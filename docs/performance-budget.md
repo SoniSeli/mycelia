@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Draft: targets proposed, reference device not yet chosen |
-| **Last updated** | 2026-10-21 |
+| **Status** | Draft: targets proposed; mid-range device measured, low-end reference device not yet chosen |
+| **Last updated** | 2026-10-22 |
 
 > **Why budgets first.** These targets are set *before* the code is written, so every system is designed to fit them. Measurements on a real device are recorded against them below, and any significant fix gets a short case study.
 
@@ -12,7 +12,7 @@
 | Role | Device | SoC / RAM | Android | Why this device |
 |---|---|---|---|---|
 | **Low-end (budget target)** | _TBD_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
-| Mid-range (sanity check) | _your own phone?_ | | | |
+| Mid-range (sanity check) | Xiaomi Redmi Note 12 Pro+ 5G (22101316UG) | MediaTek Dimensity 1080 (MT6877V) / 8 GB, 1080 × 2400 | 13 (API 33) | Developer's own phone, available every day. Good for checking that things work, too fast to prove the budgets. |
 
 > **Decide:** Pick a real low-end device you can test on. If you don't own one, a cheap second-hand phone is a worthwhile purchase for a mobile portfolio. Firebase Test Lab or a device farm can help, but they don't replace profiling with your own hands on the device.
 
@@ -71,11 +71,15 @@ All figures are measured on the **low-end reference device** with a **Developmen
 
 Store raw captures outside the repo (they're large). Commit screenshots of the relevant views to `docs/perf/` instead.
 
+> **Measure memory on release builds, or with the Profiler attached.** A development build with *Autoconnect Profiler* that can't reach the Editor buffers up to 128 MB of profiler data in memory (`Profiler.maxUsedMemory`), which inflates PSS. On 2026-10-22 the same empty scene measured 350 MB PSS as a development build and 246 MB as a release build.
+
 ## Results log
 
 | Date | Build / commit | Device | Metric | Budget | Measured | Pass | Notes |
 |---|---|---|---|---|---|---|---|
-| _YYYY-MM-DD_ | _abc1234_ | _low-end_ | _GC alloc per move_ | _0 B_ | | | |
+| 2026-10-22 | ebe4851 (empty Bootstrap scene) | — | APK size, release, arm64 | ≤ 40 MB | **33.2 MB** | ✅ (83 % used) | Engine and generated code, not content: `libil2cpp.so` 15.1 MB (61.5 MB unpacked), `libunity.so` 8.4 MB, IL2CPP metadata 2.3 MB, `classes.dex` 2.2 MB. Managed stripping at its default; unused engine modules still enabled. Baseline for Milestone 5. |
+| 2026-10-22 | ebe4851 (empty Bootstrap scene) | Mid-range | Cold start → activity displayed | ≤ 3 s *to level select* | 216 / 228 / 346 ms (median **228 ms**) | n/a | Measures `am start -W` TotalTime only; there is no level select yet. |
+| 2026-10-22 | ebe4851 (empty Bootstrap scene) | Mid-range | Total app memory (PSS), release | ≤ 200 MB | **246 MB** | ❌ | Graphics 66 MB, Code 63 MB, native heap 19 MB, 10 s after launch. Over budget before any content. Suspects: full-resolution (1080 × 2400) swapchain and URP intermediate targets (Graphics); unstripped IL2CPP code mapped in memory (Code). To investigate with the Memory Profiler in Milestone 2. |
 
 ## Optimisation case studies
 
