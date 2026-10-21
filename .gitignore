@@ -19,6 +19,7 @@
 
 # Gradle / Android build intermediates
 .gradle/
+/.utmp/
 /ExportedObj/
 /[Aa]ssets/Plugins/Android/*.androidlib/build/
 
