@@ -1,0 +1,17 @@
+{
+    "name": "Mycelia.App",
+    "rootNamespace": "Mycelia.App",
+    "references": [
+        "Mycelia.Domain",
+        "Mycelia.Game"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
