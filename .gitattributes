@@ -1,0 +1,24 @@
+# Normalize line endings for text files
+* text=auto
+
+# Unity serialized assets are text (Force Text serialization); keep them diffable
+*.unity    text eol=lf
+*.prefab   text eol=lf
+*.asset    text eol=lf
+*.mat      text eol=lf
+*.anim     text eol=lf
+*.controller text eol=lf
+*.meta     text eol=lf
+*.cs       text diff=csharp
+*.md       text
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.psd  binary
+*.wav  binary
+*.mp3  binary
+*.ttf  binary
+*.otf  binary
+
+# Git LFS is not enabled yet: see the "Large binary assets" open question in docs/design.md.
