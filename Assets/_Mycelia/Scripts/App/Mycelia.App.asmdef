@@ -3,6 +3,7 @@
     "rootNamespace": "Mycelia.App",
     "references": [
         "Mycelia.Domain",
+        "Mycelia.Content",
         "Mycelia.Game"
     ],
     "includePlatforms": [],
