@@ -140,7 +140,7 @@ Proposed decisions to record (see [adr/README.md](adr/README.md)): dependency wi
 ## 7. Testing strategy
 
 - **Domain:** EditMode tests written alongside the code. Test names read as rules, e.g. `Chain_RejectsDifferentSporeType`, `Gravity_LeavesNoGapsBelowSpores`. Boards are written as text grids (`Boards.Parse`), so a test reads like the rule it checks. One test asserts the pipeline's phase order.
-- **Randomness:** the domain takes an injected `IRandom` so refill behaviour can be reproduced in tests.
+- **Randomness:** the domain takes an injected `IRandom` (PCG32) seeded explicitly in every test; in the game each attempt gets a fresh, logged seed, so any board can be replayed exactly ([ADR-0007](adr/0007-random-seed-per-attempt-with-pcg32.md)).
 - **Game/App:** a small number of PlayMode smoke tests (a level loads and a scripted chain resolves), plus a manual device checklist before each release.
 - **CI:** every push runs the tests and builds an Android APK.
 

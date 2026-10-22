@@ -12,6 +12,7 @@ Each file records one significant decision: its context, the options considered,
 | [0004](0004-resolve-moves-through-a-phase-pipeline.md) | Resolve moves through a phase pipeline of rules that emit typed steps | Accepted |
 | [0005](0005-identify-spores-by-asset-with-runtime-id.md) | Identify spore types by ScriptableObject asset, with a compact runtime id and a stable key | Accepted (amended by 0006) |
 | [0006](0006-save-progress-as-versioned-json.md) | Save progress as a versioned JSON file; no mid-level resume | Accepted |
+| [0007](0007-random-seed-per-attempt-with-pcg32.md) | Use a random, logged seed per attempt, with a PCG32 generator in the domain | Accepted |
 
 ## Candidates to decide
 
@@ -22,5 +23,4 @@ These came up while drafting the [design document](../design.md). Each becomes a
 | Dependency wiring | Hand-written bootstrap, a DI framework (VContainer or Zenject), or singletons? |
 | Animation flow | Coroutines, `async`/Awaitable, or a tween library for the pop → fall → refill sequence? |
 | Input handling | Input System touch API vs. pointer events vs. legacy Input. How are multi-touch and Editor testing handled? |
-| Randomness | Should the injected `IRandom` use a fixed seed per level (reproducible boards) or a random one? |
 | Large binary assets | Git LFS or plain git for a small project? |
