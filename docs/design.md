@@ -55,7 +55,7 @@ _Write these in your own words from how the game plays. They become the spec for
 
 ### 3.3 Resolving a move
 1. Chained spores are removed.
-2. Spores above the gaps fall straight down to fill them (gravity per column, preserving order).
+2. Spores above the gaps fall straight down to fill them (gravity per column, preserving order). Void cells are skipped: spores fall past them but never into them.
 3. Empty cells at the top of each column are refilled. Each new spore's type is chosen **uniformly at random from the level's spore types**.
 4. The move counter decreases by 1.
 5. **Reshuffle guarantee:** if the board now has no valid chain (no two neighbouring spores of the same type), the existing spores are shuffled (type counts are kept) until at least one valid chain exists. A reshuffle costs no move. If a set number of shuffle attempts all fail, the board is regenerated instead.
