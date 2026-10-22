@@ -1,0 +1,19 @@
+{
+    "name": "Mycelia.Content.Editor",
+    "rootNamespace": "Mycelia.Content.Editor",
+    "references": [
+        "Mycelia.Content",
+        "Mycelia.Domain"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

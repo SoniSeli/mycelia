@@ -114,7 +114,7 @@ Three layers, each depending only on the one below it:
 | **Game** | Board view, spore views (pooled), chain input, HUD, panels | MonoBehaviours | PlayMode smoke tests and manual testing |
 | **App** | Bootstrap, scene loading, save, audio, haptics, settings, analytics | MonoBehaviours and services | Manual testing on device |
 
-**Data.** `SporeType` (stable key, species name, colour, unique silhouette sprite, accessible label), `SporeCatalog`, `LevelDefinition` and `LevelCatalog` are ScriptableObjects. The domain refers to spore types only by a 1-byte runtime `SporeTypeId`, and analytics uses the stable key. Neither ever uses colour ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md)).
+**Data.** `SporeType` (stable key, species name, colour, unique silhouette sprite, accessible label), `SporeCatalog`, `LevelDefinition` and `LevelCatalog` are ScriptableObjects. The domain refers to spore types only by a 1-byte runtime `SporeTypeId`, and analytics uses the stable key. Neither ever uses colour ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md)). These ScriptableObjects and `LevelDefinitionMapper` (asset → `LevelConfig`) live in a fourth assembly, **`Mycelia.Content`**, between Domain and Game, because both the Game views (sprites, colours) and the App (level select, saves) need them. Its Editor assembly shows each asset's problems in the Inspector, and EditMode tests check that every level asset in the project is playable.
 
 **Communication.** The domain is an engine-free assembly. Committing a chain runs a fixed pipeline of phases (Clear → Trigger → Damage → Gravity → Refill → Hazards → Settle → Evaluate). Each phase's rules record typed steps, and the resulting `MoveResult` is played back by the Game layer phase by phase, with input locked ([ADR-0003](adr/0003-separate-pure-domain-from-views.md), [ADR-0004](adr/0004-resolve-moves-through-a-phase-pipeline.md)). There are no global static event buses.
 
@@ -199,4 +199,6 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
+| Placeholder spore silhouettes (circle, triangle, square, diamond) | Made for this project | Own work |
+| Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
 | _e.g. Comfortaa font_ | _Google Fonts_ | _SIL OFL 1.1_ |
