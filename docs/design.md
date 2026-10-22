@@ -126,7 +126,13 @@ Three layers, each depending only on the one below it:
 
 **Persistence.** One versioned `progress.json` serialized with `JsonUtility`, with golden-file migration tests and atomic writes. There is no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md)).
 
-Proposed decisions to record (see [adr/README.md](adr/README.md)): dependency wiring, animation flow, input handling.
+**Input.** One Input System action bound to `<Pointer>` (primary touch on device, mouse in the Editor); screen positions map to cells with grid maths and the circular hit radius from §6 ([ADR-0008](adr/0008-pointer-action-and-grid-hit-testing.md)).
+
+**Animation.** `MovePlayback` turns each `MoveResult` into one PrimeTween Sequence (steps grouped within a phase, phases chained), installed only through npm per its licence and written to stay allocation-free ([ADR-0009](adr/0009-animate-playback-with-primetween.md)).
+
+**Wiring.** `AppRoot` in the Bootstrap scene creates the services once and passes them to each scene's single entry point; no singletons or static state ([ADR-0010](adr/0010-hand-written-composition-root.md)).
+
+Proposed decisions to record (see [adr/README.md](adr/README.md)): UI framework (before the Milestone 2 HUD slice).
 
 ## 6. Mobile considerations
 
@@ -156,6 +162,21 @@ Proposed decisions to record (see [adr/README.md](adr/README.md)): dependency wi
 | 5 | Content and build-size pass | Build size and memory are within budget |
 | 6 | Release | Public build link, README, GIF, performance write-up |
 
+### 8.1 Milestone 2 plan
+
+Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
+
+| # | Slice | Builds on | Done when |
+|---|---|---|---|
+| 1 | **Spore and level data**: `SporeType`, `SporeCatalog`, `LevelDefinition` ScriptableObjects, mapping to `LevelConfig`, Editor validation; four placeholder silhouettes (final species art comes later) | ADR-0005 | A test level asset loads into a `LevelConfig`; invalid assets show their problems in the Inspector |
+| 2 | **App bootstrap**: `AppRoot`, `AppServices`, `SceneLoader`, `ISceneEntry`, Editor play-mode start scene, frame-rate policy | ADR-0010 | Pressing Play in any scene boots through Bootstrap into the Game scene with a test level |
+| 3 | **Board view**: `BoardLayout` fitted to the safe area (portrait, 16:9 to ~21:9, tablets), pooled `SporeView`s, sprite atlas | ADR-0002, ADR-0003 | The starting board renders correctly on several aspect ratios; no `Instantiate`/`Destroy` during play |
+| 4 | **Touch input**: `MyceliaInput` actions, `CellHitTest` (radius, swipe sampling) with EditMode tests, `ChainInputController`, chain line | ADR-0008 | Chains can be dragged on device, including diagonals and backtracking, with no stray side cells |
+| 5 | **Move playback**: PrimeTween via npm, `PlaybackSettings`, `MovePlayback`, input lock, PlayMode allocation test | ADR-0009 | A move animates pop → fall → refill (→ reshuffle); playback allocates 0 B after warm-up |
+| 6 | **HUD**: moves left, objective counters, win/lose panel (minimal) | UI framework ADR | A level can be won or lost and the result is shown |
+| 7 | **Lifecycle**: pause overlay on `OnApplicationPause`, Android back button, audio pause, 30/60 fps policy | ADR-0006, ADR-0010 | Backgrounding mid-level pauses cleanly; back button behaves on every screen |
+| 8 | **Device pass**: choose the low-end reference device; Profiler connection check (deferred from Milestone 0); memory investigation (the 246 MB case study); frame time, GC and batches against the budget | Performance budget | Results logged on both devices; Milestone 2 done-when met |
+
 ## 9. Open questions
 
 - [x] Neighbour rule and minimum chain length: 8-way, minimum 2 (§3.2)
@@ -177,4 +198,5 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 
 | Asset | Source | Licence |
 |---|---|---|
+| PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
 | _e.g. Comfortaa font_ | _Google Fonts_ | _SIL OFL 1.1_ |

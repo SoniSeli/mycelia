@@ -13,6 +13,9 @@ Each file records one significant decision: its context, the options considered,
 | [0005](0005-identify-spores-by-asset-with-runtime-id.md) | Identify spore types by ScriptableObject asset, with a compact runtime id and a stable key | Accepted (amended by 0006) |
 | [0006](0006-save-progress-as-versioned-json.md) | Save progress as a versioned JSON file; no mid-level resume | Accepted |
 | [0007](0007-random-seed-per-attempt-with-pcg32.md) | Use a random, logged seed per attempt, with a PCG32 generator in the domain | Accepted |
+| [0008](0008-pointer-action-and-grid-hit-testing.md) | Read input through one pointer action and map it to cells with grid maths | Accepted |
+| [0009](0009-animate-playback-with-primetween.md) | Animate move playback with PrimeTween sequences | Accepted |
+| [0010](0010-hand-written-composition-root.md) | Wire services with a hand-written composition root in the Bootstrap scene | Accepted |
 
 ## Candidates to decide
 
@@ -20,7 +23,5 @@ These came up while drafting the [design document](../design.md). Each becomes a
 
 | Topic | The question to answer |
 |---|---|
-| Dependency wiring | Hand-written bootstrap, a DI framework (VContainer or Zenject), or singletons? |
-| Animation flow | Coroutines, `async`/Awaitable, or a tween library for the pop → fall → refill sequence? |
-| Input handling | Input System touch API vs. pointer events vs. legacy Input. How are multi-touch and Editor testing handled? |
+| UI framework | uGUI or UI Toolkit for the HUD, panels and menus? Consider mobile performance, safe-area layout, and how the fact cards are authored. Needed before the Milestone 2 HUD slice. |
 | Large binary assets | Git LFS or plain git for a small project? |
