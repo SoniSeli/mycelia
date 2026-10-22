@@ -67,6 +67,17 @@ public interface ISceneEntry
 - **Playing from any scene in the Editor:** an Editor-only script sets `EditorSceneManager.playModeStartScene` to Bootstrap, so pressing Play always goes through `AppRoot`. A per-scene "debug args" field picks the level to open.
 - **Frame rate policy** lives in the root and scene entries: 60 fps in gameplay, 30 fps in menus (performance budget).
 
+### Refinements (2026-10-23, Milestone 2 slice 2)
+
+Decided while building the bootstrap:
+
+- **Scene entries live in `Mycelia.App`**, next to `AppServices`. They are composition code: Game-layer views never see `AppServices` and get only what they need through `Init(...)`, so `Mycelia.Game` doesn't depend on the service interfaces.
+- **`SceneLoader` applies the frame rate**, from a per-`SceneId` table (`FrameRatePolicy`: Game 60 fps, everything else 30 fps), before it calls `Construct`. Every scene is covered without each entry remembering to do it. An entry may still lower it while idle, e.g. under the pause overlay (slice 7).
+- **Until Level Select exists, a build opens the Game scene** with the level set in AppRoot's *Start Level* field. There is no `LevelCatalog` yet.
+- **Entry timing:** the loader calls `Construct` from `SceneManager.sceneLoaded`, so after every Awake and OnEnable in the new scene and before any Start. Bootstrap is never loaded again, and a second load while one is in progress is rejected.
+- **Editor Play:** `playModeStartScene` is set to Bootstrap only while entering Play from a saved scene, and cleared afterwards. The scene's path is handed to AppRoot through `SessionState`, and AppRoot reopens it with no `SceneArgs`, so the scene uses its debug args (`GameSceneEntry.debugLevel`). Unsaved edits are offered for saving first, since Bootstrap loads scenes from disk. An untitled scratch scene plays as it is.
+- **Guards:** EditMode tests check that Bootstrap is build index 0 with one `AppRoot` whose assets are set, that every `SceneId` is enabled in the build, and that every other scene has exactly one entry.
+
 ## Consequences
 
 - **Positive:**
@@ -77,5 +88,6 @@ public interface ISceneEntry
   - Manual wiring: a new service touches the root and the entries that use it.
   - Discipline is needed to avoid shortcuts such as a static `Instance` creeping back in. Code review and the design doc are the guard.
 - **Follow-up:**
-  - Milestone 2: `AppRoot`, `AppServices`, `SceneLoader`, `ISceneEntry`, the Editor play-mode start scene, and the Game scene entry that builds `LevelSession` and the views.
+  - Milestone 2: `AppRoot`, `AppServices`, `SceneLoader`, `ISceneEntry`, the Editor play-mode start scene, and the Game scene entry that builds `LevelSession` and the views. *Done in slice 2 except the views, which are handed the session as their slices land.*
+  - Slice 5 (first PlayMode tests): check that the Play redirect doesn't take over the Test Runner's own play-mode scene.
   - **Revisit if:** the service count grows beyond about 15, or scoping (per-level or per-session services) becomes complicated. VContainer (Option B) would then be worth its cost.
