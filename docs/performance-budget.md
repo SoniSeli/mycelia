@@ -11,10 +11,10 @@
 
 | Role | Device | SoC / RAM | Android | Why this device |
 |---|---|---|---|---|
-| **Low-end (budget target)** | _TBD_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
+| **Low-end (budget target)** | _To choose in Milestone 2_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
 | Mid-range (sanity check) | Xiaomi Redmi Note 12 Pro+ 5G (22101316UG) | MediaTek Dimensity 1080 (MT6877V) / 8 GB, 1080 × 2400 | 13 (API 33) | Developer's own phone, available every day. Good for checking that things work, too fast to prove the budgets. |
 
-> **Decide:** Pick a real low-end device you can test on. If you don't own one, a cheap second-hand phone is a worthwhile purchase for a mobile portfolio. Firebase Test Lab or a device farm can help, but they don't replace profiling with your own hands on the device.
+> **Status (2026-10-22): no low-end device yet; deferred to Milestone 2.** Only the mid-range phone is available. Until a low-end device is chosen, results on the mid-range phone are **provisional**: a pass there doesn't prove the budget, but a failure there (like the memory result below) is a real problem. Options for Milestone 2: a cheap second-hand phone (the most useful, because you can profile it yourself), or a device farm such as Firebase Test Lab for start-up and crash checks on low-end models.
 
 ## Budgets
 

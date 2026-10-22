@@ -148,9 +148,9 @@ Proposed decisions to record (see [adr/README.md](adr/README.md)): dependency wi
 
 | # | Milestone | Done when |
 |---|---|---|
-| 0 | Repo, docs, CI building an empty Android project | CI is green and the APK installs on the reference device |
+| 0 | Repo, docs, CI building an empty Android project | CI is green and the APK installs on the reference device. *Amended 2026-10-22: installed on the mid-range device; the low-end reference device is deferred to Milestone 2.* |
 | 1 | Domain logic and tests | Every rule in §3 is covered by a passing test |
-| 2 | Board view, touch input, pooling, lifecycle, safe area | One level is playable on device within budget |
+| 2 | Board view, touch input, pooling, lifecycle, safe area | Low-end reference device chosen; one level is playable on it within budget |
 | 3 | Level flow, save system, analytics events | All 12 levels are playable and progress persists |
 | 4 | App shell, back button, haptics, colour-blind mode | Full flow works on device |
 | 5 | Content and build-size pass | Build size and memory are within budget |
@@ -166,7 +166,7 @@ Proposed decisions to record (see [adr/README.md](adr/README.md)): dependency wi
 - [x] Save format: versioned JSON with JsonUtility, no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md))
 - [ ] Choose the 4 fungus species and design silhouettes that stay distinct at phone size and in colour-blindness simulations
 - [ ] Main menu or straight to level select (§4)
-- [ ] Reference low-end device (§6, performance budget)
+- [ ] Reference low-end device: deferred to Milestone 2, since only a mid-range phone is available today (§6, performance budget)
 - [x] Render pipeline: URP with the 2D Renderer, unlit sprites by default ([ADR-0002](adr/0002-use-urp-with-2d-renderer.md))
 - [ ] Git LFS for binary art and audio, or keep them in plain git (the project is small)
 - [ ] Which art and audio to replace with your own versus license, and where fact images come from (they need clear usage rights)
