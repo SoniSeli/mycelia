@@ -6,7 +6,7 @@ namespace Mycelia.Domain.Grid
     /// The grid of cells. Cells are only reached through this API, so new cell layers
     /// (obstacles, hazards) can be added without changing callers (ADR-0004).
     /// </summary>
-    public sealed class Board
+    public sealed class Board : IReadOnlyBoard
     {
         struct Cell
         {

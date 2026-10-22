@@ -49,7 +49,7 @@ namespace Mycelia.Domain.Tests
             return board;
         }
 
-        public static string Print(Board board)
+        public static string Print(IReadOnlyBoard board)
         {
             var lines = new List<string>(board.Height);
             for (int row = board.Height - 1; row >= 0; row--)
@@ -72,7 +72,7 @@ namespace Mycelia.Domain.Tests
             return new SporeTypeId((byte)(letter - 'A' + 1));
         }
 
-        static char SymbolOf(Board board, GridPosition cell)
+        static char SymbolOf(IReadOnlyBoard board, GridPosition cell)
         {
             if (!board.IsPlayable(cell)) return Void;
             SporeTypeId id = board.GetOccupant(cell);

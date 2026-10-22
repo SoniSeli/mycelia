@@ -1,4 +1,5 @@
 using Mycelia.Domain.Grid;
+using Mycelia.Domain.Sessions;
 
 namespace Mycelia.Domain.Moves
 {
@@ -65,5 +66,37 @@ namespace Mycelia.Domain.Moves
         }
 
         public override string ToString() => $"Spawned {Type} at {Cell} (slot {DropSlot})";
+    }
+
+    /// <summary>An objective's progress changed during the move; values are after the move.</summary>
+    public readonly struct ObjectiveProgressed : IMoveStep
+    {
+        public readonly int ObjectiveIndex;
+        public readonly int Current;
+        public readonly int Target;
+
+        public ObjectiveProgressed(int objectiveIndex, int current, int target)
+        {
+            ObjectiveIndex = objectiveIndex;
+            Current = current;
+            Target = target;
+        }
+
+        public override string ToString() => $"Objective {ObjectiveIndex}: {Current}/{Target}";
+    }
+
+    /// <summary>The move ended the level. <see cref="Stars"/> is 0 unless it was won.</summary>
+    public readonly struct SessionEnded : IMoveStep
+    {
+        public readonly SessionState Outcome;
+        public readonly int Stars;
+
+        public SessionEnded(SessionState outcome, int stars)
+        {
+            Outcome = outcome;
+            Stars = stars;
+        }
+
+        public override string ToString() => $"Ended: {Outcome} ({Stars} stars)";
     }
 }
