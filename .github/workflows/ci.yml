@@ -22,8 +22,14 @@ env:
 jobs:
   test:
     name: EditMode tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      # Unity editor images are larger than the hosted runner's free disk space.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
       - uses: actions/checkout@v4
 
       - uses: actions/cache@v4
@@ -49,9 +55,9 @@ jobs:
   build-android:
     name: Android build
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      # The Unity Android image is large; the hosted runner's preinstalled tools are not needed.
+      # The Unity Android image is larger than the hosted runner's free disk space.
       - name: Free disk space
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
