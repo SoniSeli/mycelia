@@ -80,6 +80,7 @@ Store raw captures outside the repo (they're large). Commit screenshots of the r
 | 2026-10-22 | ebe4851 (empty Bootstrap scene) | — | APK size, release, arm64 | ≤ 40 MB | **33.2 MB** | ✅ (83 % used) | Engine and generated code, not content: `libil2cpp.so` 15.1 MB (61.5 MB unpacked), `libunity.so` 8.4 MB, IL2CPP metadata 2.3 MB, `classes.dex` 2.2 MB. Managed stripping at its default; unused engine modules still enabled. Baseline for Milestone 5. |
 | 2026-10-22 | ebe4851 (empty Bootstrap scene) | Mid-range | Cold start → activity displayed | ≤ 3 s *to level select* | 216 / 228 / 346 ms (median **228 ms**) | n/a | Measures `am start -W` TotalTime only; there is no level select yet. |
 | 2026-10-22 | ebe4851 (empty Bootstrap scene) | Mid-range | Total app memory (PSS), release | ≤ 200 MB | **246 MB** | ❌ | Graphics 66 MB, Code 63 MB, native heap 19 MB, 10 s after launch. Over budget before any content. Suspects: full-resolution (1080 × 2400) swapchain and URP intermediate targets (Graphics); unstripped IL2CPP code mapped in memory (Code). To investigate with the Memory Profiler in Milestone 2. |
+| 2026-10-22 | 7334e24 (domain only) | Editor (Mono) | GC alloc per move (domain: Commit) | 0 B | **0 B** | ✅ (Editor) | Automated: `AllocationTests.Commit_DoesNotAllocateAfterWarmUp` (Unity `Is.Not.AllocatingGCMemory`) on a 6 × 6 board after 5 warm-up moves; shown to fail when Commit allocates one array. Covers the game rules only: input, views and animation are measured on device in Milestone 2. |
 
 ## Optimisation case studies
 
