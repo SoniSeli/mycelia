@@ -35,6 +35,21 @@ namespace Mycelia.Domain.Moves
         public override string ToString() => $"Fell {From} -> {To}";
     }
 
+    /// <summary>A spore was moved to another cell by a reshuffle.</summary>
+    public readonly struct SporeRelocated : IMoveStep
+    {
+        public readonly GridPosition From;
+        public readonly GridPosition To;
+
+        public SporeRelocated(GridPosition from, GridPosition to)
+        {
+            From = from;
+            To = to;
+        }
+
+        public override string ToString() => $"Relocated {From} -> {To}";
+    }
+
     /// <summary>A new spore appeared in an empty cell. <see cref="DropSlot"/> counts from the lowest new spore in its column.</summary>
     public readonly struct SporeSpawned : IMoveStep
     {
