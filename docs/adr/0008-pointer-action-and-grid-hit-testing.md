@@ -51,6 +51,16 @@ The deciding factor is that **the design's hit rule is geometric, not physical**
 - **Feedback:** the controller raises the `ChainChange` from each touch so the line view, sound and haptics can react (e.g. a light tick on `Rejected`).
 - **Allocations:** positions are value types; reading actions with `ReadValue<Vector2>()` and `IsPressed()` does not allocate.
 
+### Refinements (2026-10-23, Milestone 2 slice 4)
+
+Decided while building touch input:
+
+- **Actions arrive as `InputActionReference`s** to `Gameplay/Point` and `Gameplay/Press` in `MyceliaInput.inputactions`, serialized on `ChainInputController`, which enables them. No generated C# class, and **no project-wide actions**: the template's `InputSystem_Actions` asset and its project-wide registration are removed, since `InputSystem.actions` is global state (ADR-0010).
+- **Tuning lives in a `ChainInputSettings` asset:** `HitRadius` 0.4 and the swipe sample step 0.5, in cells.
+- **The logic is in `ChainDrag`**, which takes press, move and release in board coordinates (from `BoardLayout.ScreenToWorld`). It is tested directly, including a 0 B allocation test for dragging. `ChainInputController` only reads the actions and forwards them. A drag that starts between cells begins at the first spore it reaches.
+- **Feedback goes through `IChainFeedback`:** every touched cell, including `Rejected` ones (for later sound and haptics), and the end of the drag. `ChainView` draws a line through the chained spores' centres, above the spores, and draws the chained spores at 1.15× size, so the chain reads without colour.
+- **Until move playback exists (slice 5), a committed move snaps the board:** `BoardView.Snap` redraws every spore from the new board using pooled views. `MovePlayback` replaces it.
+
 ## Consequences
 
 - **Positive:**
@@ -61,6 +71,6 @@ The deciding factor is that **the design's hit rule is geometric, not physical**
   - The swipe interpolation and the radius rule are our own code to maintain.
   - **To verify on device:** what `<Pointer>` does when the first finger lifts while a second is still down. The chain must not jump to the second finger mid-drag; if it does, the controller cancels the drag on the primary touch's release.
 - **Follow-up:**
-  - Milestone 2: `MyceliaInput` asset, `BoardLayout` and `CellHitTest` with EditMode tests (centre, edge of radius, corner gaps, diagonal swipe sampling), and `ChainInputController`.
+  - Milestone 2: `MyceliaInput` asset, `BoardLayout` and `CellHitTest` with EditMode tests (centre, edge of radius, corner gaps, diagonal swipe sampling), and `ChainInputController`. *Done in slice 4 (`BoardLayout` in slice 3); a headless Play check drove a virtual mouse through a chain and committed the move. Not yet tried on device.*
   - Tune `HitRadius` on the mid-range and low-end devices.
   - **Revisit if:** a mechanic needs gestures (pinch, two-finger actions). EnhancedTouch (Option B) can then be added beside the pointer action.

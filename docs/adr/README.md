@@ -13,7 +13,7 @@ Each file records one significant decision: its context, the options considered,
 | [0005](0005-identify-spores-by-asset-with-runtime-id.md) | Identify spore types by ScriptableObject asset, with a compact runtime id and a stable key | Accepted (amended by 0006) |
 | [0006](0006-save-progress-as-versioned-json.md) | Save progress as a versioned JSON file; no mid-level resume | Accepted |
 | [0007](0007-random-seed-per-attempt-with-pcg32.md) | Use a random, logged seed per attempt, with a PCG32 generator in the domain | Accepted |
-| [0008](0008-pointer-action-and-grid-hit-testing.md) | Read input through one pointer action and map it to cells with grid maths | Accepted |
+| [0008](0008-pointer-action-and-grid-hit-testing.md) | Read input through one pointer action and map it to cells with grid maths | Accepted (refined 2026-10-23) |
 | [0009](0009-animate-playback-with-primetween.md) | Animate move playback with PrimeTween sequences | Accepted |
 | [0010](0010-hand-written-composition-root.md) | Wire services with a hand-written composition root in the Bootstrap scene | Accepted (refined 2026-10-23) |
 | [0011](0011-fit-camera-to-board-and-pool-views-up-front.md) | Fit the camera to the board, pool spore views up front, and pack board sprites in one atlas | Accepted |
