@@ -20,5 +20,12 @@ namespace Mycelia.App.Tests
                 Assert.That(FrameRatePolicy.TargetFor(scene), Is.EqualTo(30), scene.ToString());
             }
         }
+
+        [Test]
+        public void APausedGame_IdlesAt30Fps()
+        {
+            Assert.That(FrameRatePolicy.TargetFor(SceneId.Game, paused: true), Is.EqualTo(30));
+            Assert.That(FrameRatePolicy.TargetFor(SceneId.Game, paused: false), Is.EqualTo(60));
+        }
     }
 }

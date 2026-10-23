@@ -5,11 +5,14 @@ using UnityEngine.InputSystem;
 
 namespace Mycelia.Game.Tests
 {
-    /// <summary>Guards the input setup (ADR-0008): one pointer action asset, and no global project-wide actions (ADR-0010).</summary>
+    /// <summary>
+    /// Guards the input setup (ADR-0008): one action asset reading one pointer and the back button, and no global
+    /// project-wide actions (ADR-0010).
+    /// </summary>
     public class ProjectInputTests
     {
         [Test]
-        public void TheOnlyInputAsset_ReadsOnePointer()
+        public void TheOnlyInputAsset_ReadsOnePointer_AndTheBackButton()
         {
             // Only the project's own assets: the Input System package ships DefaultInputActions, which CI's Library
             // imports as an InputActionAsset.
@@ -21,6 +24,8 @@ namespace Mycelia.Game.Tests
             InputActionMap gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
             Assert.That(gameplay.FindAction("Point", true).bindings.Select(b => b.path), Is.EqualTo(new[] { "<Pointer>/position" }));
             Assert.That(gameplay.FindAction("Press", true).bindings.Select(b => b.path), Is.EqualTo(new[] { "<Pointer>/press" }));
+            // Android's back button arrives as the Escape key, which also makes it testable in the Editor.
+            Assert.That(gameplay.FindAction("Back", true).bindings.Select(b => b.path), Is.EqualTo(new[] { "<Keyboard>/escape" }));
         }
 
         [Test]

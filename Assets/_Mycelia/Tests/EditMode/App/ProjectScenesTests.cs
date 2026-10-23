@@ -175,6 +175,26 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Design §6: the pause overlay covers the board, the HUD and the result panel.
+        [Test]
+        public void ThePauseOverlay_DrawsAboveEveryOtherCanvas()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.PauseOverlay overlay = roots.SelectMany(root => root.GetComponentsInChildren<Game.PauseOverlay>(true)).Single();
+                Canvas pauseCanvas = overlay.GetComponentInParent<Canvas>(true);
+                Assert.That(pauseCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+
+                var others = roots.SelectMany(root => root.GetComponentsInChildren<Canvas>(true))
+                    .Where(canvas => canvas.isRootCanvas && canvas != pauseCanvas);
+                foreach (Canvas other in others)
+                {
+                    Assert.That(other.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay), other.name);
+                    Assert.That(pauseCanvas.sortingOrder, Is.GreaterThan(other.sortingOrder), other.name);
+                }
+            });
+        }
+
         // ADR-0012 rule 7: UI images draw from one UI atlas, so the HUD batches.
         [Test]
         public void EveryUiImage_InTheGameScene_DrawsFromTheUiAtlas()

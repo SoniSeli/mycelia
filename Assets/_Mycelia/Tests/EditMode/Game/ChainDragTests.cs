@@ -32,21 +32,10 @@ namespace Mycelia.Game.Tests
             public void ChainEnded(Chain chain) => Ended++;
         }
 
-        sealed class FakePlayer : IMovePlayer
-        {
-            public int Played;
-            public bool IsPlaying { get; set; }
-
-            public void Play(MoveResult move)
-            {
-                Played++;
-                IsPlaying = true;
-            }
-        }
-
         LevelSession session;
         RecordingFeedback feedback;
         FakePlayer player;
+        LevelPause pause;
         ChainDrag drag;
 
         static Vector2 Centre(int column, int row) => new Vector2(column + 0.5f, row + 0.5f);
@@ -56,10 +45,16 @@ namespace Mycelia.Game.Tests
         [SetUp]
         public void StartDrag()
         {
-            session = TestSessions.Start(Grid);
             feedback = new RecordingFeedback();
             player = new FakePlayer();
-            drag = new ChainDrag(session, feedback, player, hitRadius: 0.4f, sampleStep: 0.5f);
+            Start(TestSessions.Start(Grid));
+        }
+
+        void Start(LevelSession levelSession)
+        {
+            session = levelSession;
+            pause = new LevelPause(session, player);
+            drag = new ChainDrag(session, feedback, player, pause, hitRadius: 0.4f, sampleStep: 0.5f);
         }
 
         [Test]
@@ -211,10 +206,61 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
+        public void PausingMidDrag_CancelsTheChain_WithoutSpendingAMove()
+        {
+            drag.Press(Centre(0, 0));
+            drag.Move(Centre(1, 0));
+
+            // The app goes to the background; the finger is up when the player comes back.
+            pause.Pause();
+            MoveResult result = drag.Release();
+
+            Assert.That(result, Is.Null);
+            Assert.That(session.MovesRemaining, Is.EqualTo(10));
+            Assert.That(session.Chain.Count, Is.Zero);
+            Assert.That(feedback.Ended, Is.EqualTo(1));
+            Assert.That(player.Played, Is.Zero);
+        }
+
+        [Test]
+        public void PausingWhileTheFingerStaysDown_CancelsTheChain_AndIgnoresTheRestOfThatTouch()
+        {
+            drag.Press(Centre(0, 0));
+            drag.Move(Centre(1, 0));
+
+            // The back button pauses while the finger is still on the board.
+            pause.Pause();
+            drag.Move(Centre(2, 2));
+            Assert.That(drag.IsDragging, Is.False);
+            Assert.That(session.Chain.Count, Is.Zero);
+            Assert.That(feedback.Ended, Is.EqualTo(1));
+
+            pause.Resume();
+            drag.Press(Centre(2, 2));
+            Assert.That(session.Chain.Count, Is.Zero, "The same touch doesn't start a new chain.");
+        }
+
+        [Test]
+        public void WhilePaused_PressesAreIgnored_UntilTheFingerLiftsAfterResuming()
+        {
+            pause.Pause();
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.Zero);
+
+            // Resumed while the finger is still down: the controller keeps reporting a press.
+            pause.Resume();
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.Zero, "A touch that began while paused doesn't start a chain.");
+
+            drag.Release();
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.EqualTo(1));
+        }
+
+        [Test]
         public void OnceTheLevelHasEnded_InputIsIgnored()
         {
-            session = TestSessions.Start(Grid, moves: 1);
-            drag = new ChainDrag(session, feedback, player, hitRadius: 0.4f, sampleStep: 0.5f);
+            Start(TestSessions.Start(Grid, moves: 1));
             drag.Press(Centre(0, 0));
             drag.Move(Centre(1, 0));
             drag.Release();

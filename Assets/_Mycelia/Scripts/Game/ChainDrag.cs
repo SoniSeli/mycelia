@@ -18,16 +18,18 @@ namespace Mycelia.Game
         readonly LevelSession session;
         readonly IChainFeedback feedback;
         readonly IMovePlayer player;
+        readonly LevelPause pause;
         readonly float hitRadius;
         readonly float sampleStep;
         Vector2 lastPoint;
         bool waitingForRelease;
 
-        public ChainDrag(LevelSession session, IChainFeedback feedback, IMovePlayer player, float hitRadius, float sampleStep)
+        public ChainDrag(LevelSession session, IChainFeedback feedback, IMovePlayer player, LevelPause pause, float hitRadius, float sampleStep)
         {
             this.session = session ?? throw new ArgumentNullException(nameof(session));
             this.feedback = feedback ?? throw new ArgumentNullException(nameof(feedback));
             this.player = player ?? throw new ArgumentNullException(nameof(player));
+            this.pause = pause ?? throw new ArgumentNullException(nameof(pause));
             if (hitRadius <= 0 || hitRadius > 0.5f)
                 throw new ArgumentOutOfRangeException(nameof(hitRadius), hitRadius, "The hit radius must be in (0, 0.5] cells.");
             if (sampleStep <= 0)
@@ -44,9 +46,10 @@ namespace Mycelia.Game
             if (waitingForRelease)
                 return;
 
-            // Input is locked while a move plays back (ADR-0003) and once the level has ended. A touch that begins
-            // while locked is ignored until the finger lifts, so it can't start a chain the moment playback ends.
-            if (player.IsPlaying || session.State != SessionState.Playing)
+            // Input is locked while a move plays back (ADR-0003), while the level is paused, and once it has ended.
+            // A touch that begins while locked is ignored until the finger lifts, so it can't start a chain the
+            // moment playback ends or the level resumes.
+            if (player.IsPlaying || pause.IsPaused || session.State != SessionState.Playing)
             {
                 waitingForRelease = true;
                 return;
@@ -62,12 +65,25 @@ namespace Mycelia.Game
             if (!IsDragging)
                 return;
 
+            // Paused with the finger still down: the chain is cancelled, and the rest of the touch ignored.
+            if (pause.IsPaused)
+            {
+                IsDragging = false;
+                waitingForRelease = true;
+                session.Chain.Clear();
+                feedback.ChainEnded(session.Chain);
+                return;
+            }
+
             foreach (Vector2 point in CellHitTest.SamplePoints(lastPoint, boardPoint, sampleStep))
                 TouchAt(point);
             lastPoint = boardPoint;
         }
 
-        /// <summary>Commits the chain if it is long enough and hands the move to the player, otherwise cancels it.</summary>
+        /// <summary>
+        /// Commits the chain if it is long enough and hands the move to the player, otherwise cancels it. A chain
+        /// released while the level is paused is cancelled too: the player wasn't looking.
+        /// </summary>
         /// <returns>The committed move, or null if nothing was committed. Valid until the next commit.</returns>
         public MoveResult Release()
         {
@@ -77,7 +93,7 @@ namespace Mycelia.Game
 
             IsDragging = false;
             MoveResult result = null;
-            if (session.Chain.IsCommittable)
+            if (session.Chain.IsCommittable && !pause.IsPaused)
                 result = session.Commit();
             else
                 session.Chain.Clear();

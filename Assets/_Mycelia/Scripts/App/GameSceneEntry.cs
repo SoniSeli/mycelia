@@ -10,8 +10,8 @@ namespace Mycelia.App
 {
     /// <summary>
     /// The Game scene's entry point: starts a <see cref="LevelSession"/> on the level it is given, with a fresh seed.
-    /// It fits the camera to the level, shows the starting board and the HUD, and connects chain input to move
-    /// playback, which reports to the HUD.
+    /// It fits the camera to the level, shows the starting board and the HUD, connects chain input to move playback,
+    /// which reports to the HUD, and sets up pausing.
     /// </summary>
     public sealed class GameSceneEntry : MonoBehaviour, ISceneEntry
     {
@@ -25,8 +25,11 @@ namespace Mycelia.App
         [SerializeField] MovePlayback playback;
         [SerializeField] HudView hud;
         [SerializeField] ResultPanel resultPanel;
+        [SerializeField] PauseOverlay pauseOverlay;
+        [SerializeField] PauseController pauseController;
 
         public LevelSession Session { get; private set; }
+        public LevelPause Pause { get; private set; }
 
         public void Construct(AppServices services, SceneArgs args)
         {
@@ -44,10 +47,14 @@ namespace Mycelia.App
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
             hud.Init(config, services.Spores);
-            // Play again restarts the same level with a fresh seed, through the loader like any scene change.
-            resultPanel.Init(() => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level)));
+            // Play again and Restart start the same level with a fresh seed, through the loader like any scene change.
+            Action restart = () => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level));
+            resultPanel.Init(restart);
             playback.Init(boardView, config.Width, config.Height, hud);
-            chainInput.Init(Session, boardCamera, chainView, playback);
+            Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
+            pauseOverlay.Init(Pause.Resume, restart);
+            pauseController.Init(Pause);
+            chainInput.Init(Session, boardCamera, chainView, playback, Pause);
         }
     }
 }

@@ -165,6 +165,40 @@ namespace Mycelia.Game.PlayTests
             AssertViewsMatchTheBoard();
         }
 
+        [UnityTest]
+        public IEnumerator APausedMove_HoldsStill_UntilResumed()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2));
+            SporeView falling = boardView.SporeAt(At(0, 2));
+            playback.Play(Commit(At(0, 0), At(0, 1)));
+
+            yield return new WaitForSeconds(settings.ClearDuration + settings.FallDuration(2) * 0.25f);
+            playback.SetPaused(true);
+            float heldAt = falling.transform.localPosition.y;
+            Assert.That(heldAt, Is.LessThan(2.4f), "Paused once the fall has started.");
+
+            // Longer than the whole move would take unpaused.
+            yield return new WaitForSeconds(settings.ClearDuration + settings.FallDuration(6) * 2f);
+            Assert.That(playback.IsPlaying, Is.True, "Input stays locked under the pause.");
+            Assert.That(falling.transform.localPosition.y, Is.EqualTo(heldAt).Within(1e-4f), "Nothing moves while paused.");
+
+            playback.SetPaused(false);
+            float timeout = Time.time + 5f;
+            while (playback.IsPlaying && Time.time < timeout) yield return null;
+            Assert.That(playback.IsPlaying, Is.False, "The move finishes once resumed.");
+            AssertViewsMatchTheBoard();
+        }
+
+        [Test]
+        public void PausingWithNoMovePlaying_DoesNothing()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2));
+
+            Assert.DoesNotThrow(() => playback.SetPaused(true));
+            Assert.DoesNotThrow(() => playback.SetPaused(false));
+            Assert.That(playback.IsPlaying, Is.False);
+        }
+
         // Refill leaves B A B, a dead board; the scripted shuffle rotates it to B B A, moving cell 2's spore to cell 0.
         [Test]
         public void AReshuffle_MovesEverySporeToItsNewCell()

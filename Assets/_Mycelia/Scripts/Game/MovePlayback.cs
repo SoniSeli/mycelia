@@ -12,7 +12,7 @@ namespace Mycelia.Game
     /// tweens animate the views there. Allocation-free after <see cref="Init"/>: no capturing lambdas, buffers sized
     /// up front, and tween capacity reserved.
     /// </summary>
-    public sealed class MovePlayback : MonoBehaviour, IMovePlayer
+    public sealed class MovePlayback : MonoBehaviour, IMovePlayer, IPausable
     {
         [SerializeField] PlaybackSettings settings;
 
@@ -117,6 +117,13 @@ namespace Mycelia.Game
         {
             if (sequence.isAlive)
                 sequence.Complete();
+        }
+
+        /// <summary>Freezes the move being played under the pause overlay; input stays locked until it finishes.</summary>
+        public void SetPaused(bool paused)
+        {
+            if (sequence.isAlive)
+                sequence.isPaused = paused;
         }
 
         void OnDestroy()

@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Mycelia.Content;
 using Mycelia.Domain.Grid;
 using Mycelia.Domain.Randomness;
@@ -25,6 +26,10 @@ namespace Mycelia.App.Tests
         BoardView boardView;
         ResultPanel resultPanel;
         Button playAgain;
+        PauseOverlay pauseOverlay;
+        Button resume;
+        Button restart;
+        PauseController pauseController;
         FakeSceneLoader loader;
         FixedSeedSource seeds;
         AppServices services;
@@ -93,6 +98,16 @@ namespace Mycelia.App.Tests
             SetReference(entry, "hud", hud);
             SetReference(entry, "resultPanel", resultPanel);
 
+            pauseOverlay = UiChild("Pause Panel", scene.transform).gameObject.AddComponent<PauseOverlay>();
+            resume = UiChild("Resume", pauseOverlay.transform).gameObject.AddComponent<Button>();
+            restart = UiChild("Restart", pauseOverlay.transform).gameObject.AddComponent<Button>();
+            SetReference(pauseOverlay, "resume", resume);
+            SetReference(pauseOverlay, "restart", restart);
+            pauseController = new GameObject("Pause", typeof(PauseController)).GetComponent<PauseController>();
+            pauseController.transform.SetParent(scene.transform);
+            SetReference(entry, "pauseOverlay", pauseOverlay);
+            SetReference(entry, "pauseController", pauseController);
+
             seeds = new FixedSeedSource(Seed);
             loader = new FakeSceneLoader();
             services = new AppServices(loader, seeds, ProjectAssets.Spores);
@@ -124,6 +139,12 @@ namespace Mycelia.App.Tests
 
         void SetDebugLevel(LevelDefinition debugLevel) => SetReference(entry, "debugLevel", debugLevel);
 
+        // Calls the message Unity sends when the app goes to the background or comes back. SendMessage can't be used:
+        // behaviours don't run in Edit Mode.
+        void SendApplicationPause(bool paused) =>
+            typeof(PauseController).GetMethod("OnApplicationPause", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(pauseController, new object[] { paused });
+
         [Test]
         public void PlayAgain_ReloadsTheGameScene_OnTheSameLevel()
         {
@@ -145,6 +166,65 @@ namespace Mycelia.App.Tests
             playAgain.onClick.Invoke();
 
             Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(level));
+        }
+
+        [Test]
+        public void GoingToTheBackground_PausesTheLevel_BehindTheOverlay()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            Assert.That(pauseOverlay.gameObject.activeSelf, Is.False, "Hidden while playing.");
+
+            SendApplicationPause(true);
+
+            Assert.That(entry.Pause.IsPaused, Is.True);
+            Assert.That(pauseOverlay.gameObject.activeSelf, Is.True);
+        }
+
+        [Test]
+        public void ComingBack_LeavesTheLevelPaused_UntilThePlayerResumes()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            SendApplicationPause(true);
+
+            SendApplicationPause(false);
+            Assert.That(entry.Pause.IsPaused, Is.True, "The level waits for the player.");
+
+            resume.onClick.Invoke();
+            Assert.That(entry.Pause.IsPaused, Is.False);
+            Assert.That(pauseOverlay.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void Restart_ReloadsTheGameScene_OnTheSameLevel()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            entry.Pause.Pause();
+
+            restart.onClick.Invoke();
+
+            Assert.That(loader.Loads.Count, Is.EqualTo(1));
+            Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.Game));
+            Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(level));
+        }
+
+        [Test]
+        public void WhilePaused_TheGameIdlesAtTheMenuFrameRate()
+        {
+            int before = Application.targetFrameRate;
+            try
+            {
+                entry.Construct(services, new GameSceneArgs(level));
+
+                entry.Pause.Pause();
+                Assert.That(Application.targetFrameRate, Is.EqualTo(FrameRatePolicy.Menus));
+
+                entry.Pause.Resume();
+                Assert.That(Application.targetFrameRate, Is.EqualTo(FrameRatePolicy.Gameplay));
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
         }
 
         [Test]
