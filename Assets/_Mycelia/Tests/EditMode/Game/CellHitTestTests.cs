@@ -7,9 +7,14 @@ namespace Mycelia.Game.Tests
 {
     public class CellHitTestTests
     {
-        const float Radius = 0.4f;
+        // The tuned value in ChainInputSettings, and the largest radius ChainDrag accepts.
+        const float Radius = 0.45f;
+        const float LargestRadius = 0.5f;
 
-        static bool Hit(float x, float y, out GridPosition cell) => CellHitTest.TryHit(new Vector2(x, y), 6, 6, Radius, out cell);
+        static bool Hit(float x, float y, out GridPosition cell) => Hit(x, y, Radius, out cell);
+
+        static bool Hit(float x, float y, float radius, out GridPosition cell) =>
+            CellHitTest.TryHit(new Vector2(x, y), 6, 6, radius, out cell);
 
         static List<Vector2> Points(Vector2 from, Vector2 to, float step)
         {
@@ -19,12 +24,12 @@ namespace Mycelia.Game.Tests
         }
 
         // Every cell a swipe touches, in order, without repeats: the press point, then the samples after it.
-        static List<GridPosition> CellsAlong(Vector2 from, Vector2 to)
+        static List<GridPosition> CellsAlong(Vector2 from, Vector2 to, float radius = Radius)
         {
             var cells = new List<GridPosition>();
             void Touch(Vector2 point)
             {
-                if (CellHitTest.TryHit(point, 6, 6, Radius, out GridPosition cell) && (cells.Count == 0 || cells[cells.Count - 1] != cell))
+                if (CellHitTest.TryHit(point, 6, 6, radius, out GridPosition cell) && (cells.Count == 0 || cells[cells.Count - 1] != cell))
                     cells.Add(cell);
             }
 
@@ -43,23 +48,24 @@ namespace Mycelia.Game.Tests
         [Test]
         public void ATouchJustInsideTheRadius_Hits_AndJustOutsideMisses()
         {
-            Assert.That(Hit(2.5f + 0.39f, 3.5f, out _), Is.True);
-            Assert.That(Hit(2.5f + 0.41f, 3.5f, out _), Is.False);
-            Assert.That(Hit(2.5f, 3.5f - 0.39f, out _), Is.True);
+            Assert.That(Hit(2.5f + 0.44f, 3.5f, out _), Is.True);
+            Assert.That(Hit(2.5f + 0.46f, 3.5f, out _), Is.False);
+            Assert.That(Hit(2.5f, 3.5f - 0.44f, out _), Is.True);
         }
 
         [Test]
         public void ATouchInTheCornerBetweenCells_HitsNothing()
         {
             Assert.That(Hit(2f, 3f, out _), Is.False);
-            Assert.That(Hit(2.5f + 0.3f, 3.5f + 0.3f, out _), Is.False, "0.42 from the centre, inside the square cell");
+            Assert.That(Hit(2.5f + 0.33f, 3.5f + 0.33f, out _), Is.False, "0.47 from the centre, inside the square cell");
         }
 
-        [Test]
-        public void AFingerCuttingTheCornerOfASideNeighbour_HitsNothing()
+        [TestCase(Radius)]
+        [TestCase(LargestRadius)]
+        public void AFingerCuttingTheCornerOfASideNeighbour_HitsNothing(float radius)
         {
             // Inside cell (1, 0), near the corner it shares with (0, 0) and (1, 1): where a diagonal drag passes.
-            Assert.That(Hit(1.1f, 0.9f, out _), Is.False);
+            Assert.That(Hit(1.1f, 0.9f, radius, out _), Is.False);
         }
 
         [Test]
@@ -106,10 +112,11 @@ namespace Mycelia.Game.Tests
             }));
         }
 
-        [Test]
-        public void ADiagonalSwipe_TouchesTheDiagonalCells_NeverTheSideNeighbours()
+        [TestCase(Radius)]
+        [TestCase(LargestRadius)]
+        public void ADiagonalSwipe_TouchesTheDiagonalCells_NeverTheSideNeighbours(float radius)
         {
-            Assert.That(CellsAlong(new Vector2(0.5f, 0.5f), new Vector2(3.5f, 3.5f)), Is.EqualTo(new[]
+            Assert.That(CellsAlong(new Vector2(0.5f, 0.5f), new Vector2(3.5f, 3.5f), radius), Is.EqualTo(new[]
             {
                 new GridPosition(0, 0), new GridPosition(1, 1), new GridPosition(2, 2), new GridPosition(3, 3),
             }));

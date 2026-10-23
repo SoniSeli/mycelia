@@ -7,7 +7,7 @@ namespace Mycelia.Game
     public sealed class ChainInputSettings : ScriptableObject
     {
         [SerializeField, Range(0.25f, 0.5f), Tooltip("A spore is touched only within this distance of its centre, in cells. Keeps diagonal drags off the side neighbours.")]
-        float hitRadius = 0.4f;
+        float hitRadius = 0.45f;
 
         [SerializeField, Range(0.1f, 1f), Tooltip("A fast swipe is checked at least this often along its path, in cells, so it can't skip a spore.")]
         float sampleStep = 0.5f;

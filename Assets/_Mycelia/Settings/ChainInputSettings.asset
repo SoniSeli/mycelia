@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d887db1d25bf4b4ebcc8bc549809600, type: 3}
   m_Name: ChainInputSettings
   m_EditorClassIdentifier: Mycelia.Game::Mycelia.Game.ChainInputSettings
-  hitRadius: 0.4
+  hitRadius: 0.45
   sampleStep: 0.5
