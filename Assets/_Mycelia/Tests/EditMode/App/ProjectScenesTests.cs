@@ -130,6 +130,13 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
+        public void PlayModeTests_KeepTheTestRunnersOwnScene()
+        {
+            // The Test Runner saves this scene and makes it active before entering Play (CreateBootstrapSceneTask).
+            Assert.That(PlayModeStartScene.BootsThroughBootstrap("Assets/InitTestScene3f2a9c1e-4b7d-4e8a-9f0c-2d1b6a5e7c3f.unity"), Is.False);
+        }
+
+        [Test]
         public void PressingPlayInAnUntitledScene_PlaysItAsItIs()
         {
             Assert.That(PlayModeStartScene.BootsThroughBootstrap(""), Is.False);

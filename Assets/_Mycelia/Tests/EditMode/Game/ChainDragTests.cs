@@ -32,8 +32,21 @@ namespace Mycelia.Game.Tests
             public void ChainEnded(Chain chain) => Ended++;
         }
 
+        sealed class FakePlayer : IMovePlayer
+        {
+            public int Played;
+            public bool IsPlaying { get; set; }
+
+            public void Play(MoveResult move)
+            {
+                Played++;
+                IsPlaying = true;
+            }
+        }
+
         LevelSession session;
         RecordingFeedback feedback;
+        FakePlayer player;
         ChainDrag drag;
 
         static Vector2 Centre(int column, int row) => new Vector2(column + 0.5f, row + 0.5f);
@@ -45,7 +58,8 @@ namespace Mycelia.Game.Tests
         {
             session = TestSessions.Start(Grid);
             feedback = new RecordingFeedback();
-            drag = new ChainDrag(session, feedback, hitRadius: 0.4f, sampleStep: 0.5f);
+            player = new FakePlayer();
+            drag = new ChainDrag(session, feedback, player, hitRadius: 0.4f, sampleStep: 0.5f);
         }
 
         [Test]
@@ -154,13 +168,53 @@ namespace Mycelia.Game.Tests
             Assert.That(session.MovesRemaining, Is.EqualTo(9));
             Assert.That(session.Chain.Count, Is.Zero);
             Assert.That(feedback.Ended, Is.EqualTo(1));
+            Assert.That(player.Played, Is.EqualTo(1), "The committed move is handed over for playback.");
+        }
+
+        [Test]
+        public void ACancelledChain_PlaysNothing()
+        {
+            drag.Press(Centre(2, 0));
+            drag.Release();
+
+            Assert.That(player.Played, Is.Zero);
+        }
+
+        [Test]
+        public void WhileAMoveIsPlaying_PressesAreIgnored_UntilItEnds()
+        {
+            player.IsPlaying = true;
+            drag.Press(Centre(0, 0));
+            drag.Release();
+            Assert.That(drag.IsDragging, Is.False);
+            Assert.That(session.Chain.Count, Is.Zero);
+
+            player.IsPlaying = false;
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AFingerHeldThroughPlayback_StartsNoChain_UntilItLiftsAndPressesAgain()
+        {
+            player.IsPlaying = true;
+            drag.Press(Centre(0, 0));
+
+            // Playback ends while the finger is still down: the controller keeps reporting a press.
+            player.IsPlaying = false;
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.Zero, "A touch that began during playback doesn't start a chain.");
+
+            drag.Release();
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void OnceTheLevelHasEnded_InputIsIgnored()
         {
             session = TestSessions.Start(Grid, moves: 1);
-            drag = new ChainDrag(session, feedback, hitRadius: 0.4f, sampleStep: 0.5f);
+            drag = new ChainDrag(session, feedback, player, hitRadius: 0.4f, sampleStep: 0.5f);
             drag.Press(Centre(0, 0));
             drag.Move(Centre(1, 0));
             drag.Release();

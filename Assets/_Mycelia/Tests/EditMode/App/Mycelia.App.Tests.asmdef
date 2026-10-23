@@ -7,6 +7,7 @@
         "Mycelia.App",
         "Mycelia.App.Editor",
         "Mycelia.Game",
+        "PrimeTween.Runtime",
         "Mycelia.Content",
         "Mycelia.Domain"
     ],

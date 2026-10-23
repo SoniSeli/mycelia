@@ -7,7 +7,7 @@ namespace Mycelia.Game
     /// <summary>
     /// Reads the pointer (primary touch on device, mouse in the Editor) each frame and feeds it to a
     /// <see cref="ChainDrag"/> in board coordinates (ADR-0008). Reading actions with ReadValue and IsPressed
-    /// allocates nothing. Until move playback exists, a committed move redraws the board at once (slice 4).
+    /// allocates nothing.
     /// </summary>
     public sealed class ChainInputController : MonoBehaviour
     {
@@ -15,17 +15,13 @@ namespace Mycelia.Game
         [SerializeField] InputActionReference press;
         [SerializeField] ChainInputSettings settings;
 
-        LevelSession session;
         BoardCamera boardCamera;
-        BoardView boardView;
         ChainDrag drag;
 
-        public void Init(LevelSession session, BoardCamera boardCamera, BoardView boardView, IChainFeedback feedback)
+        public void Init(LevelSession session, BoardCamera boardCamera, IChainFeedback feedback, IMovePlayer player)
         {
-            this.session = session;
             this.boardCamera = boardCamera;
-            this.boardView = boardView;
-            drag = new ChainDrag(session, feedback, settings.HitRadius, settings.SampleStep);
+            drag = new ChainDrag(session, feedback, player, settings.HitRadius, settings.SampleStep);
         }
 
         void OnEnable()
@@ -54,9 +50,10 @@ namespace Mycelia.Game
                 else
                     drag.Press(boardPoint);
             }
-            else if (drag.IsDragging && drag.Release() != null)
+            else
             {
-                boardView.Snap(session.Board);
+                // Every frame without a press, so a touch held through playback is let go of too.
+                drag.Release();
             }
         }
     }

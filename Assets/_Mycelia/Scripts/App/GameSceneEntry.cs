@@ -10,7 +10,8 @@ namespace Mycelia.App
 {
     /// <summary>
     /// The Game scene's entry point: starts a <see cref="LevelSession"/> on the level it is given, with a fresh seed.
-    /// It fits the camera to the level, shows the starting board and connects chain input; the HUD comes later.
+    /// It fits the camera to the level, shows the starting board, and connects chain input to move playback; the HUD
+    /// comes later.
     /// </summary>
     public sealed class GameSceneEntry : MonoBehaviour, ISceneEntry
     {
@@ -21,6 +22,7 @@ namespace Mycelia.App
         [SerializeField] BoardView boardView;
         [SerializeField] ChainView chainView;
         [SerializeField] ChainInputController chainInput;
+        [SerializeField] MovePlayback playback;
 
         public LevelSession Session { get; private set; }
 
@@ -39,7 +41,8 @@ namespace Mycelia.App
             boardCamera.Init(config.Width, config.Height);
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
-            chainInput.Init(Session, boardCamera, boardView, chainView);
+            playback.Init(boardView, config.Width, config.Height);
+            chainInput.Init(Session, boardCamera, chainView, playback);
         }
     }
 }

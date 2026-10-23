@@ -14,8 +14,12 @@ namespace Mycelia.App.Editor
     {
         static PlayModeStartScene() => EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 
-        /// <summary>Saved scenes boot through Bootstrap; an untitled scratch scene plays as it is.</summary>
-        internal static bool BootsThroughBootstrap(string activeScenePath) => !string.IsNullOrEmpty(activeScenePath);
+        /// <summary>
+        /// Saved scenes boot through Bootstrap. An untitled scratch scene plays as it is, and so does the Test Runner's
+        /// own play-mode scene, saved as Assets/InitTestScene&lt;guid&gt;.unity, so PlayMode tests run their own setup.
+        /// </summary>
+        internal static bool BootsThroughBootstrap(string activeScenePath) =>
+            !string.IsNullOrEmpty(activeScenePath) && !activeScenePath.StartsWith("Assets/InitTestScene");
 
         static void OnPlayModeStateChanged(PlayModeStateChange change)
         {

@@ -9,21 +9,25 @@ namespace Mycelia.Game
 {
     /// <summary>
     /// Turns press, move and release of one pointer, in board coordinates, into chain touches and a committed move
-    /// (ADR-0008). Engine-input-free so it can be tested directly; <see cref="ChainInputController"/> feeds it.
+    /// (ADR-0008), and hands committed moves to an <see cref="IMovePlayer"/>. Engine-input-free so it can be tested
+    /// directly; <see cref="ChainInputController"/> feeds it.
     /// Allocation-free while dragging.
     /// </summary>
     public sealed class ChainDrag
     {
         readonly LevelSession session;
         readonly IChainFeedback feedback;
+        readonly IMovePlayer player;
         readonly float hitRadius;
         readonly float sampleStep;
         Vector2 lastPoint;
+        bool waitingForRelease;
 
-        public ChainDrag(LevelSession session, IChainFeedback feedback, float hitRadius, float sampleStep)
+        public ChainDrag(LevelSession session, IChainFeedback feedback, IMovePlayer player, float hitRadius, float sampleStep)
         {
             this.session = session ?? throw new ArgumentNullException(nameof(session));
             this.feedback = feedback ?? throw new ArgumentNullException(nameof(feedback));
+            this.player = player ?? throw new ArgumentNullException(nameof(player));
             if (hitRadius <= 0 || hitRadius > 0.5f)
                 throw new ArgumentOutOfRangeException(nameof(hitRadius), hitRadius, "The hit radius must be in (0, 0.5] cells.");
             if (sampleStep <= 0)
@@ -37,8 +41,16 @@ namespace Mycelia.Game
 
         public void Press(Vector2 boardPoint)
         {
-            if (session.State != SessionState.Playing)
+            if (waitingForRelease)
                 return;
+
+            // Input is locked while a move plays back (ADR-0003) and once the level has ended. A touch that begins
+            // while locked is ignored until the finger lifts, so it can't start a chain the moment playback ends.
+            if (player.IsPlaying || session.State != SessionState.Playing)
+            {
+                waitingForRelease = true;
+                return;
+            }
 
             IsDragging = true;
             lastPoint = boardPoint;
@@ -55,10 +67,11 @@ namespace Mycelia.Game
             lastPoint = boardPoint;
         }
 
-        /// <summary>Commits the chain if it is long enough, otherwise cancels it.</summary>
-        /// <returns>The move to play back, or null if nothing was committed. Valid until the next commit.</returns>
+        /// <summary>Commits the chain if it is long enough and hands the move to the player, otherwise cancels it.</summary>
+        /// <returns>The committed move, or null if nothing was committed. Valid until the next commit.</returns>
         public MoveResult Release()
         {
+            waitingForRelease = false;
             if (!IsDragging)
                 return null;
 
@@ -70,6 +83,8 @@ namespace Mycelia.Game
                 session.Chain.Clear();
 
             feedback.ChainEnded(session.Chain);
+            if (result != null)
+                player.Play(result);
             return result;
         }
 

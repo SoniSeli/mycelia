@@ -4,7 +4,8 @@
     "references": [
         "Mycelia.Domain",
         "Mycelia.Content",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "PrimeTween.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

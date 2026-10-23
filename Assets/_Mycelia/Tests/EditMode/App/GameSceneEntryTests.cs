@@ -18,6 +18,7 @@ namespace Mycelia.App.Tests
         GameObject scene;
         BoardLayoutSettings layoutSettings;
         ChainInputSettings inputSettings;
+        PlaybackSettings playbackSettings;
         GameSceneEntry entry;
         BoardView boardView;
         FixedSeedSource seeds;
@@ -63,6 +64,10 @@ namespace Mycelia.App.Tests
             SetReference(entry, "boardView", boardView);
             SetReference(entry, "chainView", chainView);
             SetReference(entry, "chainInput", chainInput);
+            var playback = boardView.gameObject.AddComponent<MovePlayback>();
+            playbackSettings = ScriptableObject.CreateInstance<PlaybackSettings>();
+            SetReference(playback, "settings", playbackSettings);
+            SetReference(entry, "playback", playback);
 
             seeds = new FixedSeedSource(Seed);
             services = new AppServices(new FakeSceneLoader(), seeds, ProjectAssets.Spores);
@@ -75,6 +80,7 @@ namespace Mycelia.App.Tests
             Object.DestroyImmediate(scene);
             Object.DestroyImmediate(layoutSettings);
             Object.DestroyImmediate(inputSettings);
+            Object.DestroyImmediate(playbackSettings);
         }
 
         static void SetReference(Object target, string property, Object value)

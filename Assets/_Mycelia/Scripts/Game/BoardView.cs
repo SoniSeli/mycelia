@@ -23,6 +23,7 @@ namespace Mycelia.Game
         int width;
 
         public SporeViewPool Pool { get; private set; }
+        public SporeCatalog Catalog => catalog;
         public Transform CellsRoot { get; private set; }
 
         public void Init(IReadOnlyBoard board, SporeCatalog catalog)
@@ -34,8 +35,9 @@ namespace Mycelia.Game
             width = board.Width;
             int cells = board.Width * board.Height;
             CellsRoot = CreateChild("Cells");
-            // Twice the cells: new spores can appear while cleared ones are still animating out.
-            Pool = new SporeViewPool(sporePrefab, CreateChild("Spores"), 2 * cells);
+            // Three times the cells: playback rents new spores while cleared ones still animate out, and a move can
+            // clear its chain and then regenerate the whole board (ADR-0011, amended).
+            Pool = new SporeViewPool(sporePrefab, CreateChild("Spores"), 3 * cells);
             spores = new SporeView[cells];
 
             for (int row = 0; row < board.Height; row++)
@@ -61,35 +63,26 @@ namespace Mycelia.Game
             }
         }
 
-        /// <summary>
-        /// Redraws every spore from <paramref name="board"/> at once, reusing pooled views. Stands in for move
-        /// playback until slice 5 animates each move.
-        /// </summary>
-        public void Snap(IReadOnlyBoard board)
-        {
-            for (int i = 0; i < spores.Length; i++)
-            {
-                if (spores[i] == null) continue;
-                Pool.Return(spores[i]);
-                spores[i] = null;
-            }
-
-            for (int row = 0; row < board.Height; row++)
-            for (int column = 0; column < board.Width; column++)
-            {
-                var cell = new GridPosition(column, row);
-                SporeTypeId occupant = board.IsPlayable(cell) ? board.GetOccupant(cell) : SporeTypeId.None;
-                if (occupant == SporeTypeId.None)
-                    continue;
-
-                SporeView spore = Pool.Rent();
-                spore.Show(catalog.TypeOf(occupant), BoardLayout.CellCentre(cell));
-                spores[IndexOf(cell)] = spore;
-            }
-        }
-
         /// <summary>The view showing the spore in <paramref name="cell"/>, or null if the cell has none.</summary>
         public SporeView SporeAt(GridPosition cell) => spores[IndexOf(cell)];
+
+        /// <summary>Removes the view from <paramref name="cell"/>, for playback to animate it away or elsewhere.</summary>
+        internal SporeView Take(GridPosition cell)
+        {
+            int index = IndexOf(cell);
+            SporeView view = spores[index] ?? throw new InvalidOperationException($"No spore view at {cell} to move.");
+            spores[index] = null;
+            return view;
+        }
+
+        /// <summary>Puts <paramref name="view"/> on <paramref name="cell"/>, which must be free.</summary>
+        internal void Place(GridPosition cell, SporeView view)
+        {
+            int index = IndexOf(cell);
+            if (spores[index] != null)
+                throw new InvalidOperationException($"{cell} already shows a spore.");
+            spores[index] = view;
+        }
 
         int IndexOf(GridPosition cell) => cell.Row * width + cell.Column;
 

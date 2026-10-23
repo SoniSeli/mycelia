@@ -96,36 +96,13 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void Snap_ShowsTheBoardAsItIsNow_WithoutCreatingViews()
-        {
-            view.Init(board, catalog);
-            // Chain emphasis on every spore; views are reused in any order, so all of them must come back to size.
-            foreach (SporeView spore in boardObject.GetComponentsInChildren<SporeView>(includeInactive: false))
-                spore.transform.localScale = Vector3.one * 1.2f;
-            board.SetOccupant(At(0, 0), SporeTypeId.None);
-            board.SetOccupant(At(1, 0), Id(4));
-            board.SetOccupant(At(1, 1), Id(2));
-
-            view.Snap(board);
-
-            Assert.That(view.SporeAt(At(0, 0)), Is.Null);
-            Assert.That(view.SporeAt(At(1, 0)).Renderer.sprite, Is.SameAs(catalog.TypeOf(Id(4)).Sprite));
-            foreach (GridPosition cell in new[] { At(1, 0), At(2, 0), At(0, 1), At(1, 1) })
-                Assert.That(view.SporeAt(cell).transform.localScale, Is.EqualTo(Vector3.one), $"{cell}: chain emphasis is reset");
-            Assert.That(view.SporeAt(At(1, 1)).Renderer.sprite, Is.SameAs(catalog.TypeOf(Id(2)).Sprite));
-            Assert.That((Vector2)view.SporeAt(At(1, 1)).transform.localPosition, Is.EqualTo(BoardLayout.CellCentre(At(1, 1))));
-            Assert.That(boardObject.GetComponentsInChildren<SporeView>(includeInactive: true).Length, Is.EqualTo(12));
-            Assert.That(view.Pool.Available, Is.EqualTo(12 - 4));
-        }
-
-        [Test]
-        public void ThePool_IsFilledWithTwiceTheCells_BeforePlayStarts()
+        public void ThePool_IsFilledWithThreeTimesTheCells_BeforePlayStarts()
         {
             view.Init(board, catalog);
 
             var spores = boardObject.GetComponentsInChildren<SporeView>(includeInactive: true);
-            Assert.That(spores.Length, Is.EqualTo(2 * 3 * 2));
-            Assert.That(view.Pool.Available, Is.EqualTo(2 * 3 * 2 - 4));
+            Assert.That(spores.Length, Is.EqualTo(3 * 3 * 2));
+            Assert.That(view.Pool.Available, Is.EqualTo(3 * 3 * 2 - 4));
         }
     }
 }
