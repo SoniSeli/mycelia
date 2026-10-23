@@ -97,7 +97,7 @@ Decided while building playback:
   - A third-party dependency: version pinning, update checks, and its licence terms must be respected (npm only).
   - The 0 B guarantee depends on following the usage rules. It must be **verified**, not assumed.
 - **Follow-up:**
-  - Milestone 2: install PrimeTween via npm, `PlaybackSettings` asset, `MovePlayback`, and a **PlayMode allocation test** that plays back a move under `Is.Not.AllocatingGCMemory()` after warm-up, plus a device Profiler check. *Done in slice 5, except the device Profiler check (slice 8).*
+  - Milestone 2: install PrimeTween via npm, `PlaybackSettings` asset, `MovePlayback`, and a **PlayMode allocation test** that plays back a move under `Is.Not.AllocatingGCMemory()` after warm-up, plus a device Profiler check. *Done in slice 5, except the device Profiler check (slice 8).* *Slice 8 (2026-10-23): on the mid-range phone, `PerfProbe` measured about 22 KB of first-use allocations over the opening moves, then mostly 0 B per frame, but with small allocations (24 B to 1.3 KB) in some windows during play. Their source (playback, HUD, input or the engine) is still to be found with the Profiler; see the [performance budget](../performance-budget.md).*
   - Add PrimeTween to design §10 (credits and licences). *Done.*
   - Tune the eases on device: `OutBack` on a 2-cell fall overshoots the target by about 0.2 of a cell. *Seen on the mid-range phone (2026-10-23) and kept as it is.*
   - Decide when PlayMode tests join CI.

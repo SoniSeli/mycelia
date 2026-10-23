@@ -152,7 +152,8 @@ Three layers, each depending only on the one below it:
 - **Domain:** EditMode tests written alongside the code. Test names read as rules, e.g. `Chain_RejectsDifferentSporeType`, `Gravity_LeavesNoGapsBelowSpores`. Boards are written as text grids (`Boards.Parse`), so a test reads like the rule it checks. One test asserts the pipeline's phase order.
 - **Randomness:** the domain takes an injected `IRandom` (PCG32) seeded explicitly in every test; in the game each attempt gets a fresh, logged seed, so any board can be replayed exactly ([ADR-0007](adr/0007-random-seed-per-attempt-with-pcg32.md)).
 - **Game/App:** a small number of PlayMode smoke tests (a level loads and a scripted chain resolves), plus a manual device checklist before each release.
-- **CI:** every push runs the EditMode tests and builds an Android APK. PlayMode tests (move playback, including the 0 B allocation test) run locally for now ([ADR-0009](adr/0009-animate-playback-with-primetween.md)).
+- **CI:** every push runs the EditMode tests and builds an Android APK. PlayMode tests (move playback, including the 0 B allocation test) run locally for now ([ADR-0009](adr/0009-animate-playback-with-primetween.md)). Each CI run signs its APK with a new debug key, so a CI build can't update an installed one: uninstall first. *Decided 2026-10-23 to keep it that way for now: there are no saves until Milestone 3, so uninstalling costs nothing yet. A project keystore in CI secrets comes with the save system or the Play release.*
+- **Device performance:** `PerfProbe` logs frame, main-thread, render-thread and GPU times, GC, batches and SetPass calls in development builds; 0 B per move with the real HUD is checked with it during real moves ([performance budget](performance-budget.md)).
 
 ## 8. Milestones
 
@@ -160,10 +161,10 @@ Three layers, each depending only on the one below it:
 |---|---|---|
 | 0 | Repo, docs, CI building an empty Android project | CI is green and the APK installs on the reference device. *Amended 2026-10-22: installed on the mid-range device; the low-end reference device is deferred to Milestone 2.* |
 | 1 | Domain logic and tests | Every rule in §3 is covered by a passing test |
-| 2 | Board view, touch input, pooling, lifecycle, safe area | Low-end reference device chosen; one level is playable on it within budget |
+| 2 | Board view, touch input, pooling, lifecycle, safe area | Low-end reference device chosen; one level is playable on it within budget. *Amended 2026-10-23: one level is playable on the mid-range phone within budget; the low-end reference device moves to Milestone 5 ([performance budget](performance-budget.md)).* |
 | 3 | Level flow, save system, analytics events | All 12 levels are playable and progress persists |
 | 4 | App shell, back button, haptics, colour-blind mode | Full flow works on device |
-| 5 | Content and build-size pass | Build size and memory are within budget |
+| 5 | Content and build-size pass | Build size and memory are within budget, on the low-end reference device too (moved here from Milestone 2); managed stripping level decided |
 | 6 | Release | Public build link, README, GIF, performance write-up |
 
 ### 8.1 Milestone 2 plan
@@ -179,7 +180,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | 5 | **Move playback**: PrimeTween via npm, `PlaybackSettings`, `MovePlayback`, input lock, PlayMode allocation test | ADR-0009 | A move animates pop → fall → refill (→ reshuffle); playback allocates 0 B after warm-up |
 | 6 | **HUD**: moves left, objective counters, win/lose panel (minimal) | ADR-0012 | A level can be won or lost and the result is shown |
 | 7 | **Lifecycle**: pause overlay on `OnApplicationPause`, Android back button, audio pause, 30/60 fps policy. *Audio pause deferred until there is audio (ADR-0013).* | ADR-0006, ADR-0010, ADR-0013 | Backgrounding mid-level pauses cleanly; back button behaves on every screen |
-| 8 | **Device pass**: choose the low-end reference device; Profiler connection check (deferred from Milestone 0); memory investigation (the 246 MB case study); frame time, GC and batches against the budget | Performance budget | Results logged on both devices; Milestone 2 done-when met |
+| 8 | **Device pass**: choose the low-end reference device; Profiler connection check (deferred from Milestone 0); memory investigation (the 246 MB case study); frame time, GC and batches against the budget. *Measured on the mid-range phone only: `PerfProbe`, batches replaced by render-thread time and SetPass, memory budget raised to 300 MB; the low-end device moved to Milestone 5. Still open: small GC allocations during play and one 25.9 ms frame, to find with the Profiler.* | Performance budget | Results logged on both devices; Milestone 2 done-when met |
 
 ## 9. Open questions
 
@@ -191,7 +192,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 - [x] Save format: versioned JSON with JsonUtility, no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md))
 - [ ] Choose the 4 fungus species and design silhouettes that stay distinct at phone size and in colour-blindness simulations
 - [ ] Main menu or straight to level select (§4)
-- [ ] Reference low-end device: deferred to Milestone 2, since only a mid-range phone is available today (§6, performance budget)
+- [ ] Reference low-end device: deferred to Milestone 2, since only a mid-range phone is available today (§6, performance budget). *Deferred again on 2026-10-23, to Milestone 5.*
 - [x] Render pipeline: URP with the 2D Renderer, unlit sprites by default ([ADR-0002](adr/0002-use-urp-with-2d-renderer.md))
 - [ ] Git LFS for binary art and audio, or keep them in plain git (the project is small)
 - [ ] Which art and audio to replace with your own versus license, and where fact images come from (they need clear usage rights)
