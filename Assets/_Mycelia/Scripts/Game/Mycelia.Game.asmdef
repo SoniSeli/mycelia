@@ -3,7 +3,8 @@
     "rootNamespace": "Mycelia.Game",
     "references": [
         "Mycelia.Domain",
-        "Mycelia.Content"
+        "Mycelia.Content",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -17,6 +17,7 @@ namespace Mycelia.App.Tests
 
         GameObject scene;
         BoardLayoutSettings layoutSettings;
+        ChainInputSettings inputSettings;
         GameSceneEntry entry;
         BoardView boardView;
         FixedSeedSource seeds;
@@ -49,8 +50,19 @@ namespace Mycelia.App.Tests
             SetReference(boardView, "sporePrefab", sporeView);
             SetReference(boardView, "cellPrefab", cellPrefab.GetComponent<SpriteRenderer>());
 
+            var line = new GameObject("Chain Line", typeof(LineRenderer)).GetComponent<LineRenderer>();
+            line.transform.SetParent(boardView.transform);
+            var chainView = line.gameObject.AddComponent<ChainView>();
+            SetReference(chainView, "line", line);
+            var chainInput = new GameObject("Chain Input", typeof(ChainInputController)).GetComponent<ChainInputController>();
+            chainInput.transform.SetParent(scene.transform);
+            inputSettings = ScriptableObject.CreateInstance<ChainInputSettings>();
+            SetReference(chainInput, "settings", inputSettings);
+
             SetReference(entry, "boardCamera", boardCamera);
             SetReference(entry, "boardView", boardView);
+            SetReference(entry, "chainView", chainView);
+            SetReference(entry, "chainInput", chainInput);
 
             seeds = new FixedSeedSource(Seed);
             services = new AppServices(new FakeSceneLoader(), seeds, ProjectAssets.Spores);
@@ -62,6 +74,7 @@ namespace Mycelia.App.Tests
         {
             Object.DestroyImmediate(scene);
             Object.DestroyImmediate(layoutSettings);
+            Object.DestroyImmediate(inputSettings);
         }
 
         static void SetReference(Object target, string property, Object value)

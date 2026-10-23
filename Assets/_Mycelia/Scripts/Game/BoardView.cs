@@ -18,6 +18,7 @@ namespace Mycelia.Game
         [SerializeField] SporeView sporePrefab;
         [SerializeField] SpriteRenderer cellPrefab;
 
+        SporeCatalog catalog;
         SporeView[] spores;
         int width;
 
@@ -29,6 +30,7 @@ namespace Mycelia.Game
             if (Pool != null)
                 throw new InvalidOperationException("The board view is already showing a board.");
 
+            this.catalog = catalog;
             width = board.Width;
             int cells = board.Width * board.Height;
             CellsRoot = CreateChild("Cells");
@@ -55,6 +57,33 @@ namespace Mycelia.Game
 
                 SporeView spore = Pool.Rent();
                 spore.Show(catalog.TypeOf(occupant), centre);
+                spores[IndexOf(cell)] = spore;
+            }
+        }
+
+        /// <summary>
+        /// Redraws every spore from <paramref name="board"/> at once, reusing pooled views. Stands in for move
+        /// playback until slice 5 animates each move.
+        /// </summary>
+        public void Snap(IReadOnlyBoard board)
+        {
+            for (int i = 0; i < spores.Length; i++)
+            {
+                if (spores[i] == null) continue;
+                Pool.Return(spores[i]);
+                spores[i] = null;
+            }
+
+            for (int row = 0; row < board.Height; row++)
+            for (int column = 0; column < board.Width; column++)
+            {
+                var cell = new GridPosition(column, row);
+                SporeTypeId occupant = board.IsPlayable(cell) ? board.GetOccupant(cell) : SporeTypeId.None;
+                if (occupant == SporeTypeId.None)
+                    continue;
+
+                SporeView spore = Pool.Rent();
+                spore.Show(catalog.TypeOf(occupant), BoardLayout.CellCentre(cell));
                 spores[IndexOf(cell)] = spore;
             }
         }

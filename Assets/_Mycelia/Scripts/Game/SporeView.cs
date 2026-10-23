@@ -20,6 +20,7 @@ namespace Mycelia.Game
             spriteRenderer.sprite = type.Sprite;
             spriteRenderer.color = type.Color;
             transform.localPosition = position;
+            transform.localScale = Vector3.one;
         }
 
         // One-time setup when the pool creates the view.

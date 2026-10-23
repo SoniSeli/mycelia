@@ -1,0 +1,57 @@
+{
+    "version": 1,
+    "name": "MyceliaInput",
+    "maps": [
+        {
+            "name": "Gameplay",
+            "id": "3475e18f-7711-491f-825b-7ce1d836c09e",
+            "actions": [
+                {
+                    "name": "Point",
+                    "type": "Value",
+                    "id": "3396225f-24c6-45b0-8961-d954de35a035",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true,
+                    "priority": 0
+                },
+                {
+                    "name": "Press",
+                    "type": "Button",
+                    "id": "e67639a1-5a46-4b81-9bc8-4ffe42f22634",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "cea5ae23-99d4-40e4-8ca5-81299f1fb571",
+                    "path": "<Pointer>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Point",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5bc82fb4-7ce9-4de4-8ea9-fc4b2490a43a",
+                    "path": "<Pointer>/press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
