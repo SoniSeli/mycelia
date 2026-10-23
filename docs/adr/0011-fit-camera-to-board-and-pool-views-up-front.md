@@ -64,6 +64,7 @@ Twice the cells is not enough. Playback builds a whole move at once, so the chai
   - New art folders must be added to the atlas (the atlas test catches spores, not other sprites).
 - **Follow-up:**
   - Slice 6: tune the insets around the real HUD.
+  - Slice 8: the pool also reads each view's `transform` while it fills: Unity creates a component's C# wrapper on first access, and a Profiler capture showed each view allocating 24 B the first time a move showed it. Guarded by an EditMode allocation test.
   - Slice 8: measure batches against the ≤ 30 budget on device. *Measured 77 batches but 6 SetPass calls: the SRP Batcher draws each sprite on its own at no measurable cost, so the budget now limits render-thread time and SetPass calls instead ([performance budget](../performance-budget.md)).*
   - **Revisit if:** levels need boards too large for one screen (scrolling), or the board needs a fixed background independent of the camera.
 

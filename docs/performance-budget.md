@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | Targets set; measured on the mid-range device (Milestone 2 slice 8); low-end reference device deferred |
-| **Last updated** | 2026-10-23 |
+| **Last updated** | 2026-10-24 |
 
 > **Why budgets first.** These targets are set *before* the code is written, so every system is designed to fit them. Measurements on a real device are recorded against them below, and any significant fix gets a short case study.
 
@@ -30,7 +30,7 @@ All figures are measured on the **low-end reference device** with a **Developmen
 | Frame rate on menus and idle screens | **30 fps** | Saves battery and reduces heat |
 | CPU main thread: gameplay scripts | **≤ 2 ms per frame** | Domain logic and views, excluding rendering |
 | CPU main thread: total | **≤ 10 ms per frame** | Leaves room for spikes and heat throttling |
-| GC allocations during a move (input → pop → fall → refill) | **0 B per frame** after warm-up | Pooling; no LINQ or boxing in code that runs every frame |
+| GC allocations during a move (input → pop → fall → refill) | **0 B per frame** after warm-up | Pooling; no LINQ or boxing in code that runs every frame. Warm-up means each code path has run once in this run of the app (see Changes) |
 | Longest single frame during a move | **≤ 25 ms** | No visible hitch |
 | Render thread | **≤ 2 ms per frame (median)** | Replaces "batches ≤ 30" (see Changes) |
 | SetPass calls (gameplay scene) | **≤ 10** | Shader-state changes; sprite atlas, shared materials |
@@ -65,6 +65,7 @@ All figures are measured on the **low-end reference device** with a **Developmen
 
 - **2026-10-23: "Draw calls / batches ≤ 30" became render thread ≤ 2 ms (median) and SetPass calls ≤ 10.** URP's SRP Batcher draws every sprite as its own batch but keeps the shader state, so the board shows 77 batches with only 6 SetPass calls. On the Redmi, those 77 batches cost the same as 6 batches with the SRP Batcher off (case study below). The deciding factor: the budget should measure the cost it exists to protect, not a count that the SRP Batcher makes misleading. The numbers are today's measurements (6 SetPass, 0.5 ms) with headroom for a few more materials; the median, because single idle frames already reach 2 ms and spikes are covered by the longest-frame budget.
 - **2026-10-23: total memory went from ≤ 200 MB to ≤ 300 MB.** An empty Unity 6 + URP scene already uses about 246 MB on the Redmi, and the game 271 MB, almost all of it fixed engine and display overhead (case study below). The deciding factor: 200 MB can't be met by any work on the game's own content, and 300 MB leaves about 30 MB for 12 levels of art, fonts and audio (about 50 MB with High stripping) while staying comfortable on 3 GB phones.
+- **2026-10-24: "after warm-up" means once each code path has run once in this run of the app.** On the phone, the first move, the first goal pulse and the first touch of each level allocate a few KB: IL2CPP sets up each method and runs static constructors on first call, PrimeTween's assertions (development builds only) build comparers once, and uGUI's EventSystem sets up its pointer state on a level's first touch (case study below). The deciding factor: these costs come from IL2CPP and the engine, happen once, and are far too small to trigger a GC on their own; prewarming them away would add code that exists only for the measurement. Costs that come back with every level in *our* code are not warm-up: they're fixed, and guarded by tests.
 - **2026-10-23: managed code stripping stays at Minimal for now.** High saves 19 MB of memory and 5.5 MB of APK, but can remove code reached only through reflection. The deciding factor: memory is within the new budget without it, and the Milestone 5 size pass is the place to adopt it with a full play test.
 
 ## How to measure
@@ -96,6 +97,8 @@ Store raw captures outside the repo (they're large). Commit screenshots of the r
 | 2026-10-23 | 31f10fa + probe, development | Mid-range | GC per frame during moves, real HUD | 0 B after warm-up | **0 B** in 9 windows of play after about 22 KB over the first moves | ✅ (this run) | Input, playback and the real HUD (TextMeshPro's player-only `SetText` path, ADR-0012). Showing the pause overlay the first time allocates about 22 KB (not during a move). |
 | 2026-10-23 | slice 8, development | Mid-range | GC per frame during moves, real HUD (second run, 3 levels) | 0 B after warm-up | small allocations in 8 of about 25 windows of play: 24, 72, 72, 120, 384 B, and **1,332 B** at the start of each new level | ❌ | Source not yet known (game code, input or engine): to find with allocation call stacks in the Profiler. Play again's scene load allocates 200–220 KB, outside a move. |
 | 2026-10-23 | slice 8, development | Mid-range | Longest frame during a move (second run) | ≤ 25 ms | **25.9 ms** once, mid-game; otherwise ≤ 21.6 ms | ❌ (by 0.9 ms) | Cause not yet known; for the Profiler session. Play again's scene load takes one 36–39 ms frame (level load, not a move). |
+| 2026-10-24 | slice 8, development, Profiler capture | Mid-range | Sources of the allocations during play | 0 B after warm-up | Two per-level costs in our code (564 B on each level's first move; 24 B per pooled spore view on its first use) and first-use costs in IL2CPP, PrimeTween, uGUI and the Input System | ✅ after fixes | Our two are fixed and guarded in EditMode (`TheFirstMoveOfANewLevel_DoesNotAllocate`, `ShowingViewsThatWereNeverRentedBefore_AllocatesNothing`); the rest is warm-up (see Changes). Not yet re-measured on the phone. |
+| 2026-10-24 | slice 8, development, Profiler capture | Mid-range | What the long frames are | ≤ 25 ms | captured long frames up to **22 ms**, all waiting on the GPU and display (`Gfx.WaitForPresentOnGfxThread`, `Device.Present`); no script over 1 ms | ✅ (watch) | The 25.9 ms frame itself wasn't captured. Decided to record it as most likely a missed display refresh and keep watching; the deciding factor: every long frame captured was waiting on the display, with no script time, so there is nothing in our code to change. Rechecked on the low-end device. |
 | 2026-10-23 | slice 8, development | Mid-range | SetPass, render thread, main thread during moves | ≤ 10; ≤ 2 ms; ≤ 10 ms | SetPass **6–8**; render median **0.5–0.9 ms**; main median **2.3–4.1 ms** | ✅ | Main, render and GPU times rose together after about 25 s of play, before any scene reload: likely CPU clocks, not a leak. Batches up to 93. |
 | 2026-10-23 | slice 8, development | Mid-range | CPU main thread (idle board) | ≤ 10 ms total | median **2.3 ms**, max 4–6 ms | ✅ | `cpuMainThreadFrameTime`, which already leaves out the wait for Present (main 2.3 + wait 14.2 ≈ 16.5 ms). Scripts alone (≤ 2 ms) aren't separated by the probe. |
 | 2026-10-23 | slice 8, development | Mid-range | Render thread (idle board) | ≤ 2 ms median | median **0.5–0.6 ms**, max 2.0 ms | ✅ | |
@@ -132,6 +135,18 @@ Add one section per meaningful fix. Two or three good ones are enough.
 
 - **Change:** the memory budget went to 300 MB (see Changes). Stripping High waits for the Milestone 5 size pass and a full play test.
 - **Trade-off:** a looser budget, which now guards content growth (about 30 MB of headroom) rather than promising a small footprint; the fixed overhead is measured and explained instead.
+
+### Allocations during play, found without a live Profiler
+
+- **Symptom:** the probe showed small allocations during play (24 B to 1.3 KB), some at the start of every level, and one 25.9 ms frame. The probe can't say where they come from.
+- **Obstacle:** the phone's USB link drops under the live Profiler's stream ("device offline"), and under large transfers in general.
+- **Method:** a temporary change made the development build record a Profiler capture on the phone (`Profiler.enableBinaryLog`, with allocation call stacks). The file was pulled in 16 MB pieces, each checked against a checksum on the phone and retried until it matched, then joined and checked as a whole. A headless Editor script loaded it (`ProfilerDriver.LoadProfile`) and walked every frame (`RawFrameDataView`): each `GC.Alloc` with its parent markers and call stack, and the longest frames with their most expensive markers. The Profiler only keeps 2,000 frames, so the capture that answered the question covered the first 1,900 frames from launch.
+- **Findings:**
+  - **Our code, once per level:** `ReshuffleRule` built its `Reshuffler` lazily, on each level's first move (564 B), and each pooled `SporeView` created its C# `Transform` wrapper the first time a move showed it (24 B per view, until all 108 had been used; this explains the 24 B multiples the probe saw).
+  - **First use, once per run:** IL2CPP method setup and static constructors in PrimeTween (first sequence, first goal pulse), comparers built by PrimeTween's assertions (development builds only), uGUI's EventSystem and the Input System on the first touch.
+  - **Long frames:** waiting on the GPU and display, not scripts.
+- **Change:** the `Reshuffler` is built with the session (`RulePipeline.For(config, board)`), and the pool reads each view's `transform` while the level loads. Both have EditMode guards, which fail on the old code.
+- **Trade-off:** none in the game; the budget's "after warm-up" is now spelled out (see Changes).
 
 ### Case study template: _title_
 
