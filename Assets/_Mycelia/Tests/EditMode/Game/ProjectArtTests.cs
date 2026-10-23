@@ -10,8 +10,9 @@ namespace Mycelia.Game.Tests
     /// <summary>Guards the board's real prefabs and atlas (ADR-0002, ADR-0011).</summary>
     public class ProjectArtTests
     {
+        // Only the project's own assets: packages ship atlases and prefabs too, and whether they show up depends on the Library.
         static T[] LoadAll<T>(string filter) where T : Object =>
-            AssetDatabase.FindAssets(filter)
+            AssetDatabase.FindAssets(filter, new[] { "Assets" })
                 .Select(guid => AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid)))
                 .ToArray();
 

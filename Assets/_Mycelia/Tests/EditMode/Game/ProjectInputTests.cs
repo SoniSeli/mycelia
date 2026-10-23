@@ -11,7 +11,9 @@ namespace Mycelia.Game.Tests
         [Test]
         public void TheOnlyInputAsset_ReadsOnePointer()
         {
-            var asset = AssetDatabase.FindAssets("t:InputActionAsset")
+            // Only the project's own assets: the Input System package ships DefaultInputActions, which CI's Library
+            // imports as an InputActionAsset.
+            var asset = AssetDatabase.FindAssets("t:InputActionAsset", new[] { "Assets" })
                 .Select(guid => AssetDatabase.LoadAssetAtPath<InputActionAsset>(AssetDatabase.GUIDToAssetPath(guid)))
                 .Single();
 
