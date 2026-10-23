@@ -59,7 +59,7 @@ Decided while building touch input:
 - **Tuning lives in a `ChainInputSettings` asset:** `HitRadius` 0.4 and the swipe sample step 0.5, in cells.
 - **The logic is in `ChainDrag`**, which takes press, move and release in board coordinates (from `BoardLayout.ScreenToWorld`). It is tested directly, including a 0 B allocation test for dragging. `ChainInputController` only reads the actions and forwards them. A drag that starts between cells begins at the first spore it reaches.
 - **Feedback goes through `IChainFeedback`:** every touched cell, including `Rejected` ones (for later sound and haptics), and the end of the drag. `ChainView` draws a line through the chained spores' centres, above the spores, and draws the chained spores at 1.15× size, so the chain reads without colour.
-- **Until move playback exists (slice 5), a committed move snaps the board:** `BoardView.Snap` redraws every spore from the new board using pooled views. `MovePlayback` replaces it.
+- **Until move playback exists (slice 5), a committed move snaps the board:** `BoardView.Snap` redraws every spore from the new board using pooled views. `MovePlayback` replaces it. *Replaced in slice 5: `ChainDrag` now hands committed moves to an `IMovePlayer` (ADR-0009 refinements).*
 
 ## Consequences
 

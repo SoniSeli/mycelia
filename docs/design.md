@@ -150,7 +150,7 @@ Proposed decisions to record (see [adr/README.md](adr/README.md)): UI framework 
 - **Domain:** EditMode tests written alongside the code. Test names read as rules, e.g. `Chain_RejectsDifferentSporeType`, `Gravity_LeavesNoGapsBelowSpores`. Boards are written as text grids (`Boards.Parse`), so a test reads like the rule it checks. One test asserts the pipeline's phase order.
 - **Randomness:** the domain takes an injected `IRandom` (PCG32) seeded explicitly in every test; in the game each attempt gets a fresh, logged seed, so any board can be replayed exactly ([ADR-0007](adr/0007-random-seed-per-attempt-with-pcg32.md)).
 - **Game/App:** a small number of PlayMode smoke tests (a level loads and a scripted chain resolves), plus a manual device checklist before each release.
-- **CI:** every push runs the tests and builds an Android APK.
+- **CI:** every push runs the EditMode tests and builds an Android APK. PlayMode tests (move playback, including the 0 B allocation test) run locally for now ([ADR-0009](adr/0009-animate-playback-with-primetween.md)).
 
 ## 8. Milestones
 

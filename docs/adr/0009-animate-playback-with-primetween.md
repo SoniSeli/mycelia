@@ -74,6 +74,20 @@ The deciding factor is **spending the effort on the game, not on infrastructure*
 | `ObjectiveProgressed` | update the HUD counter with a pulse |
 | `SessionEnded` | trigger the win or lose panel |
 
+### Refinements (2026-10-23, Milestone 2 slice 5)
+
+Decided while building playback:
+
+- **Version:** `com.kyrylokuzyk.primetween` **1.4.11**, pinned exactly, from the npm scoped registry. 1.5.x was days old at the time.
+- **Timing by insertion:** each phase starts when the previous one ends. Every step tween is `Insert`ed at its phase's start, and the phase lasts as long as its longest step. Falls take `perCell × √cells`, like gravity.
+- **Steps are handled by type, in any phase.** The Settle phase can hold a reshuffle's relocations, or a regenerated board's clears and spawns. Each phase first takes every leaving or moving view off its cell, then places moved and new views. That way a cell can be emptied and refilled in the same phase, and a reshuffle can rotate spores.
+- **The view's cell map is updated as the sequence is built**, to the move's end state; tweens then animate the views there. Cleared views go back to the pool in one callback at the end of their phase.
+- **New spores fall in, fading in.** They start above the board at their drop slot, invisible until the refill phase, with no mask, so batching is unchanged.
+- **Callbacks** use the target overloads with `static` lambdas, so the compiler rejects a capture. Tween capacity comes from `PlaybackSettings.TweenCapacity` (512) and is set in `MovePlayback.Init`, when a level loads.
+- **Input lock:** `ChainDrag` hands committed moves to an `IMovePlayer` and ignores presses while one plays. A touch that begins during playback is ignored until the finger lifts, so it can't start a chain the moment playback ends (found by a headless Play check).
+- **Allocation test scope:** a PlayMode test commits a move, builds its sequence and completes it at once under `Is.Not.AllocatingGCMemory()` after warm-up. That covers sequence creation and every callback. Per-frame tweening relies on PrimeTween's guarantee and the device Profiler pass (slice 8).
+- **PlayMode tests run locally for now;** CI still runs EditMode only.
+
 ## Consequences
 
 - **Positive:**
@@ -83,6 +97,8 @@ The deciding factor is **spending the effort on the game, not on infrastructure*
   - A third-party dependency: version pinning, update checks, and its licence terms must be respected (npm only).
   - The 0 B guarantee depends on following the usage rules. It must be **verified**, not assumed.
 - **Follow-up:**
-  - Milestone 2: install PrimeTween via npm, `PlaybackSettings` asset, `MovePlayback`, and a **PlayMode allocation test** that plays back a move under `Is.Not.AllocatingGCMemory()` after warm-up, plus a device Profiler check.
-  - Add PrimeTween to design §10 (credits and licences).
+  - Milestone 2: install PrimeTween via npm, `PlaybackSettings` asset, `MovePlayback`, and a **PlayMode allocation test** that plays back a move under `Is.Not.AllocatingGCMemory()` after warm-up, plus a device Profiler check. *Done in slice 5, except the device Profiler check (slice 8).*
+  - Add PrimeTween to design §10 (credits and licences). *Done.*
+  - Tune the eases on device: `OutBack` on a 2-cell fall overshoots the target by about 0.2 of a cell.
+  - Decide when PlayMode tests join CI.
   - **Revisit if:** the licence changes, the npm package stops being published, or playback allocates in a way the usage rules can't fix. Option A (own runner) is the fallback; `MovePlayback`'s interface stays the same.

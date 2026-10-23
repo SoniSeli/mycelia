@@ -49,6 +49,10 @@ The deciding factor is **keeping the board in cell units and keeping every cost 
 - **Atlas:** `Art/BoardAtlas.spriteatlasv2` packs `Art/Spores` and `Art/Board`: padding 4, no rotation or tight packing, no mipmaps, ASTC 4×4 on Android.
 - **Materials:** both prefabs use URP's `Sprite-Unlit-Default` (ADR-0002).
 
+### Amendment (2026-10-23, Milestone 2 slice 5): the pool holds three times the cells
+
+Twice the cells is not enough. Playback builds a whole move at once, so the chain's cleared views are still in use, animating out, when later phases rent new ones. When no reshuffle can fix a dead board, the Settle phase **regenerates** it, clearing and respawning every cell in the same move. Worst case: the board's views, plus the chain's cleared views, plus a full new board, which is **3 × cells** (108 for 6 × 6). The pool is now that size and still never grows. A PlayMode test scripts exactly this case (chain, then a dead refill, ten failed shuffles, then regeneration); with 2 × cells it exhausts the pool.
+
 ## Consequences
 
 - **Positive:**
