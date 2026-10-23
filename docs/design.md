@@ -132,6 +132,8 @@ Three layers, each depending only on the one below it:
 
 **Wiring.** `AppRoot` in the Bootstrap scene creates the services once and passes them to each scene's single entry point; no singletons or static state ([ADR-0010](adr/0010-hand-written-composition-root.md)).
 
+**Board view.** The board stays in world units (one cell = one unit) and the camera is fitted to it inside the safe area, leaving tunable bands for the HUD. Spore views come from a pool filled before play, and board sprites share one atlas ([ADR-0011](adr/0011-fit-camera-to-board-and-pool-views-up-front.md)).
+
 Proposed decisions to record (see [adr/README.md](adr/README.md)): UI framework (before the Milestone 2 HUD slice).
 
 ## 6. Mobile considerations
@@ -199,6 +201,6 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
-| Placeholder spore silhouettes (circle, triangle, square, diamond) | Made for this project | Own work |
+| Placeholder spore silhouettes (circle, triangle, square, diamond) and board cell tile | Made for this project | Own work |
 | Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
 | _e.g. Comfortaa font_ | _Google Fonts_ | _SIL OFL 1.1_ |
