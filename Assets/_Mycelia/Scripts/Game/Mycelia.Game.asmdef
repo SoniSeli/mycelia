@@ -2,7 +2,8 @@
     "name": "Mycelia.Game",
     "rootNamespace": "Mycelia.Game",
     "references": [
-        "Mycelia.Domain"
+        "Mycelia.Domain",
+        "Mycelia.Content"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

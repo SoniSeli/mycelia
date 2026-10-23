@@ -90,6 +90,40 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
+        public void EveryMyceliaComponent_InEveryScene_HasItsReferencesSet()
+        {
+            foreach (SceneId scene in AllScenes)
+            {
+                WithScene(scene, roots =>
+                {
+                    var components = roots
+                        .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                        .Where(component => component.GetType().Namespace?.StartsWith("Mycelia") == true);
+                    foreach (MonoBehaviour component in components)
+                    {
+                        SerializedProperty property = new SerializedObject(component).GetIterator();
+                        while (property.NextVisible(enterChildren: true))
+                        {
+                            if (property.propertyType == SerializedPropertyType.ObjectReference && property.name != "m_Script")
+                                Assert.That(property.objectReferenceValue, Is.Not.Null, $"{scene}: {component.name}.{property.name}");
+                        }
+                    }
+                });
+            }
+        }
+
+        [Test]
+        public void TheBoard_SitsAtTheWorldOrigin_WhereTheLayoutExpectsIt()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.BoardView board = roots.SelectMany(root => root.GetComponentsInChildren<Game.BoardView>(true)).Single();
+                Assert.That(board.transform.position, Is.EqualTo(Vector3.zero));
+                Assert.That(board.transform.lossyScale, Is.EqualTo(Vector3.one));
+            });
+        }
+
+        [Test]
         public void PressingPlayInASavedScene_BootsThroughBootstrap()
         {
             Assert.That(PlayModeStartScene.BootsThroughBootstrap("Assets/_Mycelia/Scenes/Game.unity"), Is.True);

@@ -6,6 +6,7 @@
         "UnityEditor.TestRunner",
         "Mycelia.App",
         "Mycelia.App.Editor",
+        "Mycelia.Game",
         "Mycelia.Content",
         "Mycelia.Domain"
     ],
