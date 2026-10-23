@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Mycelia.Domain.Grid;
 using Mycelia.Domain.Sessions;
 
 namespace Mycelia.Domain.Moves
@@ -69,10 +70,12 @@ namespace Mycelia.Domain.Moves
         readonly List<SporeRelocated> relocated;
         readonly List<SporeCleared> cleared;
         readonly List<SporeSpawned> spawned;
-        Reshuffler reshuffler;
+        readonly Reshuffler reshuffler;
 
-        public ReshuffleRule(int cells)
+        // Built with the session, not on the first move: a level's first move must not allocate either.
+        public ReshuffleRule(Board board, int cells)
         {
+            reshuffler = new Reshuffler(board);
             relocated = new List<SporeRelocated>(cells);
             cleared = new List<SporeCleared>(cells);
             spawned = new List<SporeSpawned>(cells);
@@ -82,7 +85,6 @@ namespace Mycelia.Domain.Moves
 
         public void Apply(MoveContext context)
         {
-            reshuffler ??= new Reshuffler(context.Board);
             relocated.Clear();
             cleared.Clear();
             spawned.Clear();

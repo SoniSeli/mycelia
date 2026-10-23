@@ -1,5 +1,6 @@
 using System.Linq;
 using NUnit.Framework;
+using Mycelia.Domain.Grid;
 using Mycelia.Domain.Levels;
 using Mycelia.Domain.Moves;
 using Mycelia.Domain.Randomness;
@@ -17,7 +18,7 @@ namespace Mycelia.Domain.Tests.Moves
         public void TheV1Pipeline_RunsItsRulesInTheDocumentedOrder()
         {
             // ADR-0004 phase table. Changing this order changes every seed's game (ADR-0007).
-            var rules = RulePipeline.For(Config()).Rules;
+            var rules = RulePipeline.For(Config(), new Board(6, 6)).Rules;
 
             Assert.That(rules.Select(r => r.GetType().Name), Is.EqualTo(new[]
             {

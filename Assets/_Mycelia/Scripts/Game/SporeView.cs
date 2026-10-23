@@ -23,7 +23,12 @@ namespace Mycelia.Game
             transform.localScale = Vector3.one;
         }
 
-        // One-time setup when the pool creates the view.
-        internal void Prepare() => spriteRenderer.sortingOrder = SortingOrder;
+        // One-time setup when the pool creates the view. Reading transform creates its C# wrapper now, while the
+        // level loads, instead of the first time a move shows the view (0 B per move).
+        internal void Prepare()
+        {
+            spriteRenderer.sortingOrder = SortingOrder;
+            _ = transform;
+        }
     }
 }

@@ -40,7 +40,7 @@ namespace Mycelia.Domain.Sessions
             moves = new MoveBudget(config.Moves);
             result = new MoveResult(cells);
             context = new MoveContext(board, random, config, objectives, moves, result);
-            pipeline = RulePipeline.For(config);
+            pipeline = RulePipeline.For(config, board);
             Chain = new Chain(board);
             Config = config;
         }

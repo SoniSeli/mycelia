@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Mycelia.Domain.Grid;
 using Mycelia.Domain.Levels;
 
 namespace Mycelia.Domain.Moves
@@ -20,8 +21,8 @@ namespace Mycelia.Domain.Moves
 
         public IReadOnlyList<IMoveRule> Rules => rules;
 
-        /// <summary>The v1 rules. A new mechanic registers its rules here.</summary>
-        public static RulePipeline For(LevelConfig config)
+        /// <summary>The v1 rules for one level's board. A new mechanic registers its rules here.</summary>
+        public static RulePipeline For(LevelConfig config, Board board)
         {
             int cells = config.Width * config.Height;
             return new RulePipeline(new IMoveRule[]
@@ -29,7 +30,7 @@ namespace Mycelia.Domain.Moves
                 new ClearChainRule(cells),
                 new GravityRule(cells),
                 new RefillRule(cells),
-                new ReshuffleRule(cells),
+                new ReshuffleRule(board, cells),
                 new MoveCounterRule(),
                 new ObjectivesRule(config.Objectives.Count),
                 new OutcomeRule()

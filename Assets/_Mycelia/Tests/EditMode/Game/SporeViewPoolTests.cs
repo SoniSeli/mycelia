@@ -1,6 +1,8 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 using Object = UnityEngine.Object;
 
 namespace Mycelia.Game.Tests
@@ -25,6 +27,30 @@ namespace Mycelia.Game.Tests
         }
 
         int ViewCount => parent.GetComponentsInChildren<SporeView>(includeInactive: true).Length;
+
+        // Found on the phone: each view's C# Transform wrapper was created the first time a move showed it.
+        [Test]
+        public void ShowingViewsThatWereNeverRentedBefore_AllocatesNothing()
+        {
+            var type = ScriptableObject.CreateInstance<Content.SporeType>();
+            try
+            {
+                // Another pool warms up what every pool shares, as earlier levels would.
+                var earlier = new SporeViewPool(template.GetComponent<SporeView>(), parent.transform, capacity: 1);
+                earlier.Rent().Show(type, Vector2.zero);
+
+                var pool = new SporeViewPool(template.GetComponent<SporeView>(), parent.transform, capacity: 4);
+
+                Assert.That(() =>
+                {
+                    for (int i = 0; i < 4; i++) pool.Rent().Show(type, Vector2.one);
+                }, Is.Not.AllocatingGCMemory());
+            }
+            finally
+            {
+                Object.DestroyImmediate(type);
+            }
+        }
 
         [Test]
         public void ThePool_CreatesEveryViewUpFront_Hidden()
