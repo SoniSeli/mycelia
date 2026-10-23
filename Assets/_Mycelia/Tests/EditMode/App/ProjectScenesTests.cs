@@ -63,6 +63,17 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Performance budget: development builds log frame time, GC and batches from the first frame to the last.
+        [Test]
+        public void Bootstrap_ProbesPerformance_OnTheAppRoot_WhichOutlivesEveryScene()
+        {
+            WithScene(SceneId.Bootstrap, roots =>
+            {
+                AppRoot appRoot = roots.SelectMany(root => root.GetComponentsInChildren<AppRoot>(true)).Single();
+                Assert.That(appRoot.GetComponent<PerfProbe>(), Is.Not.Null);
+            });
+        }
+
         [Test]
         public void Bootstrap_HasNoSceneEntry()
         {
