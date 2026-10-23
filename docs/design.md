@@ -201,6 +201,7 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
-| Placeholder spore silhouettes (circle, triangle, square, diamond) and board cell tile | Made for this project | Own work |
+| Placeholder spore silhouettes (circle, triangle, square, diamond), board cell tile, UI panel and star | Made for this project | Own work |
 | Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
-| _e.g. Comfortaa font_ | _Google Fonts_ | _SIL OFL 1.1_ |
+| LiberationSans font (placeholder UI font, shipped as TextMeshPro's SDF font asset) | Red Hat, Inc. / Google Corporation, via Unity's TextMeshPro essential resources | SIL Open Font License 1.1 (`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`) |
+| TextMeshPro essential resources (shaders, settings, style sheet) | Unity Technologies, from the `com.unity.ugui` package | Unity Companion License; the sample emoji set is removed |

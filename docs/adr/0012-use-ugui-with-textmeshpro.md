@@ -50,6 +50,19 @@ The deciding factor is **maturity on mobile**: uGUI is what most shipped mobile 
 7. **Sprites in a UI atlas**, separate from the board atlas. Fonts are SDF font assets with a static atlas for the shipped glyphs.
 8. **Scaling:** one `CanvasScaler` setup for every canvas, *Scale With Screen Size* with a portrait reference resolution. Its values are tuned on device in slice 6.
 
+### Refinements (2026-10-23, Milestone 2 slice 6)
+
+Decided while building the HUD:
+
+- **Counter timing:** moves left drop the moment a chain is released. Goal counters update, with a short pulse, as the cleared spores finish popping, at the end of the Clear phase. The result panel opens once the whole move has played. `MovePlayback` reports all three through `IPlaybackListener`, which `HudView` implements.
+- **Goal display:** the spore's silhouette in its colour, then `collected/target` (for example `7/12`).
+- **Result panel:** "Level complete" with three stars, earned ones lit, or "Out of moves" without stars. **Play again** reloads the level through the `SceneLoader` with a fresh seed. Level select and the fact card come in Milestone 3.
+- **Font:** LiberationSans SDF from TextMeshPro's essential resources (SIL OFL) is a placeholder until the art pass. TMP's sample emoji set is removed and emoji support is off: the game uses none, and its licence terms are unclear.
+- **Scaling (rule 8):** reference resolution 1080 × 1920 in *Expand* mode, so the reference area always fits: tall phones gain height and tablets gain width. The HUD fills the top band of the safe area that `BoardLayoutSettings` keeps free.
+- **Canvases:** a HUD canvas (frame and caption) with a nested canvas for the counters, and a separate result canvas, the only one with a `GraphicRaycaster`. Each has one safe-area root.
+- **Rule 5 in the Editor:** TextMeshPro's numeric `SetText` allocates *only in the Editor*, where it rebuilds the string for the Inspector (`#if UNITY_EDITOR` in `TMP_Text.SetText`). Players don't allocate, so the 0 B check for the counters is part of the device pass (slice 8). The EditMode test guards our own part, the goal pulse.
+- **Guards:** EditMode tests check the real Game scene against rules 1–4, 7 and 8: only buttons take touches, counters sit on their own canvas with no layout group, every canvas scales alike and has one safe-area root, every UI image draws from the UI atlas, and there is one EventSystem using the Input System UI module.
+
 ## Consequences
 
 - **Positive:**
@@ -60,7 +73,7 @@ The deciding factor is **maturity on mobile**: uGUI is what most shipped mobile 
   - Text-heavy screens (fact cards, settings) need care with layout groups, which UI Toolkit would have made easier.
   - The project now uses UI Toolkit for Editor tooling and uGUI for the game; that split is intentional.
 - **Follow-up:**
-  - Slice 6: import TextMeshPro's essential resources, add `SafeAreaFitter` with EditMode tests, and build the HUD and win/lose panel driven by playback's `ObjectiveProgressed` and `SessionEnded` steps (ADR-0009). Board input must be locked while a panel is open.
+  - Slice 6: import TextMeshPro's essential resources, add `SafeAreaFitter` with EditMode tests, and build the HUD and win/lose panel driven by playback's `ObjectiveProgressed` and `SessionEnded` steps (ADR-0009). Board input must be locked while a panel is open.  *Done in slice 6. Board input is already locked once a level ends (`ChainDrag`); a pause overlay (slice 7) will need its own lock.*
   - Slice 8: measure canvas rebuilds, batches and GC with the HUD updating during a move, on device.
   - Choose and credit a font (design §10).
   - **Revisit if:** the UI grows into data-heavy screens (long lists, rich text) where uGUI's costs show up in profiling, or Unity stops developing uGUI.
