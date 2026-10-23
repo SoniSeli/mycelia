@@ -17,6 +17,7 @@ Each file records one significant decision: its context, the options considered,
 | [0009](0009-animate-playback-with-primetween.md) | Animate move playback with PrimeTween sequences | Accepted (refined 2026-10-23) |
 | [0010](0010-hand-written-composition-root.md) | Wire services with a hand-written composition root in the Bootstrap scene | Accepted (refined 2026-10-23) |
 | [0011](0011-fit-camera-to-board-and-pool-views-up-front.md) | Fit the camera to the board, pool spore views up front, and pack board sprites in one atlas | Accepted (amended 2026-10-23) |
+| [0012](0012-use-ugui-with-textmeshpro.md) | Build the game's UI with uGUI and TextMeshPro | Accepted |
 
 ## Candidates to decide
 
@@ -24,5 +25,4 @@ These came up while drafting the [design document](../design.md). Each becomes a
 
 | Topic | The question to answer |
 |---|---|
-| UI framework | uGUI or UI Toolkit for the HUD, panels and menus? Consider mobile performance, safe-area layout, and how the fact cards are authored. Needed before the Milestone 2 HUD slice. |
 | Large binary assets | Git LFS or plain git for a small project? |

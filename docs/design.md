@@ -134,7 +134,7 @@ Three layers, each depending only on the one below it:
 
 **Board view.** The board stays in world units (one cell = one unit) and the camera is fitted to it inside the safe area, leaving tunable bands for the HUD. Spore views come from a pool filled before play, and board sprites share one atlas ([ADR-0011](adr/0011-fit-camera-to-board-and-pool-views-up-front.md)).
 
-Proposed decisions to record (see [adr/README.md](adr/README.md)): UI framework (before the Milestone 2 HUD slice).
+**UI.** uGUI with TextMeshPro, with canvases split by how often they change, safe-area fitting, and allocation-free text updates ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md)).
 
 ## 6. Mobile considerations
 
@@ -175,7 +175,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | 3 | **Board view**: `BoardLayout` fitted to the safe area (portrait, 16:9 to ~21:9, tablets), pooled `SporeView`s, sprite atlas | ADR-0002, ADR-0003 | The starting board renders correctly on several aspect ratios; no `Instantiate`/`Destroy` during play |
 | 4 | **Touch input**: `MyceliaInput` actions, `CellHitTest` (radius, swipe sampling) with EditMode tests, `ChainInputController`, chain line | ADR-0008 | Chains can be dragged on device, including diagonals and backtracking, with no stray side cells |
 | 5 | **Move playback**: PrimeTween via npm, `PlaybackSettings`, `MovePlayback`, input lock, PlayMode allocation test | ADR-0009 | A move animates pop → fall → refill (→ reshuffle); playback allocates 0 B after warm-up |
-| 6 | **HUD**: moves left, objective counters, win/lose panel (minimal) | UI framework ADR | A level can be won or lost and the result is shown |
+| 6 | **HUD**: moves left, objective counters, win/lose panel (minimal) | ADR-0012 | A level can be won or lost and the result is shown |
 | 7 | **Lifecycle**: pause overlay on `OnApplicationPause`, Android back button, audio pause, 30/60 fps policy | ADR-0006, ADR-0010 | Backgrounding mid-level pauses cleanly; back button behaves on every screen |
 | 8 | **Device pass**: choose the low-end reference device; Profiler connection check (deferred from Milestone 0); memory investigation (the 246 MB case study); frame time, GC and batches against the budget | Performance budget | Results logged on both devices; Milestone 2 done-when met |
 
