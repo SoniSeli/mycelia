@@ -99,6 +99,6 @@ Decided while building playback:
 - **Follow-up:**
   - Milestone 2: install PrimeTween via npm, `PlaybackSettings` asset, `MovePlayback`, and a **PlayMode allocation test** that plays back a move under `Is.Not.AllocatingGCMemory()` after warm-up, plus a device Profiler check. *Done in slice 5, except the device Profiler check (slice 8).*
   - Add PrimeTween to design §10 (credits and licences). *Done.*
-  - Tune the eases on device: `OutBack` on a 2-cell fall overshoots the target by about 0.2 of a cell.
+  - Tune the eases on device: `OutBack` on a 2-cell fall overshoots the target by about 0.2 of a cell. *Seen on the mid-range phone (2026-10-23) and kept as it is.*
   - Decide when PlayMode tests join CI.
   - **Revisit if:** the licence changes, the npm package stops being published, or playback allocates in a way the usage rules can't fix. Option A (own runner) is the fallback; `MovePlayback`'s interface stays the same.

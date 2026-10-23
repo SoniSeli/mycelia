@@ -138,7 +138,7 @@ Three layers, each depending only on the one below it:
 
 ## 6. Mobile considerations
 
-- **Input:** touch through the Input System, with mouse as a fallback for the Editor. A second finger is ignored while dragging. Because chains can go diagonally (§3.2), a spore joins the chain only when the finger comes within a **circular** radius of its centre (about 0.4 of a cell, to be tuned on device), not anywhere in its square cell. That way a diagonal drag doesn't accidentally catch the side neighbours it passes between.
+- **Input:** touch through the Input System, with mouse as a fallback for the Editor. A second finger is ignored while dragging. Because chains can go diagonally (§3.2), a spore joins the chain only when the finger comes within a **circular** radius of its centre (0.45 of a cell, tuned on the mid-range phone; still to check on the low-end device), not anywhere in its square cell. That way a diagonal drag doesn't accidentally catch the side neighbours it passes between.
 - **Screen:** portrait only. Supports aspect ratios from 16:9 to about 21:9 and tablets, with layout inside the device's safe area.
 - **App lifecycle:** progress saves atomically (temporary file → replace, with a backup) when a level is won, when settings change, and when the app is paused. A level in progress is not resumed (§3.6). When the app is paused during a level, it shows a pause overlay and waits for the player. Audio pauses on interruptions. The Android back button behaves sensibly on every screen.
 - **Performance:** see [performance-budget.md](performance-budget.md). The target is a low-end reference device, not the Editor.

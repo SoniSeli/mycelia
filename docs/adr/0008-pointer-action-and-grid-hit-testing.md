@@ -61,6 +61,13 @@ Decided while building touch input:
 - **Feedback goes through `IChainFeedback`:** every touched cell, including `Rejected` ones (for later sound and haptics), and the end of the drag. `ChainView` draws a line through the chained spores' centres, above the spores, and draws the chained spores at 1.15× size, so the chain reads without colour.
 - **Until move playback exists (slice 5), a committed move snaps the board:** `BoardView.Snap` redraws every spore from the new board using pooled views. `MovePlayback` replaces it. *Replaced in slice 5: `ChainDrag` now hands committed moves to an `IMovePlayer` (ADR-0009 refinements).*
 
+### Refinements (2026-10-23, first run on device)
+
+Found on the mid-range phone (Redmi Note 12 Pro+ 5G), CI build of `afd1c41`:
+
+- **`HitRadius` goes from 0.4 to 0.45.** The deciding factor: at 0.4, catching a spore felt slightly too tight on the phone. At 0.45, a drag straight along a diagonal still passes at least 0.26 of a cell from each side neighbour's circle (0.31 before). The `CellHitTest` tests for diagonals now also run at 0.5, the largest radius `ChainDrag` accepts, so every value the setting allows keeps diagonal drags off the side neighbours.
+- **A first finger lifting while a second is down** does not move the chain to the second finger, so no extra handling is needed.
+
 ## Consequences
 
 - **Positive:**
@@ -69,8 +76,8 @@ Decided while building touch input:
   - No physics in the input path.
 - **Negative:**
   - The swipe interpolation and the radius rule are our own code to maintain.
-  - **To verify on device:** what `<Pointer>` does when the first finger lifts while a second is still down. The chain must not jump to the second finger mid-drag; if it does, the controller cancels the drag on the primary touch's release.
+  - **To verify on device:** what `<Pointer>` does when the first finger lifts while a second is still down. The chain must not jump to the second finger mid-drag; if it does, the controller cancels the drag on the primary touch's release. *Checked on the mid-range phone (2026-10-23): it doesn't jump.*
 - **Follow-up:**
-  - Milestone 2: `MyceliaInput` asset, `BoardLayout` and `CellHitTest` with EditMode tests (centre, edge of radius, corner gaps, diagonal swipe sampling), and `ChainInputController`. *Done in slice 4 (`BoardLayout` in slice 3); a headless Play check drove a virtual mouse through a chain and committed the move. Not yet tried on device.*
-  - Tune `HitRadius` on the mid-range and low-end devices.
+  - Milestone 2: `MyceliaInput` asset, `BoardLayout` and `CellHitTest` with EditMode tests (centre, edge of radius, corner gaps, diagonal swipe sampling), and `ChainInputController`. *Done in slice 4 (`BoardLayout` in slice 3); a headless Play check drove a virtual mouse through a chain and committed the move. Tried on the mid-range phone on 2026-10-23.*
+  - Tune `HitRadius` on the mid-range and low-end devices. *0.45 on the mid-range phone (refinements above); the low-end device is still to check.*
   - **Revisit if:** a mechanic needs gestures (pinch, two-finger actions). EnhancedTouch (Option B) can then be added beside the pointer action.
