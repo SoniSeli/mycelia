@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -29,6 +30,23 @@ namespace Mycelia.Game.Tests
             {
                 Assert.That(sprite, Is.Not.Null);
                 Assert.That(atlas.CanBindTo(sprite), Is.True, $"{sprite.name} is not in {atlas.name}.");
+            }
+        }
+
+        [Test]
+        public void TexturesPackedInTheAtlas_AreImportedUncompressed_SoOnlyTheAtlasCompresses()
+        {
+            SpriteAtlas atlas = LoadAll<SpriteAtlas>("t:SpriteAtlas").Single();
+            string[] folders = atlas.GetPackables().Select(AssetDatabase.GetAssetPath).Where(AssetDatabase.IsValidFolder).ToArray();
+            string[] textures = AssetDatabase.FindAssets("t:Texture2D", folders).Select(AssetDatabase.GUIDToAssetPath).ToArray();
+
+            Assert.That(textures, Is.Not.Empty);
+            foreach (string path in textures)
+            {
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                Assert.That(importer.textureCompression, Is.EqualTo(TextureImporterCompression.Uncompressed), path);
+                TextureImporterPlatformSettings android = importer.GetPlatformTextureSettings("Android");
+                Assert.That(!android.overridden || android.format == TextureImporterFormat.RGBA32, $"{path} overrides Android with {android.format}.");
             }
         }
 
