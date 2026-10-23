@@ -8,6 +8,9 @@
         "Mycelia.App.Editor",
         "Mycelia.Game",
         "PrimeTween.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.InputSystem",
         "Mycelia.Content",
         "Mycelia.Domain"
     ],

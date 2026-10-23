@@ -10,8 +10,8 @@ namespace Mycelia.App
 {
     /// <summary>
     /// The Game scene's entry point: starts a <see cref="LevelSession"/> on the level it is given, with a fresh seed.
-    /// It fits the camera to the level, shows the starting board, and connects chain input to move playback; the HUD
-    /// comes later.
+    /// It fits the camera to the level, shows the starting board and the HUD, and connects chain input to move
+    /// playback, which reports to the HUD.
     /// </summary>
     public sealed class GameSceneEntry : MonoBehaviour, ISceneEntry
     {
@@ -23,6 +23,8 @@ namespace Mycelia.App
         [SerializeField] ChainView chainView;
         [SerializeField] ChainInputController chainInput;
         [SerializeField] MovePlayback playback;
+        [SerializeField] HudView hud;
+        [SerializeField] ResultPanel resultPanel;
 
         public LevelSession Session { get; private set; }
 
@@ -41,7 +43,10 @@ namespace Mycelia.App
             boardCamera.Init(config.Width, config.Height);
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
-            playback.Init(boardView, config.Width, config.Height);
+            hud.Init(config, services.Spores);
+            // Play again restarts the same level with a fresh seed, through the loader like any scene change.
+            resultPanel.Init(() => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level)));
+            playback.Init(boardView, config.Width, config.Height, hud);
             chainInput.Init(Session, boardCamera, chainView, playback);
         }
     }

@@ -15,7 +15,7 @@ namespace Mycelia.Game.PlayTests
     {
         public static SporeTypeId IdOf(char letter) => new SporeTypeId((byte)(letter - 'A' + 1));
 
-        public static LevelSession Start(string grid, IRandom random, int moves = 10)
+        public static LevelSession Start(string grid, IRandom random, int moves = 10, int collectA = 5000)
         {
             string[] rows = grid.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(row => row.Replace(" ", "").Trim())
@@ -26,17 +26,17 @@ namespace Mycelia.Game.PlayTests
             for (int column = 0; column < rows[i].Length; column++)
                 board.SetOccupant(new GridPosition(column, rows.Length - 1 - i), IdOf(rows[i][column]));
 
-            return new LevelSession(Config(board.Width, board.Height, moves), random, board);
+            return new LevelSession(Config(board.Width, board.Height, moves, collectA), random, board);
         }
 
         public static LevelSession StartRandom(int width, int height, IRandom random, int moves) =>
-            new LevelSession(Config(width, height, moves), random);
+            new LevelSession(Config(width, height, moves, 5000), random);
 
-        // Spore types are the project catalog's four, so A–D look like real spores; the objective never finishes here.
-        static LevelConfig Config(int width, int height, int moves) => new LevelConfig(
+        // Spore types are the project catalog's four, so A–D look like real spores. The goal is to collect A spores.
+        static LevelConfig Config(int width, int height, int moves, int collectA) => new LevelConfig(
             "level-playback", width, height, moves,
             "ABCD".Select(IdOf).ToArray(),
-            new[] { new ObjectiveDefinition(IdOf('A'), 5000) });
+            new[] { new ObjectiveDefinition(IdOf('A'), collectA) });
 
         public static SporeCatalog ProjectSpores
         {

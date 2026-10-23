@@ -6,7 +6,9 @@ using Mycelia.Domain.Sessions;
 using Mycelia.Game;
 using NUnit.Framework;
 using UnityEditor;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Mycelia.App.Tests
@@ -21,6 +23,9 @@ namespace Mycelia.App.Tests
         PlaybackSettings playbackSettings;
         GameSceneEntry entry;
         BoardView boardView;
+        ResultPanel resultPanel;
+        Button playAgain;
+        FakeSceneLoader loader;
         FixedSeedSource seeds;
         AppServices services;
         LevelDefinition level;
@@ -69,8 +74,28 @@ namespace Mycelia.App.Tests
             SetReference(playback, "settings", playbackSettings);
             SetReference(entry, "playback", playback);
 
+            // HUD and result panel: just enough uGUI for the entry to wire them.
+            Transform hudRoot = UiChild("HUD", scene.transform);
+            var hud = hudRoot.gameObject.AddComponent<HudView>();
+            var slotPrefab = UiChild("Slot", hudRoot).gameObject.AddComponent<ObjectiveSlot>();
+            SetReference(slotPrefab, "icon", UiChild("Icon", slotPrefab.transform).gameObject.AddComponent<Image>());
+            SetReference(slotPrefab, "count", UiChild("Count", slotPrefab.transform).gameObject.AddComponent<TextMeshProUGUI>());
+            SetReference(hud, "band", hudRoot);
+            SetReference(hud, "layout", layoutSettings);
+            SetReference(hud, "movesText", UiChild("Moves", hudRoot).gameObject.AddComponent<TextMeshProUGUI>());
+            SetReference(hud, "slotPrefab", slotPrefab);
+            SetReference(hud, "slotsRoot", hudRoot);
+            resultPanel = UiChild("Result Panel", hudRoot).gameObject.AddComponent<ResultPanel>();
+            SetReference(resultPanel, "title", UiChild("Title", resultPanel.transform).gameObject.AddComponent<TextMeshProUGUI>());
+            playAgain = UiChild("Play Again", resultPanel.transform).gameObject.AddComponent<Button>();
+            SetReference(resultPanel, "playAgain", playAgain);
+            SetReference(hud, "resultPanel", resultPanel);
+            SetReference(entry, "hud", hud);
+            SetReference(entry, "resultPanel", resultPanel);
+
             seeds = new FixedSeedSource(Seed);
-            services = new AppServices(new FakeSceneLoader(), seeds, ProjectAssets.Spores);
+            loader = new FakeSceneLoader();
+            services = new AppServices(loader, seeds, ProjectAssets.Spores);
             level = ProjectAssets.TestLevel;
         }
 
@@ -83,6 +108,13 @@ namespace Mycelia.App.Tests
             Object.DestroyImmediate(playbackSettings);
         }
 
+        static Transform UiChild(string name, Transform parent)
+        {
+            var child = new GameObject(name, typeof(RectTransform));
+            child.transform.SetParent(parent, false);
+            return child.transform;
+        }
+
         static void SetReference(Object target, string property, Object value)
         {
             var serialized = new SerializedObject(target);
@@ -91,6 +123,29 @@ namespace Mycelia.App.Tests
         }
 
         void SetDebugLevel(LevelDefinition debugLevel) => SetReference(entry, "debugLevel", debugLevel);
+
+        [Test]
+        public void PlayAgain_ReloadsTheGameScene_OnTheSameLevel()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            playAgain.onClick.Invoke();
+
+            Assert.That(loader.Loads.Count, Is.EqualTo(1));
+            Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.Game));
+            Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(level));
+        }
+
+        [Test]
+        public void PlayAgain_AfterStartingFromTheDebugLevel_ReplaysThatLevel()
+        {
+            SetDebugLevel(level);
+            entry.Construct(services, args: null);
+
+            playAgain.onClick.Invoke();
+
+            Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(level));
+        }
 
         [Test]
         public void Construct_ShowsTheStartingBoard()

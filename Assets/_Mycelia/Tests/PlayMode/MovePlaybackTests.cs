@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Mycelia.Content;
 using Mycelia.Domain;
 using Mycelia.Domain.Grid;
@@ -24,6 +25,31 @@ namespace Mycelia.Game.PlayTests
         MovePlayback playback;
         SporeCatalog catalog;
         LevelSession session;
+        RecordingListener listener;
+
+        sealed class RecordingListener : IPlaybackListener
+        {
+            public readonly List<string> Events = new List<string>();
+            public bool Recording = true;
+            public MovePlayback Playback;
+            public bool WasPlayingWhenEnded;
+
+            public void MovesChanged(int remaining)
+            {
+                if (Recording) Events.Add($"moves {remaining}");
+            }
+
+            public void ObjectiveProgressed(int index, int current, int target)
+            {
+                if (Recording) Events.Add($"goal {index}: {current}/{target}");
+            }
+
+            public void SessionEnded(SessionState outcome, int stars)
+            {
+                WasPlayingWhenEnded = Playback.IsPlaying;
+                if (Recording) Events.Add($"ended {outcome} {stars}");
+            }
+        }
 
         static GridPosition At(int column, int row) => new GridPosition(column, row);
 
@@ -45,6 +71,7 @@ namespace Mycelia.Game.PlayTests
             settings = ScriptableObject.CreateInstance<PlaybackSettings>();
             playback = root.AddComponent<MovePlayback>();
             SetReference(playback, "settings", settings);
+            listener = new RecordingListener { Playback = playback };
         }
 
         static void SetReference(Object target, string property, Object value)
@@ -65,11 +92,11 @@ namespace Mycelia.Game.PlayTests
             Object.DestroyImmediate(settings);
         }
 
-        void Start(string grid, IRandom random)
+        void Start(string grid, IRandom random, int moves = 10, int collectA = 5000)
         {
-            session = PlaySessions.Start(grid, random);
+            session = PlaySessions.Start(grid, random, moves, collectA);
             boardView.Init(session.Board, catalog);
-            playback.Init(boardView, session.Board.Width, session.Board.Height);
+            playback.Init(boardView, session.Board.Width, session.Board.Height, listener);
         }
 
         MoveResult Commit(params GridPosition[] chain)
@@ -166,6 +193,54 @@ namespace Mycelia.Game.PlayTests
         }
 
         [Test]
+        public void MovesLeft_AreReportedTheMomentTheMoveStarts()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2));
+
+            playback.Play(Commit(At(0, 0), At(0, 1)));
+
+            Assert.That(listener.Events, Is.EqualTo(new[] { "moves 9" }), "Nothing else before the pop has played.");
+        }
+
+        [UnityTest]
+        public IEnumerator GoalProgress_IsReportedWhenThePopEnds_BeforeSporesFall()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2));
+            playback.Play(Commit(At(0, 0), At(0, 1)));
+
+            yield return new WaitForSeconds(settings.ClearDuration * 0.5f);
+            Assert.That(listener.Events, Has.No.Member("goal 0: 2/5000"), "Not while the spores are still popping.");
+
+            yield return new WaitForSeconds(settings.ClearDuration * 0.5f + 0.05f);
+            Assert.That(listener.Events, Has.Member("goal 0: 2/5000"));
+            Assert.That(playback.IsPlaying, Is.True, "Spores are still falling.");
+        }
+
+        [Test]
+        public void AWinningMove_ReportsTheWin_OnlyAfterEverythingHasPlayed()
+        {
+            // Collecting two A's wins; 9 of 10 moves left is three stars.
+            Start(FallGrid, new ScriptedRandom(1, 2), moves: 10, collectA: 2);
+
+            playback.Play(Commit(At(0, 0), At(0, 1)));
+            playback.CompleteNow();
+
+            Assert.That(listener.Events, Is.EqualTo(new[] { "moves 9", "goal 0: 2/2", "ended Won 3" }));
+            Assert.That(listener.WasPlayingWhenEnded, Is.False, "The result shows after playback ends.");
+        }
+
+        [Test]
+        public void ALosingMove_ReportsTheLoss()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2), moves: 1);
+
+            playback.Play(Commit(At(0, 0), At(0, 1)));
+            playback.CompleteNow();
+
+            Assert.That(listener.Events, Is.EqualTo(new[] { "moves 0", "goal 0: 2/5000", "ended Lost 0" }));
+        }
+
+        [Test]
         public void AFinishedMove_UnlocksInput()
         {
             Start(FallGrid, new ScriptedRandom(1, 2));
@@ -196,8 +271,9 @@ namespace Mycelia.Game.PlayTests
             // A 6 × 6 board filled from a seed, which the domain guarantees has a valid chain.
             session = PlaySessions.StartRandom(6, 6, new Pcg32(42), moves: 1000);
             boardView.Init(session.Board, catalog);
-            playback.Init(boardView, 6, 6);
+            playback.Init(boardView, 6, 6, listener);
 
+            listener.Recording = false;
             for (int i = 0; i < 5; i++) PlayOneMove();
 
             Assert.That(() => PlayOneMove(), Is.Not.AllocatingGCMemory());

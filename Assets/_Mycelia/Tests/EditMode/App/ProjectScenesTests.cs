@@ -123,6 +123,87 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // ADR-0012 rule 2: the HUD must never swallow a touch meant for the board.
+        [Test]
+        public void OnlyButtons_TakeTouches()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                var touchable = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+                    .Where(graphic => graphic.raycastTarget && graphic.GetComponentInParent<UnityEngine.UI.Selectable>(true) == null);
+                Assert.That(touchable.Select(graphic => graphic.name), Is.Empty);
+            });
+        }
+
+        // ADR-0012 rules 1 and 3: a counter changing rebuilds only its own small canvas, with no layout group to recompute.
+        [Test]
+        public void TheHudCounters_LiveOnTheirOwnCanvas_WithoutLayoutGroups()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.HudView hud = roots.SelectMany(root => root.GetComponentsInChildren<Game.HudView>(true)).Single();
+                var serialized = new SerializedObject(hud);
+                var moves = (Component)serialized.FindProperty("movesText").objectReferenceValue;
+                var slots = (Component)serialized.FindProperty("slotsRoot").objectReferenceValue;
+
+                Canvas countersCanvas = moves.GetComponentInParent<Canvas>(true);
+                Assert.That(countersCanvas.isRootCanvas, Is.False, "Counters sit on a nested canvas.");
+                Assert.That(slots.GetComponentInParent<Canvas>(true), Is.SameAs(countersCanvas));
+                Assert.That(countersCanvas.GetComponentsInChildren<UnityEngine.UI.LayoutGroup>(true), Is.Empty);
+            });
+        }
+
+        // ADR-0012 rules 4 and 8.
+        [Test]
+        public void EveryCanvas_ScalesAlike_AndFitsTheSafeArea()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                var canvases = roots.SelectMany(root => root.GetComponentsInChildren<Canvas>(true)).Where(canvas => canvas.isRootCanvas).ToArray();
+                Assert.That(canvases, Is.Not.Empty);
+                foreach (Canvas canvas in canvases)
+                {
+                    var scaler = canvas.GetComponent<UnityEngine.UI.CanvasScaler>();
+                    Assert.That(scaler.uiScaleMode, Is.EqualTo(UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize), canvas.name);
+                    Assert.That(scaler.screenMatchMode, Is.EqualTo(UnityEngine.UI.CanvasScaler.ScreenMatchMode.Expand), canvas.name);
+                    Assert.That(scaler.referenceResolution, Is.EqualTo(new Vector2(1080, 1920)), canvas.name);
+
+                    var fitted = canvas.transform.Cast<Transform>().Where(child => child.GetComponent<Game.SafeAreaFitter>() != null).ToArray();
+                    Assert.That(fitted.Length, Is.EqualTo(1), $"{canvas.name} has one safe-area root.");
+                    Assert.That(canvas.transform.childCount, Is.EqualTo(1), $"Everything on {canvas.name} lives inside its safe-area root.");
+                }
+            });
+        }
+
+        // ADR-0012 rule 7: UI images draw from one UI atlas, so the HUD batches.
+        [Test]
+        public void EveryUiImage_InTheGameScene_DrawsFromTheUiAtlas()
+        {
+            var atlas = AssetDatabase.FindAssets("UIAtlas t:SpriteAtlas", new[] { "Assets" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(AssetDatabase.GUIDToAssetPath(guid)))
+                .Single();
+
+            WithScene(SceneId.Game, roots =>
+            {
+                foreach (UnityEngine.UI.Image image in roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Image>(true)))
+                {
+                    Assert.That(image.sprite, Is.Not.Null, $"{image.name} has no sprite.");
+                    Assert.That(atlas.CanBindTo(image.sprite), Is.True, $"{image.name}'s {image.sprite.name} is not in {atlas.name}.");
+                }
+            });
+        }
+
+        [Test]
+        public void TheGameScene_HasOneEventSystem_ReadingTheInputSystem()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                var systems = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.EventSystems.EventSystem>(true)).ToArray();
+                Assert.That(systems.Length, Is.EqualTo(1));
+                Assert.That(systems[0].GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>(), Is.Not.Null);
+            });
+        }
+
         [Test]
         public void PressingPlayInASavedScene_BootsThroughBootstrap()
         {

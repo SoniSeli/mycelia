@@ -6,6 +6,9 @@
         "UnityEditor.TestRunner",
         "Mycelia.Game",
         "Unity.InputSystem",
+        "PrimeTween.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Mycelia.Content",
         "Mycelia.Domain"
     ],

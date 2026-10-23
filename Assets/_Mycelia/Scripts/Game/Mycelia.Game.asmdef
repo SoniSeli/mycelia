@@ -5,7 +5,9 @@
         "Mycelia.Domain",
         "Mycelia.Content",
         "Unity.InputSystem",
-        "PrimeTween.Runtime"
+        "PrimeTween.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

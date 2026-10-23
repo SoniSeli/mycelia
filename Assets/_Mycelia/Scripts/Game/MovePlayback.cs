@@ -35,12 +35,20 @@ namespace Mycelia.Game
         bool[] movingFalls;
         int movingCount;
 
+        // What the listener hears about, held until the matching moment in the sequence.
+        IPlaybackListener listener;
+        readonly ObjectiveProgressed[] progress = new ObjectiveProgressed[16];
+        int progressCount;
+        SessionEnded ending;
+        bool ends;
+
         public bool IsPlaying { get; private set; }
 
-        public void Init(BoardView boardView, int columns, int rows)
+        public void Init(BoardView boardView, int columns, int rows, IPlaybackListener listener)
         {
             this.boardView = boardView;
             this.rows = rows;
+            this.listener = listener ?? throw new ArgumentNullException(nameof(listener));
             int cells = columns * rows;
             // A move can clear the chain and, if the board is regenerated, every cell again.
             leaving = new SporeView[2 * cells];
@@ -59,13 +67,49 @@ namespace Mycelia.Game
 
             IsPlaying = true;
             leavingCount = returnedCount = phaseEndCount = nextPhaseEnd = 0;
+            CollectReports(move);
+            listener.MovesChanged(move.MovesRemaining);
             sequence = Sequence.Create();
 
             float time = 0;
+            float popEnd = 0;
             for (int i = 0; i < move.PhaseCount; i++)
+            {
                 time += PlayPhase(move, move.GetPhase(i), time);
+                // The first phase is always the chain's Clear phase (ADR-0004): goals count up as its spores finish popping.
+                if (i == 0) popEnd = time;
+            }
 
+            if (progressCount > 0)
+                sequence.InsertCallback(popEnd, this, static playback => playback.ReportProgress());
             sequence.InsertCallback(time, this, static playback => playback.Finish());
+        }
+
+        void CollectReports(MoveResult move)
+        {
+            progressCount = 0;
+            ends = false;
+            for (int p = 0; p < move.PhaseCount; p++)
+            {
+                PhaseSteps phase = move.GetPhase(p);
+                for (int i = phase.Start; i < phase.Start + phase.Count; i++)
+                {
+                    StepRef step = move.GetStep(i);
+                    if (move.TryGet(step, out ObjectiveProgressed progressed))
+                        progress[progressCount++] = progressed;
+                    else if (move.TryGet(step, out SessionEnded ended))
+                    {
+                        ending = ended;
+                        ends = true;
+                    }
+                }
+            }
+        }
+
+        void ReportProgress()
+        {
+            for (int i = 0; i < progressCount; i++)
+                listener.ObjectiveProgressed(progress[i].ObjectiveIndex, progress[i].Current, progress[i].Target);
         }
 
         /// <summary>Jumps to the end of the current move, running every callback now.</summary>
@@ -174,6 +218,11 @@ namespace Mycelia.Game
             }
         }
 
-        void Finish() => IsPlaying = false;
+        void Finish()
+        {
+            IsPlaying = false;
+            if (ends)
+                listener.SessionEnded(ending.Outcome, ending.Stars);
+        }
     }
 }
