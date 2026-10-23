@@ -136,11 +136,13 @@ Three layers, each depending only on the one below it:
 
 **UI.** uGUI with TextMeshPro, with canvases split by how often they change, safe-area fitting, and allocation-free text updates ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md)).
 
+**Lifecycle.** `LevelPause` pauses a level when the app goes to the background or loses focus, or on the back button: input locks, a chain in progress is cancelled, the playing move freezes, and an overlay offers Resume and Restart. Back on the result panel sends the app to the background ([ADR-0013](adr/0013-pause-the-level-and-handle-back.md)).
+
 ## 6. Mobile considerations
 
 - **Input:** touch through the Input System, with mouse as a fallback for the Editor. A second finger is ignored while dragging. Because chains can go diagonally (§3.2), a spore joins the chain only when the finger comes within a **circular** radius of its centre (0.45 of a cell, tuned on the mid-range phone; still to check on the low-end device), not anywhere in its square cell. That way a diagonal drag doesn't accidentally catch the side neighbours it passes between.
 - **Screen:** portrait only. Supports aspect ratios from 16:9 to about 21:9 and tablets, with layout inside the device's safe area.
-- **App lifecycle:** progress saves atomically (temporary file → replace, with a backup) when a level is won, when settings change, and when the app is paused. A level in progress is not resumed (§3.6). When the app is paused during a level, it shows a pause overlay and waits for the player. Audio pauses on interruptions. The Android back button behaves sensibly on every screen.
+- **App lifecycle:** progress saves atomically (temporary file → replace, with a backup) when a level is won, when settings change, and when the app is paused. A level in progress is not resumed (§3.6). When the app is paused or loses focus during a level, it shows a pause overlay and waits for the player. Audio pauses on interruptions. The Android back button behaves sensibly on every screen ([ADR-0013](adr/0013-pause-the-level-and-handle-back.md)).
 - **Performance:** see [performance-budget.md](performance-budget.md). The target is a low-end reference device, not the Editor.
 - **Accessibility:** colour-blind support is **always on, not a setting**. Every spore type is a species with a unique silhouette, enforced by a validation test, and is checked in grayscale and in colour-blindness simulations. Text is readable at phone size. Haptics can be turned off.
 - **Localisation:** _out of scope for v1?_ If so, keep fact text in data so it can be localised later.
@@ -176,7 +178,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | 4 | **Touch input**: `MyceliaInput` actions, `CellHitTest` (radius, swipe sampling) with EditMode tests, `ChainInputController`, chain line | ADR-0008 | Chains can be dragged on device, including diagonals and backtracking, with no stray side cells |
 | 5 | **Move playback**: PrimeTween via npm, `PlaybackSettings`, `MovePlayback`, input lock, PlayMode allocation test | ADR-0009 | A move animates pop → fall → refill (→ reshuffle); playback allocates 0 B after warm-up |
 | 6 | **HUD**: moves left, objective counters, win/lose panel (minimal) | ADR-0012 | A level can be won or lost and the result is shown |
-| 7 | **Lifecycle**: pause overlay on `OnApplicationPause`, Android back button, audio pause, 30/60 fps policy | ADR-0006, ADR-0010 | Backgrounding mid-level pauses cleanly; back button behaves on every screen |
+| 7 | **Lifecycle**: pause overlay on `OnApplicationPause`, Android back button, audio pause, 30/60 fps policy. *Audio pause deferred until there is audio (ADR-0013).* | ADR-0006, ADR-0010, ADR-0013 | Backgrounding mid-level pauses cleanly; back button behaves on every screen |
 | 8 | **Device pass**: choose the low-end reference device; Profiler connection check (deferred from Milestone 0); memory investigation (the 246 MB case study); frame time, GC and batches against the budget | Performance budget | Results logged on both devices; Milestone 2 done-when met |
 
 ## 9. Open questions

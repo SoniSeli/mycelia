@@ -73,7 +73,7 @@ Decided while building the HUD:
   - Text-heavy screens (fact cards, settings) need care with layout groups, which UI Toolkit would have made easier.
   - The project now uses UI Toolkit for Editor tooling and uGUI for the game; that split is intentional.
 - **Follow-up:**
-  - Slice 6: import TextMeshPro's essential resources, add `SafeAreaFitter` with EditMode tests, and build the HUD and win/lose panel driven by playback's `ObjectiveProgressed` and `SessionEnded` steps (ADR-0009). Board input must be locked while a panel is open.  *Done in slice 6. Board input is already locked once a level ends (`ChainDrag`); a pause overlay (slice 7) will need its own lock.*
+  - Slice 6: import TextMeshPro's essential resources, add `SafeAreaFitter` with EditMode tests, and build the HUD and win/lose panel driven by playback's `ObjectiveProgressed` and `SessionEnded` steps (ADR-0009). Board input must be locked while a panel is open.  *Done in slice 6. Board input is already locked once a level ends (`ChainDrag`); a pause overlay (slice 7) will need its own lock.* *Done in slice 7: `ChainDrag` also locks while `LevelPause` is paused, and the pause canvas draws above the others ([ADR-0013](0013-pause-the-level-and-handle-back.md)).*
   - Slice 8: measure canvas rebuilds, batches and GC with the HUD updating during a move, on device.
   - Choose and credit a font (design §10).
   - **Revisit if:** the UI grows into data-heavy screens (long lists, rich text) where uGUI's costs show up in profiling, or Unity stops developing uGUI.

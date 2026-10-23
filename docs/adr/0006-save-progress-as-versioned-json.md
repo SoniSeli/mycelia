@@ -107,6 +107,6 @@ The unlock rule and the best-stars-only-goes-up rule are pure C# in the domain (
   - If the OS kills the app in the background, or it crashes, **the current level restarts** with full moves. For 2–5 minute levels this is an accepted trade-off.
   - The lifecycle story for reviewers becomes "progress is never lost, and the game pauses correctly" rather than "you resume exactly where you were."
 - **Follow-up:**
-  - `OnApplicationPause(true)` during a level shows a pause overlay, and the level waits for the player to come back. The game never continues to run in the background.
+  - `OnApplicationPause(true)` during a level shows a pause overlay, and the level waits for the player to come back. The game never continues to run in the background. *Done in Milestone 2 slice 7 ([ADR-0013](0013-pause-the-level-and-handle-back.md)); losing focus pauses too. Saving on pause comes with the save system.*
   - Analytics: log `level_start` and `level_end`. A `level_start` with no matching end, followed by a later session, suggests a level lost to backgrounding.
   - **Revisit if:** that rate is high, or levels become longer (more than about 5 minutes). Resume would then become a new ADR, building on ADR-0005's key-based board format.
