@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "levels": [
+    { "key": "level-01", "bestStars": 3 },
+    { "key": "level-02", "bestStars": 1 }
+  ],
+  "settings": { "sfxVolume": 0.8, "musicVolume": 0.6, "haptics": true },
+  "introSeen": true
+}
