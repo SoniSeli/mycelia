@@ -47,16 +47,22 @@ namespace Mycelia.App
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
             hud.Init(config, services.Spores);
-            // Play again and Restart start the same level with a fresh seed, through the loader like any scene change.
+            // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
             Action restart = () => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level));
-            resultPanel.Init(restart);
+            // Leaving writes anything unsaved first: a win whose move was still playing when the player paused and left.
+            Action leave = () =>
+            {
+                services.Progress.SaveIfChanged();
+                services.Scenes.Load(SceneId.LevelSelect, services);
+            };
+            resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
             var results = new LevelResultRecorder(Session, services.Progress, playback, hud);
             playback.Init(boardView, config.Width, config.Height, results);
             Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
-            pauseOverlay.Init(Pause.Resume, restart);
+            pauseOverlay.Init(Pause.Resume, restart, leave);
             // Back once the result is shown steps out to level select (ADR-0013).
-            pauseController.Init(Pause, () => services.Scenes.Load(SceneId.LevelSelect, services));
+            pauseController.Init(Pause, leave);
             chainInput.Init(Session, boardCamera, chainView, results, Pause);
         }
     }

@@ -9,19 +9,41 @@ namespace Mycelia.Game.Tests
     public class ResultPanelTests
     {
         TestHud hud;
-        int playAgainClicks;
+        Texture2D texture;
+        Sprite factSprite;
+        int retryClicks;
+        int levelSelectClicks;
 
         [SetUp]
         public void CreatePanel()
         {
             hud = new TestHud();
-            hud.Panel.Init(() => playAgainClicks++);
+            texture = new Texture2D(4, 4);
+            factSprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+            retryClicks = levelSelectClicks = 0;
+            Init(new FactCard("Mycelium can span kilometres.", null, ""));
         }
 
         [TearDown]
-        public void DestroyPanel() => hud.Destroy();
+        public void DestroyPanel()
+        {
+            hud.Destroy();
+            Object.DestroyImmediate(factSprite);
+            Object.DestroyImmediate(texture);
+        }
 
-        string Title => hud.Panel.GetComponentInChildren<TMP_Text>(true).text;
+        void Init(FactCard fact) => hud.Panel.Init(() => retryClicks++, () => levelSelectClicks++, fact);
+
+        Transform Find(string name)
+        {
+            foreach (Transform child in hud.Panel.GetComponentsInChildren<Transform>(true))
+                if (child.name == name) return child;
+            return null;
+        }
+
+        string Title => Find("Title").GetComponent<TMP_Text>().text;
+        bool Shown(string name) => Find(name).gameObject.activeSelf;
+        float CardHeight => ((RectTransform)Find("Card")).sizeDelta.y;
 
         Image[] Stars => System.Array.FindAll(hud.Panel.GetComponentsInChildren<Image>(true), image => image.name.StartsWith("Star"));
 
@@ -45,22 +67,85 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void ALoss_SaysSo_WithoutStars()
+        public void AWin_ShowsTheLevelsFact_AndOnlyLevelSelect()
+        {
+            // Slice 5: every win returns to level select, so the player sees the new unlock and their stars.
+            hud.Panel.Show(SessionState.Won, 3);
+
+            Assert.That(Shown("Fact"), Is.True);
+            Assert.That(Find("Fact Text").GetComponent<TMP_Text>().text, Is.EqualTo("Mycelium can span kilometres."));
+            Assert.That(Shown("Level Select"), Is.True);
+            Assert.That(Shown("Retry"), Is.False);
+        }
+
+        [Test]
+        public void AFactWithoutAnImageOrCredit_HidesThem()
+        {
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(Shown("Fact Image"), Is.False);
+            Assert.That(Shown("Fact Credit"), Is.False);
+        }
+
+        [Test]
+        public void AFactWithAnImageAndCredit_ShowsThem_OnATallerCard()
+        {
+            hud.Panel.Show(SessionState.Won, 1);
+            float withoutImage = CardHeight;
+
+            Init(new FactCard("Text.", factSprite, "Photo: Jane Doe, CC BY 4.0"));
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(Shown("Fact Image"), Is.True);
+            Assert.That(Find("Fact Image").GetComponent<Image>().sprite, Is.SameAs(factSprite));
+            Assert.That(Shown("Fact Credit"), Is.True);
+            Assert.That(Find("Fact Credit").GetComponent<TMP_Text>().text, Is.EqualTo("Photo: Jane Doe, CC BY 4.0"));
+            Assert.That(CardHeight, Is.GreaterThan(withoutImage));
+        }
+
+        [Test]
+        public void ALoss_SaysSo_WithRetryAndLevelSelect_ButNoStarsOrFact()
         {
             hud.Panel.Show(SessionState.Lost, 0);
 
             Assert.That(Title, Is.EqualTo("Out of moves"));
             Assert.That(System.Array.TrueForAll(Stars, star => !star.gameObject.activeSelf), "No stars on a loss.");
+            Assert.That(Shown("Fact"), Is.False);
+            Assert.That(Shown("Retry"), Is.True);
+            Assert.That(Shown("Level Select"), Is.True);
         }
 
         [Test]
-        public void PlayAgain_AsksToRestartTheLevel()
+        public void ALoss_UsesTheShortCard()
+        {
+            hud.Panel.Show(SessionState.Won, 1);
+            float win = CardHeight;
+
+            hud.Panel.Show(SessionState.Lost, 0);
+
+            Assert.That(CardHeight, Is.LessThan(win));
+        }
+
+        [Test]
+        public void Retry_AsksToRestartTheLevel()
         {
             hud.Panel.Show(SessionState.Lost, 0);
 
-            hud.Panel.GetComponentInChildren<Button>(true).onClick.Invoke();
+            Find("Retry").GetComponent<Button>().onClick.Invoke();
 
-            Assert.That(playAgainClicks, Is.EqualTo(1));
+            Assert.That(retryClicks, Is.EqualTo(1));
+            Assert.That(levelSelectClicks, Is.Zero);
+        }
+
+        [Test]
+        public void LevelSelect_AsksToLeaveTheLevel()
+        {
+            hud.Panel.Show(SessionState.Won, 2);
+
+            Find("Level Select").GetComponent<Button>().onClick.Invoke();
+
+            Assert.That(levelSelectClicks, Is.EqualTo(1));
+            Assert.That(retryClicks, Is.Zero);
         }
     }
 }

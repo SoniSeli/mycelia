@@ -25,7 +25,11 @@ namespace Mycelia.App.Tests
         GameSceneEntry entry;
         BoardView boardView;
         ResultPanel resultPanel;
-        Button playAgain;
+        Button retry;
+        Button resultLevelSelect;
+        Button pauseLevelSelect;
+        FakeProgressStore store;
+        TMPro.TMP_Text factText;
         PauseOverlay pauseOverlay;
         Button resume;
         Button restart;
@@ -92,8 +96,17 @@ namespace Mycelia.App.Tests
             SetReference(hud, "slotsRoot", hudRoot);
             resultPanel = UiChild("Result Panel", hudRoot).gameObject.AddComponent<ResultPanel>();
             SetReference(resultPanel, "title", UiChild("Title", resultPanel.transform).gameObject.AddComponent<TextMeshProUGUI>());
-            playAgain = UiChild("Play Again", resultPanel.transform).gameObject.AddComponent<Button>();
-            SetReference(resultPanel, "playAgain", playAgain);
+            retry = UiChild("Retry", resultPanel.transform).gameObject.AddComponent<Button>();
+            resultLevelSelect = UiChild("Level Select", resultPanel.transform).gameObject.AddComponent<Button>();
+            Transform fact = UiChild("Fact", resultPanel.transform);
+            factText = UiChild("Fact Text", fact).gameObject.AddComponent<TextMeshProUGUI>();
+            SetReference(resultPanel, "levelSelect", resultLevelSelect);
+            SetReference(resultPanel, "card", UiChild("Card", resultPanel.transform));
+            SetReference(resultPanel, "fact", fact.gameObject);
+            SetReference(resultPanel, "factImage", UiChild("Fact Image", fact).gameObject.AddComponent<Image>());
+            SetReference(resultPanel, "factText", factText);
+            SetReference(resultPanel, "factCredit", UiChild("Fact Credit", fact).gameObject.AddComponent<TextMeshProUGUI>());
+            SetReference(resultPanel, "retry", retry);
             SetReference(hud, "resultPanel", resultPanel);
             SetReference(entry, "hud", hud);
             SetReference(entry, "resultPanel", resultPanel);
@@ -101,8 +114,10 @@ namespace Mycelia.App.Tests
             pauseOverlay = UiChild("Pause Panel", scene.transform).gameObject.AddComponent<PauseOverlay>();
             resume = UiChild("Resume", pauseOverlay.transform).gameObject.AddComponent<Button>();
             restart = UiChild("Restart", pauseOverlay.transform).gameObject.AddComponent<Button>();
+            pauseLevelSelect = UiChild("Level Select", pauseOverlay.transform).gameObject.AddComponent<Button>();
             SetReference(pauseOverlay, "resume", resume);
             SetReference(pauseOverlay, "restart", restart);
+            SetReference(pauseOverlay, "levelSelect", pauseLevelSelect);
             pauseController = new GameObject("Pause", typeof(PauseController)).GetComponent<PauseController>();
             pauseController.transform.SetParent(scene.transform);
             SetReference(entry, "pauseOverlay", pauseOverlay);
@@ -110,7 +125,8 @@ namespace Mycelia.App.Tests
 
             seeds = new FixedSeedSource(Seed);
             loader = new FakeSceneLoader();
-            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys));
+            store = new FakeProgressStore();
+            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys));
             level = ProjectAssets.TestLevel;
         }
 
@@ -146,11 +162,11 @@ namespace Mycelia.App.Tests
                 .Invoke(pauseController, new object[] { paused });
 
         [Test]
-        public void PlayAgain_ReloadsTheGameScene_OnTheSameLevel()
+        public void Retry_ReloadsTheGameScene_OnTheSameLevel()
         {
             entry.Construct(services, new GameSceneArgs(level));
 
-            playAgain.onClick.Invoke();
+            retry.onClick.Invoke();
 
             Assert.That(loader.Loads.Count, Is.EqualTo(1));
             Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.Game));
@@ -158,14 +174,50 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
-        public void PlayAgain_AfterStartingFromTheDebugLevel_ReplaysThatLevel()
+        public void Retry_AfterStartingFromTheDebugLevel_ReplaysThatLevel()
         {
             SetDebugLevel(level);
             entry.Construct(services, args: null);
 
-            playAgain.onClick.Invoke();
+            retry.onClick.Invoke();
 
             Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(level));
+        }
+
+        [Test]
+        public void LevelSelect_OnTheResult_OpensLevelSelect()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            resultLevelSelect.onClick.Invoke();
+
+            Assert.That(loader.Loads.Count, Is.EqualTo(1));
+            Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.LevelSelect));
+        }
+
+        [Test]
+        public void LevelSelect_OnThePauseOverlay_SavesFirst_ThenOpensLevelSelect()
+        {
+            // A win whose move was still playing when the player paused and left is recorded but not yet written.
+            entry.Construct(services, new GameSceneArgs(level));
+            services.Progress.RecordWin("level-01", 2);
+            entry.Pause.Pause();
+
+            pauseLevelSelect.onClick.Invoke();
+
+            Assert.That(store.Saves, Is.EqualTo(1));
+            Assert.That(loader.Loads.Count, Is.EqualTo(1));
+            Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.LevelSelect));
+        }
+
+        [Test]
+        public void TheResult_CarriesTheLevelsFact()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            resultPanel.Show(Domain.Sessions.SessionState.Won, 1);
+
+            Assert.That(factText.text, Is.EqualTo(level.FactText).And.Not.Empty);
         }
 
         [Test]

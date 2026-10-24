@@ -38,7 +38,16 @@ namespace Mycelia.Game.Tests
             var stars = new Image[3];
             for (int i = 0; i < stars.Length; i++) stars[i] = Child($"Star {i + 1}", panelRoot).gameObject.AddComponent<Image>();
             SetArray(Panel, "stars", stars);
-            Set(Panel, "playAgain", Child("Play Again", panelRoot).gameObject.AddComponent<Button>());
+            Set(Panel, "retry", Child("Retry", panelRoot).gameObject.AddComponent<Button>());
+            Set(Panel, "levelSelect", Child("Level Select", panelRoot).gameObject.AddComponent<Button>());
+            RectTransform card = Child("Card", panelRoot);
+            card.sizeDelta = new Vector2(920, 100);
+            Set(Panel, "card", card);
+            RectTransform fact = Child("Fact", panelRoot);
+            Set(Panel, "fact", fact.gameObject);
+            Set(Panel, "factImage", Child("Fact Image", fact).gameObject.AddComponent<Image>());
+            Set(Panel, "factText", Child("Fact Text", fact).gameObject.AddComponent<TextMeshProUGUI>());
+            Set(Panel, "factCredit", Child("Fact Credit", fact).gameObject.AddComponent<TextMeshProUGUI>());
 
             Hud = Root.AddComponent<HudView>();
             Set(Hud, "band", Band);
