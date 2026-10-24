@@ -78,6 +78,15 @@ Decided while building the bootstrap:
 - **Editor Play:** `playModeStartScene` is set to Bootstrap only while entering Play from a saved scene, and cleared afterwards. The scene's path is handed to AppRoot through `SessionState`, and AppRoot reopens it with no `SceneArgs`, so the scene uses its debug args (`GameSceneEntry.debugLevel`). Unsaved edits are offered for saving first, since Bootstrap loads scenes from disk. An untitled scratch scene plays as it is.
 - **Guards:** EditMode tests check that Bootstrap is build index 0 with one `AppRoot` whose assets are set, that every `SceneId` is enabled in the build, and that every other scene has exactly one entry.
 
+### Refinements (2026-10-25, Milestone 4 slice 2)
+
+Decided with the scene fade (design §8.3):
+
+- **Every scene change fades through the backdrop's gradient**, 0.25 s out and 0.25 s in, and the first screen fades in too: the fade starts covered when the app launches. *Why (Soni):* half a second per screen change is noticeable but quick, and the first screen arrives the same way as every other. The fade first went through the gradient's deep blue (*why:* moving between two blue screens never flashes black); after seeing it, Soni chose the whole gradient. *Why (Soni):* a fade then looks like the background with the screen's content gone, so changing screens feels like moving within one space. `GradientGraphic` draws it in the backdrop's rows, blended the same way; headless renders of the two match within 2 levels of 255 (5 in the top row, which the backdrop overshoots on purpose).
+- **The fade belongs to the composition root.** A `ScreenFade` overlay sits under the Bootstrap's `AppRoot`, so it outlives every scene, and draws above every canvas. `AppRoot` hands it to the `SceneLoader`; scene entries don't know about it. Once the screen is clear, its canvas is switched off, so it costs nothing during play.
+- **`SceneTransition` holds the order of a change**, engine-free and tested: fade out, load once the screen is covered, build the scene through its entry, fade in. `SceneLoader` is only the glue to Unity's scene loading.
+- **Nothing can be pressed while the screen changes.** The fade catches UI taps until it is clear again. `ISceneLoader` reports the change as an input block, so the board ignores a touch that starts during it until the finger lifts. A second request during a change (a second tap, or back) is ignored: the first wins. Only the new scene's own `Construct` may open another scene, and the screen stays covered for it. This replaces the old exception for a load requested while another was loading. It also fixed a quick tap on Play starting the level whose button sat under the same spot on level select, a tap that carried across the scene change (found on the phone in slice 1, checked gone there).
+
 ## Consequences
 
 - **Positive:**
