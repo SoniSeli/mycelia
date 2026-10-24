@@ -46,6 +46,18 @@ namespace Mycelia.App.Tests
         }
     }
 
+    /// <summary>Keeps every logged event in memory.</summary>
+    sealed class FakeAnalytics : IAnalytics
+    {
+        public readonly List<AnalyticsEvent> Events = new List<AnalyticsEvent>();
+
+        public void Log(AnalyticsEvent analyticsEvent) => Events.Add(analyticsEvent);
+
+        public IEnumerable<string> Names => Events.Select(e => e.Name);
+
+        public AnalyticsEvent Single(string name) => Events.Single(e => e.Name == name);
+    }
+
     static class ProjectAssets
     {
         public static SporeCatalog Spores => Single<SporeCatalog>("t:SporeCatalog");

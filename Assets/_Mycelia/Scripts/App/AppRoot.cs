@@ -1,3 +1,4 @@
+using System;
 using Mycelia.Content;
 using UnityEngine;
 
@@ -25,13 +26,19 @@ namespace Mycelia.App
             if (Debug.isDebugBuild)
                 Debug.Log($"[Mycelia] Progress: {progress.LoadOutcome}, {progress.Levels.Records.Count} level record(s).");
 
+            // A random id per launch ties one session's events together; it says nothing about the player.
+            var analytics = new FileAnalytics(Application.persistentDataPath, Guid.NewGuid().ToString("N").Substring(0, 12),
+                () => DateTime.UtcNow, Debug.isDebugBuild ? (Action<string>)Debug.Log : null);
+            AppStartAnalytics.Report(analytics, Application.version, progress.LoadOutcome);
+
             scenes = new SceneLoader();
             var services = new AppServices(
                 scenes: scenes,
                 seeds: new CryptoSeedSource(),
                 spores: spores,
                 levels: levels,
-                progress: progress);
+                progress: progress,
+                analytics: analytics);
 
             StartScene start = StartScene.Choose(TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);

@@ -12,7 +12,7 @@ namespace Mycelia.App.Tests
         public void CreateLoader()
         {
             loader = new SceneLoader();
-            services = new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys));
+            services = new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys), new FakeAnalytics());
         }
 
         [TearDown]

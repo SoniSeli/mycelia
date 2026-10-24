@@ -29,7 +29,7 @@ namespace Mycelia.App.Tests
 
         AppServices Services() =>
             new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels,
-                PlayerProgress.Load(store, ProjectAssets.Levels.Keys));
+                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics());
 
         static void Set(Object target, string property, Object value)
         {

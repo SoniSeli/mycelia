@@ -43,21 +43,27 @@ namespace Mycelia.App
                 Debug.Log($"[Mycelia] Level '{config.Key}' starts with seed {seed:x16}.");
 
             Session = new LevelSession(config, new Pcg32(seed));
+            services.Analytics.Log(new AnalyticsEvent("level_start").With("level", config.Key).With("seed", seed.ToString("x16")));
             boardCamera.Init(config.Width, config.Height);
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
             hud.Init(config, services.Spores);
+            // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
+            var results = new LevelResultRecorder(Session, services.Progress, playback, hud, services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
-            Action restart = () => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level));
+            Action restart = () =>
+            {
+                results.Leave();
+                services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level));
+            };
             // Leaving writes anything unsaved first: a win whose move was still playing when the player paused and left.
             Action leave = () =>
             {
+                results.Leave();
                 services.Progress.SaveIfChanged();
                 services.Scenes.Load(SceneId.LevelSelect, services);
             };
             resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
-            // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
-            var results = new LevelResultRecorder(Session, services.Progress, playback, hud);
             playback.Init(boardView, config.Width, config.Height, results);
             Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
             pauseOverlay.Init(Pause.Resume, restart, leave);

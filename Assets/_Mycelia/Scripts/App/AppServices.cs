@@ -9,8 +9,9 @@ namespace Mycelia.App
     /// </summary>
     public sealed class AppServices
     {
-        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress)
+        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress, IAnalytics analytics)
         {
+            Analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             Scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             Seeds = seeds ?? throw new ArgumentNullException(nameof(seeds));
@@ -33,5 +34,8 @@ namespace Mycelia.App
 
         /// <summary>Unlocks and best stars, loaded at boot and saved at the ADR-0006 moments.</summary>
         public PlayerProgress Progress { get; }
+
+        /// <summary>Playtest events, kept on the device (design §8.2 slice 6).</summary>
+        public IAnalytics Analytics { get; }
     }
 }

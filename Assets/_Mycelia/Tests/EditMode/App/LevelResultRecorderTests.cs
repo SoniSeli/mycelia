@@ -44,6 +44,7 @@ namespace Mycelia.App.Tests
         PlayerProgress progress;
         FakePlayer player;
         FakeListener listener;
+        FakeAnalytics analytics;
 
         [SetUp]
         public void SetUp()
@@ -52,6 +53,7 @@ namespace Mycelia.App.Tests
             progress = PlayerProgress.Load(store, Order);
             player = new FakePlayer();
             listener = new FakeListener { Store = store };
+            analytics = new FakeAnalytics();
         }
 
         // A 3 × 3 board whose top row starts with two A spores; collecting 2 A wins, collecting 50 never does.
@@ -75,7 +77,7 @@ namespace Mycelia.App.Tests
             return session.Commit();
         }
 
-        LevelResultRecorder Recorder(LevelSession session) => new LevelResultRecorder(session, progress, player, listener);
+        LevelResultRecorder Recorder(LevelSession session) => new LevelResultRecorder(session, progress, player, listener, analytics);
 
         [Test]
         public void TheWinningMove_IsRecordedWhenCommitted_BeforeItPlays()
@@ -151,6 +153,87 @@ namespace Mycelia.App.Tests
             player.IsPlaying = true;
 
             Assert.That(recorder.IsPlaying, Is.True);
+        }
+
+        [Test]
+        public void AWin_LogsLevelEnd_WhenTheMoveFinishes()
+        {
+            LevelSession session = Session("level-01", target: 2, moves: 5);
+            var recorder = Recorder(session);
+            recorder.Play(CommitTheTwoAs(session));
+            Assert.That(analytics.Events, Is.Empty, "Nothing is written on the move frame.");
+
+            recorder.SessionEnded(SessionState.Won, session.Stars);
+
+            AnalyticsEvent end = analytics.Single("level_end");
+            Assert.That(end.Value("level"), Is.EqualTo("level-01"));
+            Assert.That(end.Value("outcome"), Is.EqualTo("won"));
+            Assert.That(end.Value("stars"), Is.EqualTo(session.Stars));
+            Assert.That(end.Value("moves_used"), Is.EqualTo(1));
+            Assert.That(end.Value("moves_left"), Is.EqualTo(4));
+        }
+
+        [Test]
+        public void ALoss_LogsLevelEnd_Lost()
+        {
+            LevelSession session = Session("level-01", target: 50, moves: 1);
+            var recorder = Recorder(session);
+            recorder.Play(CommitTheTwoAs(session));
+
+            recorder.SessionEnded(SessionState.Lost, 0);
+
+            Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("lost"));
+            Assert.That(analytics.Single("level_end").Value("stars"), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void LeavingDuringPlay_LogsAbandoned()
+        {
+            // A level_start with no end then means the app was killed, not that the player left (ADR-0006).
+            LevelSession session = Session("level-01", target: 50);
+            var recorder = Recorder(session);
+            recorder.Play(CommitTheTwoAs(session));
+
+            recorder.Leave();
+
+            Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("abandoned"));
+            Assert.That(analytics.Single("level_end").Value("moves_used"), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LeavingAfterTheResult_LogsNoSecondEnd()
+        {
+            LevelSession session = Session("level-01", target: 2);
+            var recorder = Recorder(session);
+            recorder.Play(CommitTheTwoAs(session));
+            recorder.SessionEnded(SessionState.Won, session.Stars);
+
+            recorder.Leave();
+
+            Assert.That(analytics.Names, Is.EqualTo(new[] { "level_end" }));
+        }
+
+        [Test]
+        public void LeavingWhileTheDecidingMoveStillPlays_LogsItsRealOutcome()
+        {
+            LevelSession session = Session("level-01", target: 2);
+            var recorder = Recorder(session);
+            recorder.Play(CommitTheTwoAs(session));
+
+            recorder.Leave();
+
+            Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("won"));
+        }
+
+        [Test]
+        public void AMoveThatDoesNotEndTheLevel_LogsNothing()
+        {
+            LevelSession session = Session("level-01", target: 50);
+            var recorder = Recorder(session);
+
+            recorder.Play(CommitTheTwoAs(session));
+
+            Assert.That(analytics.Events, Is.Empty);
         }
     }
 }

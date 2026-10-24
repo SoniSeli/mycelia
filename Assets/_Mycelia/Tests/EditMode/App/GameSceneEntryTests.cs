@@ -29,6 +29,7 @@ namespace Mycelia.App.Tests
         Button resultLevelSelect;
         Button pauseLevelSelect;
         FakeProgressStore store;
+        FakeAnalytics analytics;
         TMPro.TMP_Text factText;
         PauseOverlay pauseOverlay;
         Button resume;
@@ -126,7 +127,8 @@ namespace Mycelia.App.Tests
             seeds = new FixedSeedSource(Seed);
             loader = new FakeSceneLoader();
             store = new FakeProgressStore();
-            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys));
+            analytics = new FakeAnalytics();
+            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys), analytics);
             level = ProjectAssets.TestLevel;
         }
 
@@ -208,6 +210,38 @@ namespace Mycelia.App.Tests
             Assert.That(store.Saves, Is.EqualTo(1));
             Assert.That(loader.Loads.Count, Is.EqualTo(1));
             Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.LevelSelect));
+        }
+
+        [Test]
+        public void Construct_LogsLevelStart_WithTheKeyAndTheAttemptsSeed()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            AnalyticsEvent start = analytics.Single("level_start");
+            Assert.That(start.Value("level"), Is.EqualTo(level.Key));
+            Assert.That(start.Value("seed"), Is.EqualTo(Seed.ToString("x16")));
+        }
+
+        [Test]
+        public void RestartingFromThePauseOverlay_LogsTheAttemptAsAbandoned()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            entry.Pause.Pause();
+
+            restart.onClick.Invoke();
+
+            Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("abandoned"));
+        }
+
+        [Test]
+        public void LeavingFromThePauseOverlay_LogsTheAttemptAsAbandoned()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            entry.Pause.Pause();
+
+            pauseLevelSelect.onClick.Invoke();
+
+            Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("abandoned"));
         }
 
         [Test]
