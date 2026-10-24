@@ -15,6 +15,9 @@ namespace Mycelia.App.Tests
     {
         static SceneId[] AllScenes => (SceneId[])Enum.GetValues(typeof(SceneId));
 
+        // Every scene the player sees; Bootstrap has no UI.
+        static SceneId[] UiScenes => AllScenes.Where(scene => scene != SceneId.Bootstrap).ToArray();
+
         static string PathOf(SceneId scene) =>
             EditorBuildSettings.scenes.Single(s => Path.GetFileNameWithoutExtension(s.path) == scene.ToString()).path;
 
@@ -134,11 +137,11 @@ namespace Mycelia.App.Tests
             });
         }
 
-        // ADR-0012 rule 2: the HUD must never swallow a touch meant for the board.
-        [Test]
-        public void OnlyButtons_TakeTouches()
+        // ADR-0012 rule 2: the HUD must never swallow a touch meant for the board, and menus take touches only on buttons.
+        [TestCaseSource(nameof(UiScenes))]
+        public void OnlyButtons_TakeTouches(SceneId scene)
         {
-            WithScene(SceneId.Game, roots =>
+            WithScene(scene, roots =>
             {
                 var touchable = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
                     .Where(graphic => graphic.raycastTarget && graphic.GetComponentInParent<UnityEngine.UI.Selectable>(true) == null);
@@ -165,10 +168,10 @@ namespace Mycelia.App.Tests
         }
 
         // ADR-0012 rules 4 and 8.
-        [Test]
-        public void EveryCanvas_ScalesAlike_AndFitsTheSafeArea()
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryCanvas_ScalesAlike_AndFitsTheSafeArea(SceneId scene)
         {
-            WithScene(SceneId.Game, roots =>
+            WithScene(scene, roots =>
             {
                 var canvases = roots.SelectMany(root => root.GetComponentsInChildren<Canvas>(true)).Where(canvas => canvas.isRootCanvas).ToArray();
                 Assert.That(canvases, Is.Not.Empty);
@@ -183,6 +186,23 @@ namespace Mycelia.App.Tests
                     Assert.That(fitted.Length, Is.EqualTo(1), $"{canvas.name} has one safe-area root.");
                     Assert.That(canvas.transform.childCount, Is.EqualTo(1), $"Everything on {canvas.name} lives inside its safe-area root.");
                 }
+            });
+        }
+
+        // ADR-0012 refinement (Milestone 3 slice 4): all levels on one portrait screen, three across, no scrolling.
+        [Test]
+        public void LevelSelect_LaysLevelsOutThreeAcross_WithoutScrolling()
+        {
+            WithScene(SceneId.LevelSelect, roots =>
+            {
+                Game.LevelSelectView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.LevelSelectView>(true)).Single();
+                var grid = (RectTransform)new SerializedObject(view).FindProperty("grid").objectReferenceValue;
+                var layout = grid.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+
+                Assert.That(layout, Is.Not.Null);
+                Assert.That(layout.constraint, Is.EqualTo(UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount));
+                Assert.That(layout.constraintCount, Is.EqualTo(3));
+                Assert.That(roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.ScrollRect>(true)), Is.Empty);
             });
         }
 
@@ -206,15 +226,15 @@ namespace Mycelia.App.Tests
             });
         }
 
-        // ADR-0012 rule 7: UI images draw from one UI atlas, so the HUD batches.
-        [Test]
-        public void EveryUiImage_InTheGameScene_DrawsFromTheUiAtlas()
+        // ADR-0012 rule 7: UI images draw from one UI atlas, so each screen batches.
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryUiImage_DrawsFromTheUiAtlas(SceneId scene)
         {
             var atlas = AssetDatabase.FindAssets("UIAtlas t:SpriteAtlas", new[] { "Assets" })
                 .Select(guid => AssetDatabase.LoadAssetAtPath<UnityEngine.U2D.SpriteAtlas>(AssetDatabase.GUIDToAssetPath(guid)))
                 .Single();
 
-            WithScene(SceneId.Game, roots =>
+            WithScene(scene, roots =>
             {
                 foreach (UnityEngine.UI.Image image in roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Image>(true)))
                 {
@@ -224,10 +244,10 @@ namespace Mycelia.App.Tests
             });
         }
 
-        [Test]
-        public void TheGameScene_HasOneEventSystem_ReadingTheInputSystem()
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryUiScene_HasOneEventSystem_ReadingTheInputSystem(SceneId scene)
         {
-            WithScene(SceneId.Game, roots =>
+            WithScene(scene, roots =>
             {
                 var systems = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.EventSystems.EventSystem>(true)).ToArray();
                 Assert.That(systems.Length, Is.EqualTo(1));

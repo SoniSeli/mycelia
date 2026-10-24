@@ -5,5 +5,7 @@ namespace Mycelia.App
     {
         Bootstrap,
         Game,
+        MainMenu,
+        LevelSelect,
     }
 }

@@ -55,7 +55,8 @@ namespace Mycelia.App
             playback.Init(boardView, config.Width, config.Height, results);
             Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
             pauseOverlay.Init(Pause.Resume, restart);
-            pauseController.Init(Pause);
+            // Back once the result is shown steps out to level select (ADR-0013).
+            pauseController.Init(Pause, () => services.Scenes.Load(SceneId.LevelSelect, services));
             chainInput.Init(Session, boardCamera, chainView, results, Pause);
         }
     }

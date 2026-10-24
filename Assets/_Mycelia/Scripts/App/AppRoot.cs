@@ -33,8 +33,7 @@ namespace Mycelia.App
                 levels: levels,
                 progress: progress);
 
-            // A build opens the first level until Level Select exists (design §8.2, slice 4).
-            StartScene start = StartScene.Choose(new GameSceneArgs(levels.Levels[0]), TakeEditorStartScene());
+            StartScene start = StartScene.Choose(TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);
         }
 

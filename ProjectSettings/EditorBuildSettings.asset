@@ -11,5 +11,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Mycelia/Scenes/Game.unity
     guid: b3bc4426e0280b34fa5d65925cf3682e
+  - enabled: 1
+    path: Assets/_Mycelia/Scenes/MainMenu.unity
+    guid: 2f9093e7f13e2b145942a70788894a9f
+  - enabled: 1
+    path: Assets/_Mycelia/Scenes/LevelSelect.unity
+    guid: 7a9a9fef3921d5a47b44ce7d35769860
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

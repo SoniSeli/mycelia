@@ -4,9 +4,8 @@ using System.IO;
 namespace Mycelia.App
 {
     /// <summary>
-    /// Where the app goes after Bootstrap. A build opens the Game scene with the start level, until Level Select
-    /// exists (design §8.1). In the Editor, Play always boots through Bootstrap and then reopens the scene Play was
-    /// pressed in, with that scene's own debug args (ADR-0010).
+    /// Where the app goes after Bootstrap. A build opens the main menu (design §4). In the Editor, Play always boots
+    /// through Bootstrap and then reopens the scene Play was pressed in, with that scene's own debug args (ADR-0010).
     /// </summary>
     public readonly struct StartScene
     {
@@ -25,12 +24,12 @@ namespace Mycelia.App
         public SceneArgs Args { get; }
 
         /// <param name="editorScenePath">The scene Play was pressed in, or null in a build.</param>
-        public static StartScene Choose(GameSceneArgs startLevel, string editorScenePath)
+        public static StartScene Choose(string editorScenePath)
         {
             if (TryFindScene(editorScenePath, out SceneId scene) && scene != SceneId.Bootstrap)
                 return new StartScene(scene, null);
 
-            return new StartScene(SceneId.Game, startLevel);
+            return new StartScene(SceneId.MainMenu, null);
         }
 
         static bool TryFindScene(string path, out SceneId scene)

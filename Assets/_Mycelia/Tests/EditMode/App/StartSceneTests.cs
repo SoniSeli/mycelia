@@ -4,45 +4,39 @@ namespace Mycelia.App.Tests
 {
     public class StartSceneTests
     {
-        GameSceneArgs startLevel;
-
-        [SetUp]
-        public void CreateArgs() => startLevel = new GameSceneArgs(ProjectAssets.TestLevel);
-
         [Test]
-        public void ABuild_StartsTheGameWithTheStartLevel()
+        public void ABuild_OpensTheMainMenu()
         {
-            StartScene start = StartScene.Choose(startLevel, editorScenePath: null);
+            StartScene start = StartScene.Choose(editorScenePath: null);
 
-            Assert.That(start.Scene, Is.EqualTo(SceneId.Game));
-            Assert.That(start.Args, Is.SameAs(startLevel));
+            Assert.That(start.Scene, Is.EqualTo(SceneId.MainMenu));
+            Assert.That(start.Args, Is.Null);
         }
 
         [Test]
-        public void PressingPlayInBootstrap_StartsTheGameWithTheStartLevel()
+        public void PressingPlayInBootstrap_OpensTheMainMenu()
         {
-            StartScene start = StartScene.Choose(startLevel, "Assets/_Mycelia/Scenes/Bootstrap.unity");
+            StartScene start = StartScene.Choose("Assets/_Mycelia/Scenes/Bootstrap.unity");
 
-            Assert.That(start.Scene, Is.EqualTo(SceneId.Game));
-            Assert.That(start.Args, Is.SameAs(startLevel));
+            Assert.That(start.Scene, Is.EqualTo(SceneId.MainMenu));
         }
 
-        [Test]
-        public void PressingPlayInAnAppScene_ReopensItWithItsDebugArgs()
+        [TestCase("Assets/_Mycelia/Scenes/Game.unity", SceneId.Game)]
+        [TestCase("Assets/_Mycelia/Scenes/LevelSelect.unity", SceneId.LevelSelect)]
+        public void PressingPlayInAnAppScene_ReopensItWithItsDebugArgs(string path, SceneId scene)
         {
-            StartScene start = StartScene.Choose(startLevel, "Assets/_Mycelia/Scenes/Game.unity");
+            StartScene start = StartScene.Choose(path);
 
-            Assert.That(start.Scene, Is.EqualTo(SceneId.Game));
+            Assert.That(start.Scene, Is.EqualTo(scene));
             Assert.That(start.Args, Is.Null, "No args, so the scene uses its own debug args.");
         }
 
         [Test]
-        public void PressingPlayInASceneOutsideTheApp_StartsTheGameWithTheStartLevel()
+        public void PressingPlayInASceneOutsideTheApp_OpensTheMainMenu()
         {
-            StartScene start = StartScene.Choose(startLevel, "Assets/Sandbox/Game Sketch.unity");
+            StartScene start = StartScene.Choose("Assets/Sandbox/Game Sketch.unity");
 
-            Assert.That(start.Scene, Is.EqualTo(SceneId.Game));
-            Assert.That(start.Args, Is.SameAs(startLevel));
+            Assert.That(start.Scene, Is.EqualTo(SceneId.MainMenu));
         }
     }
 }
