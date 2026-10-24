@@ -8,7 +8,7 @@
 
 ## Context
 
-Mycelia is a 2D, sprite-based puzzle game. Its main target is a **low-end Android phone** (see the [performance budget](../performance-budget.md): stable 60 fps, ≤ 30 batches, ≤ 60 MB texture memory). It's a new project that should keep working on supported Unity versions for its whole lifetime, and its rendering needs are modest: sprites, UI, a few particle effects, and possibly a soft glow to suit the mycelium theme.
+Mycelia is a 2D, sprite-based puzzle game. Its main target is a **low-end Android phone** (see the [performance budget](../performance-budget.md): stable 60 fps, ≤ 30 batches, ≤ 60 MB texture memory). *Amended 2026-10-24: the budget replaced "≤ 30 batches" with render-thread time and SetPass calls, since URP's SRP Batcher makes the batch count misleading.* It's a new project that should keep working on supported Unity versions for its whole lifetime, and its rendering needs are modest: sprites, UI, a few particle effects, and possibly a soft glow to suit the mycelium theme.
 
 The prototype used the Built-in Render Pipeline with default sprite materials, one camera, two particle systems and no custom shaders. Nothing needs porting, so the choice can be made on its merits.
 

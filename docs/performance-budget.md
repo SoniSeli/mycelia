@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Targets set; measured on the mid-range device (Milestone 2 slice 8); low-end reference device deferred |
+| **Status** | Targets set; measured on the mid-range device (Milestone 2 slice 8); the low-end reference device and the lines not yet measured move to Milestone 5 |
 | **Last updated** | 2026-10-24 |
 
 > **Why budgets first.** These targets are set *before* the code is written, so every system is designed to fit them. Measurements on a real device are recorded against them below, and any significant fix gets a short case study.
@@ -11,7 +11,7 @@
 
 | Role | Device | SoC / RAM | Android | Why this device |
 |---|---|---|---|---|
-| **Low-end (budget target)** | _To choose in Milestone 2_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
+| **Low-end (budget target)** | _To choose in Milestone 5_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
 | Mid-range (sanity check) | Xiaomi Redmi Note 12 Pro+ 5G (22101316UG) | MediaTek Dimensity 1080 (MT6877V) / 8 GB, 1080 × 2400 | 13 (API 33) | Developer's own phone, available every day. Good for checking that things work, too fast to prove the budgets. |
 
 > **Status (2026-10-22): no low-end device yet; deferred to Milestone 2.** Only the mid-range phone is available. Until a low-end device is chosen, results on the mid-range phone are **provisional**: a pass there doesn't prove the budget, but a failure there (like the memory result below) is a real problem. Options for Milestone 2: a cheap second-hand phone (the most useful, because you can profile it yourself), or a device farm such as Firebase Test Lab for start-up and crash checks on low-end models.
@@ -20,7 +20,9 @@
 
 ## Budgets
 
-All figures are measured on the **low-end reference device** with a **Development build** and the Profiler attached, unless noted otherwise.
+All figures are measured on the **low-end reference device** with a **Development build** and the Profiler attached, unless noted otherwise. Until Milestone 5 they come from the mid-range phone, with `PerfProbe` instead of a live Profiler (see How to measure).
+
+> **Not measured yet; moved to Milestone 5 (2026-10-24):** memory growth over 10 levels, cold start to level select, the 15-minute session, overdraw, and scripts-only CPU time. They need the finished levels, the level select or the low-end device. The live Profiler connection moves there too.
 
 ### Runtime
 
@@ -73,7 +75,7 @@ All figures are measured on the **low-end reference device** with a **Developmen
 | What | Tool | Method |
 |---|---|---|
 | Frame, main-thread, render-thread and GPU time; GC; batches; SetPass | `PerfProbe` (development builds only) | Logs one line every 300 frames: `adb logcat -s Unity \| findstr [Perf]`. Times from the FrameTimingManager (Frame Timing Stats on), GC, batches and SetPass from ProfilerRecorders. Play 10 moves and read the windows that cover them. The deciding factor for a probe: it can be rerun over adb after every change, without someone at the Editor. |
-| The same, as screenshots | Unity Profiler (connected to device) | Development build, connected over USB. Record 10 moves; screenshots of the CPU module and GC Alloc column go to `docs/perf/`. |
+| The same, as screenshots | Unity Profiler (connected to device) | Development build, connected over USB. Record 10 moves; screenshots of the CPU module and GC Alloc column go to `docs/perf/`. *The Redmi's USB link drops under the live stream, so the live connection moved to Milestone 5. Until then: a capture recorded on the phone (`Profiler.enableBinaryLog`), pulled in checksummed pieces and loaded in the Editor; the Profiler keeps at most 2,000 frames (case study below).* |
 | Comparing builds | Profile Analyzer | Compare captures before and after a change; report median and 95th-percentile frame time. |
 | Memory | Memory Profiler package + `adb shell dumpsys meminfo <package>` | Capture after loading a level and again after 10 levels. |
 | Draw calls / batches | Frame Debugger | Gameplay scene, mid-move. |
@@ -95,8 +97,8 @@ Store raw captures outside the repo (they're large). Commit screenshots of the r
 | 2026-10-23 | 31f10fa + probe, development | Mid-range | Frame time during moves | Stable 60 fps | median and p95 **16.5 ms** in every window | ✅ | `PerfProbe`, about 10 moves played by hand. |
 | 2026-10-23 | 31f10fa + probe, development | Mid-range | Longest frame during a move | ≤ 25 ms | **24.8 ms** | ✅ (tight) | Once, during one of the first moves; first-use costs, like the warm-up allocations below. |
 | 2026-10-23 | 31f10fa + probe, development | Mid-range | GC per frame during moves, real HUD | 0 B after warm-up | **0 B** in 9 windows of play after about 22 KB over the first moves | ✅ (this run) | Input, playback and the real HUD (TextMeshPro's player-only `SetText` path, ADR-0012). Showing the pause overlay the first time allocates about 22 KB (not during a move). |
-| 2026-10-23 | slice 8, development | Mid-range | GC per frame during moves, real HUD (second run, 3 levels) | 0 B after warm-up | small allocations in 8 of about 25 windows of play: 24, 72, 72, 120, 384 B, and **1,332 B** at the start of each new level | ❌ | Source not yet known (game code, input or engine): to find with allocation call stacks in the Profiler. Play again's scene load allocates 200–220 KB, outside a move. |
-| 2026-10-23 | slice 8, development | Mid-range | Longest frame during a move (second run) | ≤ 25 ms | **25.9 ms** once, mid-game; otherwise ≤ 21.6 ms | ❌ (by 0.9 ms) | Cause not yet known; for the Profiler session. Play again's scene load takes one 36–39 ms frame (level load, not a move). |
+| 2026-10-23 | slice 8, development | Mid-range | GC per frame during moves, real HUD (second run, 3 levels) | 0 B after warm-up | small allocations in 8 of about 25 windows of play: 24, 72, 72, 120, 384 B, and **1,332 B** at the start of each new level | ❌ | Source not yet known (game code, input or engine): to find with allocation call stacks in the Profiler. Play again's scene load allocates 200–220 KB, outside a move. *Traced and fixed on 2026-10-24: see the rows below.* |
+| 2026-10-23 | slice 8, development | Mid-range | Longest frame during a move (second run) | ≤ 25 ms | **25.9 ms** once, mid-game; otherwise ≤ 21.6 ms | ❌ (by 0.9 ms) | Cause not yet known; for the Profiler session. Play again's scene load takes one 36–39 ms frame (level load, not a move). *Explained on 2026-10-24 (display waits) and re-measured at 24.6 ms: see the rows below.* |
 | 2026-10-24 | slice 8, development, Profiler capture | Mid-range | Sources of the allocations during play | 0 B after warm-up | Two per-level costs in our code (564 B on each level's first move; 24 B per pooled spore view on its first use) and first-use costs in IL2CPP, PrimeTween, uGUI and the Input System | ✅ after fixes | Our two are fixed and guarded in EditMode (`TheFirstMoveOfANewLevel_DoesNotAllocate`, `ShowingViewsThatWereNeverRentedBefore_AllocatesNothing`); the rest is warm-up (see Changes). Re-measured on the phone in the next row. |
 | 2026-10-24 | 3cf8714, development | Mid-range | GC per frame during moves, after the fixes (2 levels, Restart between) | 0 B after warm-up | Level 1: about 21.5 KB over the first moves (warm-up, 860 B less than before), then **0 B**. Level 2: **544 B** on the first touch, then **0 B** in all 8 windows of play | ✅ | The 860 B saved matches the `Reshuffler` (564 B) plus about 12 pool views (24 B each). Level 2's 544 B is uGUI's EventSystem on the level's first touch (warm-up). Longest frame during moves **24.6 ms** (✅). The first pause overlay (18 KB) and Restart's scene load (207 KB) aren't moves. |
 | 2026-10-24 | slice 8, development, Profiler capture | Mid-range | What the long frames are | ≤ 25 ms | captured long frames up to **22 ms**, all waiting on the GPU and display (`Gfx.WaitForPresentOnGfxThread`, `Device.Present`); no script over 1 ms | ✅ (watch) | The 25.9 ms frame itself wasn't captured. Decided to record it as most likely a missed display refresh and keep watching; the deciding factor: every long frame captured was waiting on the display, with no script time, so there is nothing in our code to change. Rechecked on the low-end device. |

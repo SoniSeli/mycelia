@@ -5,7 +5,7 @@
 | **Status** | Accepted |
 | **Date** | 2026-10-23 |
 | **Deciders** | Soni Seli |
-| **Related** | [design §6](../design.md#6-mobile-considerations) (portrait, 16:9 to ~21:9, tablets, safe area), [ADR-0002](0002-use-urp-with-2d-renderer.md) (unlit sprites), [ADR-0008](0008-pointer-action-and-grid-hit-testing.md) (grid hit testing), [performance budget](../performance-budget.md) (0 B per move, ≤ 30 batches) |
+| **Related** | [design §6](../design.md#6-mobile-considerations) (portrait, 16:9 to ~21:9, tablets, safe area), [ADR-0002](0002-use-urp-with-2d-renderer.md) (unlit sprites), [ADR-0008](0008-pointer-action-and-grid-hit-testing.md) (grid hit testing), [performance budget](../performance-budget.md) (0 B per move, ≤ 30 batches; now SetPass ≤ 10 and render-thread time) |
 
 ## Context
 
@@ -14,7 +14,7 @@ Milestone 2 slice 3 draws the starting board. Four questions came up together:
 - **Fitting:** the board must fill its space on portrait phones from 16:9 to about 21:9 and on tablets, inside the safe area (notches, gesture bars), and leave room for the HUD that slice 6 adds.
 - **HUD space:** the HUD's framework isn't chosen yet, but the board must not have to move when it arrives.
 - **Pooling:** the budget allows no GC allocation during a move, and the done-when for this slice is "no `Instantiate`/`Destroy` during play". Spores are cleared and spawned on every move.
-- **Atlas:** every spore silhouette and the cell tile should draw from one texture, so the board batches well (≤ 30 batches).
+- **Atlas:** every spore silhouette and the cell tile should draw from one texture, so the board batches well (≤ 30 batches). *Amended 2026-10-24: the budget now limits SetPass calls and render-thread time instead (follow-up below); one atlas still keeps SetPass calls low.*
 
 ## Options considered
 

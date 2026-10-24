@@ -85,7 +85,7 @@ Decided while building playback:
 - **New spores fall in, fading in.** They start above the board at their drop slot, invisible until the refill phase, with no mask, so batching is unchanged.
 - **Callbacks** use the target overloads with `static` lambdas, so the compiler rejects a capture. Tween capacity comes from `PlaybackSettings.TweenCapacity` (512) and is set in `MovePlayback.Init`, when a level loads.
 - **Input lock:** `ChainDrag` hands committed moves to an `IMovePlayer` and ignores presses while one plays. A touch that begins during playback is ignored until the finger lifts, so it can't start a chain the moment playback ends (found by a headless Play check).
-- **Allocation test scope:** a PlayMode test commits a move, builds its sequence and completes it at once under `Is.Not.AllocatingGCMemory()` after warm-up. That covers sequence creation and every callback. Per-frame tweening relies on PrimeTween's guarantee and the device Profiler pass (slice 8).
+- **Allocation test scope:** a PlayMode test commits a move, builds its sequence and completes it at once under `Is.Not.AllocatingGCMemory()` after warm-up. That covers sequence creation and every callback. Per-frame tweening relies on PrimeTween's guarantee and the device Profiler pass (slice 8). *Slice 8 checked it with `PerfProbe` and a Profiler capture recorded on the phone; the live Profiler connection moved to Milestone 5.*
 - **PlayMode tests run locally for now;** CI still runs EditMode only.
 
 ## Consequences

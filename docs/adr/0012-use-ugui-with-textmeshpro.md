@@ -14,7 +14,7 @@ Milestone 2 slice 6 adds the HUD (moves left, objective counters) and a minimal 
 Constraints:
 - Portrait phones from 16:9 to about 21:9 and tablets, laid out inside the safe area (design §6).
 - Readable text at phone size; accessible labels for spores (ADR-0005).
-- **0 B of GC per move** includes the HUD updating its counters during playback (ADR-0009). Gameplay must stay within ≤ 30 batches.
+- **0 B of GC per move** includes the HUD updating its counters during playback (ADR-0009). Gameplay must stay within ≤ 30 batches. *Amended 2026-10-24: the budget now limits SetPass calls (≤ 10) and render-thread time instead of batches.*
 - One developer: one UI system to learn, style and debug.
 
 Both systems are already available: `com.unity.ugui` 2.0 (which includes TextMeshPro in Unity 6) and the UI Toolkit module, which the project's custom Inspectors use. PrimeTween 1.4.11 can animate either (`RectTransform`/`Graphic` and `VisualElement` tweens).

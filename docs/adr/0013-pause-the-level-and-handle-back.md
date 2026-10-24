@@ -66,6 +66,6 @@ Decided while building:
   - Anything that animates later (UI tweens, effects, audio) must register as an `IPausable`, or it keeps running under the overlay.
   - Focus-loss behaviour can only be checked on device.
 - **Follow-up:**
-  - Slice 8, on device: background mid-drag and mid-playback, the notification shade, and back on each screen, including that back on the result panel returns to the same screen when the app is reopened.
+  - Slice 8, on device: background mid-drag and mid-playback, the notification shade, and back on each screen, including that back on the result panel returns to the same screen when the app is reopened. *Checked on the mid-range phone on 2026-10-23: all as intended.*
   - Milestone 3: save on pause (ADR-0006); back on the result panel goes to level select instead.
   - **Revisit if:** something must keep moving under the overlay that can't own its pausing, or the number of `IPausable`s makes the wiring awkward.
