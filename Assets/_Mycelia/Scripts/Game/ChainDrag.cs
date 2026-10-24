@@ -19,17 +19,20 @@ namespace Mycelia.Game
         readonly IChainFeedback feedback;
         readonly IMovePlayer player;
         readonly LevelPause pause;
+        readonly IInputBlock screenChange;
         readonly float hitRadius;
         readonly float sampleStep;
         Vector2 lastPoint;
         bool waitingForRelease;
 
-        public ChainDrag(LevelSession session, IChainFeedback feedback, IMovePlayer player, LevelPause pause, float hitRadius, float sampleStep)
+        public ChainDrag(LevelSession session, IChainFeedback feedback, IMovePlayer player, LevelPause pause, IInputBlock screenChange,
+            float hitRadius, float sampleStep)
         {
             this.session = session ?? throw new ArgumentNullException(nameof(session));
             this.feedback = feedback ?? throw new ArgumentNullException(nameof(feedback));
             this.player = player ?? throw new ArgumentNullException(nameof(player));
             this.pause = pause ?? throw new ArgumentNullException(nameof(pause));
+            this.screenChange = screenChange ?? throw new ArgumentNullException(nameof(screenChange));
             if (hitRadius <= 0 || hitRadius > 0.5f)
                 throw new ArgumentOutOfRangeException(nameof(hitRadius), hitRadius, "The hit radius must be in (0, 0.5] cells.");
             if (sampleStep <= 0)
@@ -46,10 +49,10 @@ namespace Mycelia.Game
             if (waitingForRelease)
                 return;
 
-            // Input is locked while a move plays back (ADR-0003), while the level is paused, and once it has ended.
-            // A touch that begins while locked is ignored until the finger lifts, so it can't start a chain the
-            // moment playback ends or the level resumes.
-            if (player.IsPlaying || pause.IsPaused || session.State != SessionState.Playing)
+            // Input is locked while a move plays back (ADR-0003), while the level is paused, once it has ended, and while
+            // the screen changes scene. A touch that begins while locked is ignored until the finger lifts, so it can't
+            // start a chain the moment playback ends, the level resumes or the level has faded in.
+            if (player.IsPlaying || pause.IsPaused || session.State != SessionState.Playing || screenChange.IsBlockingInput)
             {
                 waitingForRelease = true;
                 return;

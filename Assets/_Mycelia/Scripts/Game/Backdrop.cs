@@ -15,8 +15,12 @@ namespace Mycelia.Game
         /// <summary>The camera size the spores' sizes, speeds and emitter are authored for; they scale with the view.</summary>
         public const float ReferenceSize = 5f;
 
-        // Rows blended in sRGB like the reference image; a two-row quad would blend in linear light and lighten the middle.
-        const int Rows = 9;
+        /// <summary>
+        /// Rows blended in sRGB like the reference image; a two-row quad would blend in linear light and lighten the middle.
+        /// The scene fade uses the same rows (<see cref="GradientGraphic"/>).
+        /// </summary>
+        public const int GradientRows = 9;
+
         // A little past the view's edges, so no edge shows through.
         const float Overscan = 1.02f;
 
@@ -45,9 +49,9 @@ namespace Mycelia.Game
 
             float halfHeight = fittedSize * Overscan;
             float halfWidth = fittedSize * fittedAspect * Overscan;
-            for (int row = 0; row < Rows; row++)
+            for (int row = 0; row < GradientRows; row++)
             {
-                float y = Mathf.Lerp(-halfHeight, halfHeight, row / (Rows - 1f));
+                float y = Mathf.Lerp(-halfHeight, halfHeight, row / (GradientRows - 1f));
                 vertices[row * 2] = new Vector3(-halfWidth, y, 0);
                 vertices[row * 2 + 1] = new Vector3(halfWidth, y, 0);
             }
@@ -70,15 +74,15 @@ namespace Mycelia.Game
 
         void Build()
         {
-            vertices = new Vector3[Rows * 2];
-            var colours = new Color[Rows * 2];
-            var triangles = new int[(Rows - 1) * 6];
+            vertices = new Vector3[GradientRows * 2];
+            var colours = new Color[GradientRows * 2];
+            var triangles = new int[(GradientRows - 1) * 6];
             bool linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
-            for (int row = 0; row < Rows; row++)
+            for (int row = 0; row < GradientRows; row++)
             {
-                Color colour = Color.Lerp(bottom, top, row / (Rows - 1f));
+                Color colour = Color.Lerp(bottom, top, row / (GradientRows - 1f));
                 colours[row * 2] = colours[row * 2 + 1] = linear ? colour.linear : colour;
-                if (row == Rows - 1)
+                if (row == GradientRows - 1)
                     continue;
                 int at = row * 6, v = row * 2;
                 triangles[at] = v;
@@ -92,7 +96,7 @@ namespace Mycelia.Game
             mesh = new Mesh { name = "Backdrop Gradient", hideFlags = HideFlags.DontSave };
             // Every vertex samples the spore texture's opaque white core, so the gradient and the spores need one material.
             // (Measured on the phone: sharing it doesn't change SetPass; particle systems don't use the SRP Batcher.)
-            var uvs = new Vector2[Rows * 2];
+            var uvs = new Vector2[GradientRows * 2];
             for (int i = 0; i < uvs.Length; i++)
                 uvs[i] = new Vector2(0.5f, 0.5f);
 

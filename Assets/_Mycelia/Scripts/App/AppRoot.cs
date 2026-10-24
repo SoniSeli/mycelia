@@ -1,5 +1,6 @@
 using System;
 using Mycelia.Content;
+using Mycelia.Game;
 using UnityEngine;
 
 namespace Mycelia.App
@@ -13,6 +14,9 @@ namespace Mycelia.App
         [SerializeField] SporeCatalog spores;
 
         [SerializeField] LevelCatalog levels;
+
+        [SerializeField, Tooltip("The fade between scenes, above every canvas; it outlives scene loads with this object.")]
+        ScreenFade fade;
 
         SceneLoader scenes;
         PlayerProgress progress;
@@ -31,7 +35,7 @@ namespace Mycelia.App
                 () => DateTime.UtcNow, Debug.isDebugBuild ? (Action<string>)Debug.Log : null);
             AppStartAnalytics.Report(analytics, Application.version, progress.LoadOutcome);
 
-            scenes = new SceneLoader();
+            scenes = new SceneLoader(fade);
             var services = new AppServices(
                 scenes: scenes,
                 seeds: new CryptoSeedSource(),

@@ -18,10 +18,11 @@ namespace Mycelia.Game
         BoardCamera boardCamera;
         ChainDrag drag;
 
-        public void Init(LevelSession session, BoardCamera boardCamera, IChainFeedback feedback, IMovePlayer player, LevelPause pause)
+        public void Init(LevelSession session, BoardCamera boardCamera, IChainFeedback feedback, IMovePlayer player, LevelPause pause,
+            IInputBlock screenChange)
         {
             this.boardCamera = boardCamera;
-            drag = new ChainDrag(session, feedback, player, pause, settings.HitRadius, settings.SampleStep);
+            drag = new ChainDrag(session, feedback, player, pause, screenChange, settings.HitRadius, settings.SampleStep);
         }
 
         void OnEnable()

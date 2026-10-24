@@ -15,6 +15,11 @@ namespace Mycelia.Game.Tests
         }
     }
 
+    sealed class FakeInputBlock : IInputBlock
+    {
+        public bool IsBlockingInput { get; set; }
+    }
+
     sealed class RecordingPausable : IPausable
     {
         public readonly List<bool> Calls = new List<bool>();

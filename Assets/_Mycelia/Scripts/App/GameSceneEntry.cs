@@ -70,7 +70,7 @@ namespace Mycelia.App
             pauseOverlay.Init(Pause.Resume, restart, leave);
             // Back once the result is shown steps out to level select (ADR-0013).
             pauseController.Init(Pause, leave);
-            chainInput.Init(Session, boardCamera, chainView, results, Pause);
+            chainInput.Init(Session, boardCamera, chainView, results, Pause, services.Scenes);
         }
     }
 }

@@ -9,7 +9,45 @@ namespace Mycelia.App.Tests
     {
         public readonly List<(SceneId Scene, SceneArgs Args)> Loads = new List<(SceneId, SceneArgs)>();
 
+        public bool IsBlockingInput { get; set; }
+
         public void Load(SceneId scene, AppServices services, SceneArgs args = null) => Loads.Add((scene, args));
+    }
+
+    // Fades finish only when a test says so.
+    sealed class FakeScreenFade : Game.IScreenFade
+    {
+        readonly List<string> log;
+        System.Action covered;
+        System.Action shown;
+
+        public FakeScreenFade(List<string> log) => this.log = log;
+
+        public void FadeOut(System.Action onCovered)
+        {
+            log.Add("fade out");
+            covered = onCovered;
+        }
+
+        public void FadeIn(System.Action onShown)
+        {
+            log.Add("fade in");
+            shown = onShown;
+        }
+
+        public void FinishFadeOut()
+        {
+            System.Action then = covered;
+            covered = null;
+            then();
+        }
+
+        public void FinishFadeIn()
+        {
+            System.Action then = shown;
+            shown = null;
+            then();
+        }
     }
 
     sealed class FixedSeedSource : ISeedSource

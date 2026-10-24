@@ -36,6 +36,7 @@ namespace Mycelia.Game.Tests
         RecordingFeedback feedback;
         FakePlayer player;
         LevelPause pause;
+        FakeInputBlock screenChange;
         ChainDrag drag;
 
         static Vector2 Centre(int column, int row) => new Vector2(column + 0.5f, row + 0.5f);
@@ -54,7 +55,8 @@ namespace Mycelia.Game.Tests
         {
             session = levelSession;
             pause = new LevelPause(session, player);
-            drag = new ChainDrag(session, feedback, player, pause, hitRadius: 0.4f, sampleStep: 0.5f);
+            screenChange = new FakeInputBlock();
+            drag = new ChainDrag(session, feedback, player, pause, screenChange, hitRadius: 0.4f, sampleStep: 0.5f);
         }
 
         [Test]
@@ -199,6 +201,23 @@ namespace Mycelia.Game.Tests
             player.IsPlaying = false;
             drag.Press(Centre(0, 0));
             Assert.That(session.Chain.Count, Is.Zero, "A touch that began during playback doesn't start a chain.");
+
+            drag.Release();
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.EqualTo(1));
+        }
+
+        // Design §8.3 slice 2: a touch from the screen before, or one made while the level fades in, starts nothing.
+        [Test]
+        public void AFingerHeldThroughAScreenChange_StartsNoChain_UntilItLiftsAndPressesAgain()
+        {
+            screenChange.IsBlockingInput = true;
+            drag.Press(Centre(0, 0));
+
+            // The level has faded in while the finger is still down.
+            screenChange.IsBlockingInput = false;
+            drag.Press(Centre(0, 0));
+            Assert.That(session.Chain.Count, Is.Zero, "A touch that began during the screen change doesn't start a chain.");
 
             drag.Release();
             drag.Press(Centre(0, 0));

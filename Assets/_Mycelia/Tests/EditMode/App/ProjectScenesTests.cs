@@ -66,6 +66,55 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Design §8.3 slice 2: the fade outlives every scene, and covers all of every screen, pause overlay included.
+        [Test]
+        public void Bootstrap_FadesBetweenScenes_OnTheAppRoot_AboveEveryCanvasOfEveryScreen()
+        {
+            int highest = int.MinValue;
+            foreach (SceneId scene in UiScenes)
+                WithScene(scene, roots => highest = Math.Max(highest,
+                    roots.SelectMany(root => root.GetComponentsInChildren<Canvas>(true)).Where(c => c.isRootCanvas).Max(c => c.sortingOrder)));
+
+            WithScene(SceneId.Bootstrap, roots =>
+            {
+                AppRoot appRoot = roots.SelectMany(root => root.GetComponentsInChildren<AppRoot>(true)).Single();
+                var fade = (Game.ScreenFade)new SerializedObject(appRoot).FindProperty("fade").objectReferenceValue;
+                Assert.That(fade, Is.Not.Null);
+                Assert.That(fade.transform.IsChildOf(appRoot.transform), Is.True, "It outlives scene loads with the AppRoot.");
+
+                var canvas = (Canvas)new SerializedObject(fade).FindProperty("canvas").objectReferenceValue;
+                Assert.That(canvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+                Assert.That(canvas.sortingOrder, Is.GreaterThan(highest));
+                Assert.That(canvas.GetComponent<UnityEngine.UI.GraphicRaycaster>(), Is.Not.Null, "It catches taps while it shows.");
+                Assert.That(canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Any(graphic => graphic.raycastTarget), Is.True);
+            });
+        }
+
+        // Soni's choices: the backdrop's gradient, 0.25 s each way, and the first screen fades in from it.
+        [Test]
+        public void TheFade_StartsCovered_InTheBackdropsGradient_AQuarterSecondEachWay()
+        {
+            var backdrop = new SerializedObject(AssetDatabase.LoadAssetAtPath<Game.Backdrop>("Assets/_Mycelia/Prefabs/Backdrop.prefab"));
+            WithScene(SceneId.Bootstrap, roots =>
+            {
+                Game.ScreenFade fade = roots.SelectMany(root => root.GetComponentsInChildren<Game.ScreenFade>(true)).Single();
+                var serialized = new SerializedObject(fade);
+                var group = (CanvasGroup)serialized.FindProperty("group").objectReferenceValue;
+                var canvas = (Canvas)serialized.FindProperty("canvas").objectReferenceValue;
+
+                Assert.That(group.alpha, Is.EqualTo(1f));
+                Assert.That(group.blocksRaycasts, Is.True);
+                Assert.That(canvas.enabled, Is.True);
+                Assert.That(serialized.FindProperty("duration").floatValue, Is.EqualTo(0.25f));
+                UnityEngine.UI.Graphic cover = canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Single();
+                Assert.That(cover, Is.InstanceOf<Game.GradientGraphic>());
+                var gradient = new SerializedObject(cover);
+                Assert.That((Color32)gradient.FindProperty("top").colorValue, Is.EqualTo((Color32)backdrop.FindProperty("top").colorValue), "top");
+                Assert.That((Color32)gradient.FindProperty("bottom").colorValue, Is.EqualTo((Color32)backdrop.FindProperty("bottom").colorValue), "bottom");
+                Assert.That((Color32)cover.color, Is.EqualTo((Color32)Color.white), "No tint on top of the gradient.");
+            });
+        }
+
         // Performance budget: development builds log frame time, GC and batches from the first frame to the last.
         [Test]
         public void Bootstrap_ProbesPerformance_OnTheAppRoot_WhichOutlivesEveryScene()
@@ -118,7 +167,9 @@ namespace Mycelia.App.Tests
                         SerializedProperty property = new SerializedObject(component).GetIterator();
                         while (property.NextVisible(enterChildren: true))
                         {
-                            if (property.propertyType == SerializedPropertyType.ObjectReference && property.name != "m_Script")
+                            // uGUI's own Graphic.m_Material: empty means the default UI material.
+                            bool graphicMaterial = component is UnityEngine.UI.Graphic && property.name == "m_Material";
+                            if (property.propertyType == SerializedPropertyType.ObjectReference && property.name != "m_Script" && !graphicMaterial)
                                 Assert.That(property.objectReferenceValue, Is.Not.Null, $"{scene}: {component.name}.{property.name}");
                         }
                     }
