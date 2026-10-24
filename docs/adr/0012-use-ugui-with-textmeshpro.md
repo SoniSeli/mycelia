@@ -75,6 +75,19 @@ Decided while building the main menu and level select:
 - Smaller choices: level buttons are 280 × 280 with 50 between them, in the button green, with a white lock icon (own placeholder art, in the UI atlas); a locked button is dimmed by the button's own disabled tint; the main menu's subtitle reads "A fungal chain puzzle".
 - **Guards widened:** the "only buttons take touches", canvas scaling and safe-area, UI atlas and EventSystem checks now run on every scene the player sees, not only Game. A new guard checks that level select lays levels out three across with no scroll view.
 
+### Refinements (2026-10-24, Milestone 3 slice 5)
+
+Decided while building the level flow (design §4):
+
+- **A win returns to level select, with no Next level button.** *Why:* coming back to the grid lets the player see the new unlock and their stars after every win, which makes progress feel real.
+- **The fact card sits on the result panel**, under the stars: the level's image if it has one, the text, and the image credit. *Why:* one screen, nothing to tap through.
+- **The fact shows on every win**, not only the first. *Why:* simple, with nothing extra to save; replays are short.
+- **A loss offers Retry and Level select.** *Why:* retrying is the usual next step after a loss, one tap away, and level select is the way out (design §4).
+- **The pause overlay adds Level select** (Resume, Restart, Level select). *Why:* the player can leave a level without finishing it; a level in progress isn't saved anyway (ADR-0006).
+- **The card's height follows the outcome**: short for a loss, taller for a win, taller again when the fact has an image. The title and stars are anchored to the card's top and the buttons to its bottom; `ResultPanel` sets the heights and moves the fact text below an image. No layout group (rule 3).
+- **Fact images are content, not UI art:** the scene's fact image holds a UI atlas sprite, and at runtime it shows the level's own image, outside the atlas (rule 7 covers the screens' own art). That costs one extra draw on a screen shown once per level.
+- Smaller choices: leaving a level (the result panel, the pause overlay, or back) writes anything unsaved first, which covers a win whose move was still playing when the player paused and left; Retry and Level select are both in the button green on the result panel, and Level select is grey (secondary) on the pause panel; the fact text is top-aligned, 42 pt, with the credit in 28 pt caption grey.
+
 ## Consequences
 
 - **Positive:**
