@@ -56,6 +56,14 @@ Decided while building:
 - **Saving on pause** (ADR-0006) arrives with the save system in Milestone 3.
 - **Guards:** EditMode tests check the pause rules, the input lock, the overlay, the frame rate under pause and the scene entry's wiring. Two project guards were added: the input asset must bind Back to Escape, and the pause canvas must draw above every other canvas (all in Screen Space – Overlay). A PlayMode test checks that a paused move holds still and finishes once resumed.
 
+### Refinements (2026-10-24, Milestone 3 slice 4)
+
+Decided with the main menu and level select (ADR-0012 Refinements):
+
+- **Back goes level select → main menu → background.** Back on level select returns to the main menu; back on the main menu, the app's first screen, sends the app to the background (`AndroidApp.MoveToBackground`). *Why:* Android's convention: back steps out one screen, and leaves from the first one without killing the app.
+- **Back on the result panel now opens level select** (the follow-up below). `PauseController` takes what "leave" means from the Game scene's entry, instead of sending the app to the background itself.
+- Menus read back through a small `BackButton` component (the same Back action as the Game scene), and their entries decide what it does.
+
 ## Consequences
 
 - **Positive:**
@@ -67,5 +75,5 @@ Decided while building:
   - Focus-loss behaviour can only be checked on device.
 - **Follow-up:**
   - Slice 8, on device: background mid-drag and mid-playback, the notification shade, and back on each screen, including that back on the result panel returns to the same screen when the app is reopened. *Checked on the mid-range phone on 2026-10-23: all as intended.*
-  - Milestone 3: save on pause (ADR-0006); back on the result panel goes to level select instead.
+  - Milestone 3: save on pause (ADR-0006); back on the result panel goes to level select instead. *Both done: save on pause in slice 3, back to level select in slice 4.*
   - **Revisit if:** something must keep moving under the overlay that can't own its pausing, or the number of `IPausable`s makes the wiring awkward.

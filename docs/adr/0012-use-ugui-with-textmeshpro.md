@@ -63,6 +63,18 @@ Decided while building the HUD:
 - **Rule 5 in the Editor:** TextMeshPro's numeric `SetText` allocates *only in the Editor*, where it rebuilds the string for the Inspector (`#if UNITY_EDITOR` in `TMP_Text.SetText`). Players don't allocate, so the 0 B check for the counters is part of the device pass (slice 8). The EditMode test guards our own part, the goal pulse.
 - **Guards:** EditMode tests check the real Game scene against rules 1–4, 7 and 8: only buttons take touches, counters sit on their own canvas with no layout group, every canvas scales alike and has one safe-area root, every UI image draws from the UI atlas, and there is one EventSystem using the Input System UI module.
 
+### Refinements (2026-10-24, Milestone 3 slice 4)
+
+Decided while building the main menu and level select:
+
+- **Launch opens a main menu first** (title and Play; Settings joins it in Milestone 4), then level select. *Why:* a title screen gives the game a front door with its name and art, which matters for a portfolio piece people open once to judge. This settles the open question in design §4/§9. The title is placeholder text in the placeholder font until the art pass.
+- **Each screen is its own scene** (`MainMenu`, `LevelSelect`) with its own entry, like `Game` (ADR-0010). *Why:* each screen keeps one entry and its own back rule, and the scene guards run on each. Switching costs a short scene load at the 30 fps menu rate.
+- **Level select is a fixed 3 × 4 grid**, all levels on one portrait screen with no scrolling; the buttons are made once when the screen opens and placed by a `GridLayoutGroup` (allowed by rule 3: the menu canvas never changes during play). *Why:* 12 levels fit one screen, so scrolling would add work and nothing for the player.
+- **A locked level shows a lock and doesn't react to taps.** *Why:* the player sees how many levels there are and that winning opens the next.
+- **Each unlocked level shows its number and best stars** (three, earned ones lit). *Why:* stars are the replay hook (design §3.4), so showing them here gives a reason to replay.
+- Smaller choices: level buttons are 280 × 280 with 50 between them, in the button green, with a white lock icon (own placeholder art, in the UI atlas); a locked button is dimmed by the button's own disabled tint; the main menu's subtitle reads "A fungal chain puzzle".
+- **Guards widened:** the "only buttons take touches", canvas scaling and safe-area, UI atlas and EventSystem checks now run on every scene the player sees, not only Game. A new guard checks that level select lays levels out three across with no scroll view.
+
 ## Consequences
 
 - **Positive:**

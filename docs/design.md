@@ -94,7 +94,10 @@ _Write these in your own words from how the game plays. They become the spec for
 ## 4. Player flow
 
 ```
-Launch → (first run) Intro tutorial → Level select ⇄ Settings
+Launch → (first run) Intro tutorial → Main menu ⇄ Settings
+                                          │
+                                          ▼
+                                     Level select
                                          │
                                          ▼
                                        Level ── win ──▶ Stars + fact card ──▶ Level select
@@ -102,7 +105,7 @@ Launch → (first run) Intro tutorial → Level select ⇄ Settings
                                          └── lose ──▶ Retry / Level select
 ```
 
-> **Decide:** Does the main menu earn its place, or should launch go straight to level select? Fewer taps to play is a common mobile choice.
+> **Decided 2026-10-24:** launch opens a main menu (title and Play) before level select, as the game's front door for a portfolio piece people open once to judge ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements). Back steps out one screen at a time, and leaves the app from the main menu.
 
 ## 5. Architecture (proposal)
 
@@ -134,7 +137,7 @@ Three layers, each depending only on the one below it:
 
 **Board view.** The board stays in world units (one cell = one unit) and the camera is fitted to it inside the safe area, leaving tunable bands for the HUD. Spore views come from a pool filled before play, and board sprites share one atlas ([ADR-0011](adr/0011-fit-camera-to-board-and-pool-views-up-front.md)).
 
-**UI.** uGUI with TextMeshPro, with canvases split by how often they change, safe-area fitting, and allocation-free text updates ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md)).
+**UI.** uGUI with TextMeshPro, with canvases split by how often they change, safe-area fitting, and allocation-free text updates ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md)). The main menu and level select are scenes of their own, each with an entry; level select shows every level on one 3 × 4 grid.
 
 **Lifecycle.** `LevelPause` pauses a level when the app goes to the background or loses focus, or on the back button: input locks, a chain in progress is cancelled, the playing move freezes, and an overlay offers Resume and Restart. Back on the result panel sends the app to the background ([ADR-0013](adr/0013-pause-the-level-and-handle-back.md)).
 
@@ -191,13 +194,13 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | 1 | **Level catalog**: `LevelCatalog` ScriptableObject (levels in play order) on `AppServices`, Inspector validation (unique keys, no empty entries, every level valid), replacing `AppRoot`'s single start level. *Decided 2026-10-24: three placeholder levels for now (the real 12 come in slice 7); keys must match `level-NN`; a guard test lists the shipped keys and fails if one disappears; `level-test` stays outside the catalog as the Game scene's Debug Level and test fixture.* | ADR-0005, ADR-0006, ADR-0010 | The game starts from the catalog; an EditMode test checks every catalog level is playable and every key is unique. *Done 2026-10-24.* |
 | 2 | **Save system**: `IProgressStore`, `ProgressDataV1`, JSON store with atomic write (`.tmp` → `File.Replace`, `.bak`), load order file → backup → defaults, newer-version files left alone, `SavedProgress` (records ready for `Progression`, settings, intro flag), golden-file test for v1. *Decided 2026-10-24: v1 has the full ADR-0006 shape; bad records are dropped one by one; an unreadable file is set aside as `.corrupt`; the CI keystore waits for the Play release (ADR-0006 Refinements).* | ADR-0006 | Progress round-trips; a corrupt file falls back to the backup, then to defaults; a newer file is never overwritten. *Done 2026-10-24 (not yet wired into the app: slice 3).* |
 | 3 | **Saving at the right moments**: the win is recorded and saved before the result panel and celebration; save on `OnApplicationPause(true)` if anything changed. *Decided 2026-10-24: record at commit, write when the winning move finishes; failed saves retried quietly; checked on the phone in this slice (ADR-0006 Refinements).* | ADR-0006, ADR-0013 | Killing the app during the win celebration keeps the unlock. *Done 2026-10-24: on the phone, a win replaced an existing save and survived a force-stop.* |
-| 4 | **Level select** (or a main menu first, §9): locked/unlocked levels, best stars, back button | ADR-0012, ADR-0013 | Any unlocked level can be started from it; locked ones can't |
+| 4 | **Main menu and level select**: a `MainMenu` scene (title, Play) and a `LevelSelect` scene (locked/unlocked levels, best stars); back steps out one screen; back on the result panel opens level select. *Decided 2026-10-24: main menu first; separate scenes; fixed 3 × 4 grid; locked levels show a lock and don't react; buttons show the number and best stars (ADR-0012 and ADR-0013 Refinements).* | ADR-0010, ADR-0012, ADR-0013 | Any unlocked level can be started from it; locked ones can't. *Done 2026-10-24 (in the Editor; the phone check comes with slice 8 unless asked sooner).* |
 | 5 | **Level flow**: win → stars + fact card → level select (or next level); lose → retry / level select | §4 | The full loop works in the Editor without restarting Play |
 | 6 | **Analytics events**: an `IAnalytics` service; level start/end with key, seed and moves left, `save_recovered`, `save_reset` | ADR-0006, ADR-0007 | Events reach the chosen sink in tests and on device |
 | 7 | **The 12 levels**: level assets and fact cards (credits in §10) | §3.6 | All 12 are in the catalog and pass validation |
 | 8 | **Device pass**: play through on the phone, kill the app mid-level and after a win, quick `PerfProbe` check of the new screens | Performance budget | Milestone 3 done-when met on the mid-range phone |
 
-> **Decide before starting:** main menu or straight to level select (§9); save moments beyond ADR-0006; analytics events and sink (local log only, or a backend with consent); placeholder or final level design for the 12 levels, and where fact images come from. *The CI keystore was decided in slice 2: with the Play release (§7).*
+> **Decide before starting:** analytics events and sink (local log only, or a backend with consent); placeholder or final level design for the 12 levels, and where fact images come from. *Decided along the way: the CI keystore with the Play release (slice 2, §7); save moments (slice 3); main menu first (slice 4, §9).*
 
 ## 9. Open questions
 
@@ -208,7 +211,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 - [x] Spore identity: ScriptableObject assets, runtime byte id, stable key ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md))
 - [x] Save format: versioned JSON with JsonUtility, no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md))
 - [ ] Choose the 4 fungus species and design silhouettes that stay distinct at phone size and in colour-blindness simulations
-- [ ] Main menu or straight to level select (§4)
+- [x] Main menu or straight to level select: main menu first (§4, [ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements)
 - [ ] Reference low-end device: deferred to Milestone 2, since only a mid-range phone is available today (§6, performance budget). *Deferred again on 2026-10-23, to Milestone 5.*
 - [x] Render pipeline: URP with the 2D Renderer, unlit sprites by default ([ADR-0002](adr/0002-use-urp-with-2d-renderer.md))
 - [ ] Git LFS for binary art and audio, or keep them in plain git (the project is small)
@@ -221,7 +224,7 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
-| Placeholder spore silhouettes (circle, triangle, square, diamond), board cell tile, UI panel and star | Made for this project | Own work |
+| Placeholder spore silhouettes (circle, triangle, square, diamond), board cell tile, UI panel, star and lock | Made for this project | Own work |
 | Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
 | LiberationSans font (placeholder UI font, shipped as TextMeshPro's SDF font asset) | Red Hat, Inc. / Google Corporation, via Unity's TextMeshPro essential resources | SIL Open Font License 1.1 (`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`) |
 | TextMeshPro essential resources (shaders, settings, style sheet) | Unity Technologies, from the `com.unity.ugui` package | Unity Companion License; the sample emoji set is removed |
