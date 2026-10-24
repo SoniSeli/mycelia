@@ -38,4 +38,22 @@ Bot: greedy, one move ahead. 500 seeds per level (1..500).
 | level-11 | 7×7 | 20 | 4 | 40 circle + 40 triangle + 40 square + 40 diamond | 89 % | 86 % / 14 % / 0 % | 2.7 |
 | level-12 | 6×6 | 17 | 4 | 27 circle + 27 triangle + 27 square + 27 diamond | 86 % | 90 % / 10 % / 0 % | 2.4 |
 
-**Open:** with the default thresholds the bot never earns 3 stars on levels 11–12; whether to lower their thresholds is still to decide. Levels 8, 11 and 12 sit a few points above their win band. Playtests on the phone come next (slice 8).
+Levels 8, 11 and 12 sit a few points above their win band. With the default thresholds the bot never earns 3 stars on levels 11–12 (see the playtest below for what was decided).
+
+## Playtest on the phone (2026-10-24, Milestone 3 slice 8)
+
+Soni played all 12 levels once, in order, on the mid-range phone (a development build of 5fd71dd). Every attempt's seed is in `events.jsonl` (ADR-0014), so the bot could play the **same seeds**: the same starting board, though the boards differ after the first move because refills depend on the chain.
+
+| Level | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Soni: moves left (stars) | 14 (3) | 13 (3) | 9 (3) | 7 (2) | 7 (2) | 8 (2) | 6 (2) | 12 (3) | 9 (2) | 8 (2) | lost, then 1 (1) | 0 (1) |
+| Bot on the same seed | 14 | 13 | 11 | 7 | 4 | 3 | 1 | 10 | 5 | 4 | 4, then 3 | lost |
+| Bot over 500 seeds (mean, wins) | 12.5 | 10.9 | 8.6 | 6.4 | 7.3 | 7.6 | 5.7 | 5.1 | 5.5 | 3.8 | 2.7 | 2.4 |
+
+What it showed:
+
+- **A player who plans ahead beats the greedy bot on levels 5–10**, by 3–7 moves on the same seed: the bot never sets up a chain for its next move. The bot's ranking still holds for the order of the levels, but it overstates how hard the middle levels are for such a player.
+- **Levels 11–12 are a step up:** a loss and a 1-move win on level 11, a win on the last move of level 12, 1 star on both. With four goals there, any chain counts, and the bot did about as well as Soni.
+- **Levels 1–2** take 1–2 moves for both (one long chain on the first board).
+
+Decided 2026-10-24: **keep the curve and the default star thresholds** until other people have played it, and revisit in the Milestone 5 content pass. Soni's feel: 11–12 are a "hard but fair finale". The deciding factor: it matches that feel, and one play-through by the person who designed the levels is too little to tune on.

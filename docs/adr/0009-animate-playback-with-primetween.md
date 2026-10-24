@@ -88,6 +88,11 @@ Decided while building playback:
 - **Allocation test scope:** a PlayMode test commits a move, builds its sequence and completes it at once under `Is.Not.AllocatingGCMemory()` after warm-up. That covers sequence creation and every callback. Per-frame tweening relies on PrimeTween's guarantee and the device Profiler pass (slice 8). *Slice 8 checked it with `PerfProbe` and a Profiler capture recorded on the phone; the live Profiler connection moved to Milestone 5.*
 - **PlayMode tests run locally for now;** CI still runs EditMode only.
 
+### Refinements (2026-10-24, Milestone 3 slice 8)
+
+- **Building a sequence grows with the square of its size.** `Sequence.Insert` walks every tween already in the sequence to find its end, so a move of *n* tweens costs on the order of *n*². On the phone, a big 7 × 7 move (about 150 tweens) took up to 25 ms to build in a development build, where PrimeTween's assertions run inside that walk, and 0.45–2.2 ms in a release build ([performance budget](../performance-budget.md), case study "A 25 ms move that only development builds see").
+- **Kept as it is.** The deciding factor: players only ever run release builds, so a hitch that exists only in development builds isn't one they can see, and rewriting playback to avoid it would add code that exists only for the measurement. If a release build ever shows it (bigger boards, more tweens per spore), the fix is fewer, larger tweens, or one tween that drives the views from our own arrays.
+
 ## Consequences
 
 - **Positive:**

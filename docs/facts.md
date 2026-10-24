@@ -21,6 +21,8 @@ One fact per level, shown in full on the result panel after a win (design §3.6,
 
 The full photo URLs are in Soni's notes next to the photos (`Assets/ThirdParty/FactPhotos/`). The card's credit line shows the source site, and only when the photo is present.
 
+**Import settings (decided 2026-10-24, Milestone 3 slice 8):** on Android each photo is capped at 1024 px and compressed as ASTC 6 × 6. With the automatic setting, seven photos whose sides aren't multiples of 4 shipped uncompressed, which put the release APK at 43.0 MB, over its 40 MB budget; now it is 38.7 MB ([performance budget](performance-budget.md)). The card shows a photo 380 px tall. The settings live in the photos' `.meta` files, which are git-ignored with them, so a new copy of the photos needs them set again. Soni's reason for doing it before Milestone 5: it's a cheap fix.
+
 ## For the Milestone 5 content pass
 
 Decided 2026-10-24 to keep the text as written for playtesting (*why:* it is placeholder text until the content pass). Points raised in review, to check then:
