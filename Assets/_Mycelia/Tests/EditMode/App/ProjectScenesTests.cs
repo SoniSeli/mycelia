@@ -226,6 +226,38 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Design §8.3: one font family for every text.
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryText_UsesTheGameFont_AndCanDrawItsText(SceneId scene)
+        {
+            WithScene(scene, roots =>
+            {
+                foreach (TMPro.TMP_Text text in roots.SelectMany(root => root.GetComponentsInChildren<TMPro.TMP_Text>(true)))
+                {
+                    Assert.That(ProjectFontTests.IsGameFont(text.font), Is.True, $"{text.name} uses {(text.font != null ? text.font.name : "no font")}.");
+                    Assert.That(ProjectFontTests.Missing(text.font, text.text), Is.Empty, text.name);
+                }
+            });
+        }
+
+        // Design §8.3: every screen shows the gradient and the drifting spores, filling the camera that draws the screen.
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryScreen_HasOneBackdrop_UnderTheCameraItFills(SceneId scene)
+        {
+            WithScene(scene, roots =>
+            {
+                Game.Backdrop[] backdrops = roots.SelectMany(root => root.GetComponentsInChildren<Game.Backdrop>(true)).ToArray();
+                Assert.That(backdrops.Length, Is.EqualTo(1));
+                var viewCamera = (Camera)new SerializedObject(backdrops[0]).FindProperty("viewCamera").objectReferenceValue;
+                Assert.That(backdrops[0].transform.parent, Is.SameAs(viewCamera.transform), "It moves with its camera.");
+
+                Game.BoardCamera boardCamera = roots.SelectMany(root => root.GetComponentsInChildren<Game.BoardCamera>(true)).SingleOrDefault();
+                if (boardCamera != null)
+                    Assert.That(viewCamera, Is.SameAs(new SerializedObject(boardCamera).FindProperty("boardCamera").objectReferenceValue),
+                        "In the game, it fills the camera fitted to the board.");
+            });
+        }
+
         // ADR-0012 rule 7: UI images draw from one UI atlas, so each screen batches.
         [TestCaseSource(nameof(UiScenes))]
         public void EveryUiImage_DrawsFromTheUiAtlas(SceneId scene)

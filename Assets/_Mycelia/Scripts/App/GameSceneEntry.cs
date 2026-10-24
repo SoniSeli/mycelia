@@ -27,6 +27,7 @@ namespace Mycelia.App
         [SerializeField] ResultPanel resultPanel;
         [SerializeField] PauseOverlay pauseOverlay;
         [SerializeField] PauseController pauseController;
+        [SerializeField] Backdrop backdrop;
 
         public LevelSession Session { get; private set; }
         public LevelPause Pause { get; private set; }
@@ -65,7 +66,7 @@ namespace Mycelia.App
             };
             resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
             playback.Init(boardView, config.Width, config.Height, results);
-            Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
+            Pause = new LevelPause(Session, playback, playback, pauseOverlay, backdrop, new PausedFrameRate(SceneId.Game));
             pauseOverlay.Init(Pause.Resume, restart, leave);
             // Back once the result is shown steps out to level select (ADR-0013).
             pauseController.Init(Pause, leave);

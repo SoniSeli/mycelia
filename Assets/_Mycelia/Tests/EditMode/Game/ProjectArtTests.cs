@@ -55,6 +55,24 @@ namespace Mycelia.Game.Tests
             }
         }
 
+        // Design §8.3 and the performance budget: a handful of spores, scaled and carried by the backdrop as it fits the view.
+        [Test]
+        public void TheBackdropsSpores_AreFew_AndScaleAndMoveWithTheBackdrop()
+        {
+            Backdrop backdrop = LoadAll<GameObject>("Backdrop t:Prefab").Single().GetComponent<Backdrop>();
+            ParticleSystem spores = backdrop.GetComponentInChildren<ParticleSystem>(true);
+            ParticleSystem.MainModule main = spores.main;
+
+            Assert.That(main.maxParticles, Is.LessThanOrEqualTo(80));
+            Assert.That(main.loop, Is.True);
+            Assert.That(main.prewarm, Is.True, "The screen opens with spores already drifting.");
+            Assert.That(main.scalingMode, Is.EqualTo(ParticleSystemScalingMode.Hierarchy), "The backdrop scales them with the view.");
+            Assert.That(main.simulationSpace, Is.EqualTo(ParticleSystemSimulationSpace.Local), "They move with the camera.");
+            Assert.That(spores.shape.shapeType, Is.EqualTo(ParticleSystemShapeType.Box));
+            Assert.That(backdrop.GetComponent<MeshRenderer>().sharedMaterial, Is.SameAs(spores.GetComponent<ParticleSystemRenderer>().sharedMaterial),
+                "The gradient and the spores share one material.");
+        }
+
         [Test]
         public void BoardSprites_UseTheUnlitSpriteMaterial()
         {

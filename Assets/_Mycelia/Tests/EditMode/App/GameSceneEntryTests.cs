@@ -35,6 +35,7 @@ namespace Mycelia.App.Tests
         Button resume;
         Button restart;
         PauseController pauseController;
+        ParticleSystem spores;
         FakeSceneLoader loader;
         FixedSeedSource seeds;
         AppServices services;
@@ -123,6 +124,16 @@ namespace Mycelia.App.Tests
             pauseController.transform.SetParent(scene.transform);
             SetReference(entry, "pauseOverlay", pauseOverlay);
             SetReference(entry, "pauseController", pauseController);
+
+            var backdropObject = new GameObject("Backdrop", typeof(MeshFilter), typeof(MeshRenderer));
+            backdropObject.transform.SetParent(camera.transform, false);
+            spores = new GameObject("Spores").AddComponent<ParticleSystem>();
+            spores.transform.SetParent(backdropObject.transform, false);
+            var backdrop = backdropObject.AddComponent<Backdrop>();
+            SetReference(backdrop, "viewCamera", camera);
+            SetReference(backdrop, "gradient", backdropObject.GetComponent<MeshFilter>());
+            SetReference(backdrop, "spores", spores);
+            SetReference(entry, "backdrop", backdrop);
 
             seeds = new FixedSeedSource(Seed);
             loader = new FakeSceneLoader();
@@ -220,6 +231,20 @@ namespace Mycelia.App.Tests
             AnalyticsEvent start = analytics.Single("level_start");
             Assert.That(start.Value("level"), Is.EqualTo(level.Key));
             Assert.That(start.Value("seed"), Is.EqualTo(Seed.ToString("x16")));
+        }
+
+        // ADR-0013: the background spores stop under the pause overlay with everything else.
+        [Test]
+        public void PausingTheLevel_FreezesTheBackdropsSpores_AndResumingLetsThemDrift()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            spores.Play();
+
+            entry.Pause.Pause();
+            Assert.That(spores.isPaused, Is.True);
+
+            entry.Pause.Resume();
+            Assert.That(spores.isPlaying, Is.True);
         }
 
         [Test]
