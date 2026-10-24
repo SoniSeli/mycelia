@@ -124,7 +124,7 @@ Three layers, each depending only on the one below it:
 
 **Rendering.** URP with the 2D Renderer; sprites are unlit unless a measured effect needs lighting ([ADR-0002](adr/0002-use-urp-with-2d-renderer.md)).
 
-**Persistence.** One versioned `progress.json` serialized with `JsonUtility`, with golden-file migration tests and atomic writes. There is no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md)).
+**Persistence.** One versioned `progress.json` serialized with `JsonUtility`, with golden-file migration tests and atomic writes. Invalid records are dropped one by one, and an unreadable file is set aside as `progress.json.corrupt` before falling back to the backup. There is no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md)).
 
 **Input.** One Input System action bound to `<Pointer>` (primary touch on device, mouse in the Editor); screen positions map to cells with grid maths and the circular hit radius from §6 ([ADR-0008](adr/0008-pointer-action-and-grid-hit-testing.md)).
 
@@ -152,7 +152,7 @@ Three layers, each depending only on the one below it:
 - **Domain:** EditMode tests written alongside the code. Test names read as rules, e.g. `Chain_RejectsDifferentSporeType`, `Gravity_LeavesNoGapsBelowSpores`. Boards are written as text grids (`Boards.Parse`), so a test reads like the rule it checks. One test asserts the pipeline's phase order.
 - **Randomness:** the domain takes an injected `IRandom` (PCG32) seeded explicitly in every test; in the game each attempt gets a fresh, logged seed, so any board can be replayed exactly ([ADR-0007](adr/0007-random-seed-per-attempt-with-pcg32.md)).
 - **Game/App:** a small number of PlayMode smoke tests (a level loads and a scripted chain resolves), plus a manual device checklist before each release.
-- **CI:** every push runs the EditMode tests and builds an Android APK. PlayMode tests (move playback, including the 0 B allocation test) run locally for now ([ADR-0009](adr/0009-animate-playback-with-primetween.md)). Each CI run signs its APK with a new debug key, so a CI build can't update an installed one: uninstall first. *Decided 2026-10-23 to keep it that way for now: there are no saves until Milestone 3, so uninstalling costs nothing yet. A project keystore in CI secrets comes with the save system or the Play release.*
+- **CI:** every push runs the EditMode tests and builds an Android APK. PlayMode tests (move playback, including the 0 B allocation test) run locally for now ([ADR-0009](adr/0009-animate-playback-with-primetween.md)). Each CI run signs its APK with a new debug key, so a CI build can't update an installed one: uninstall first. *Decided 2026-10-23 to keep it that way for now: there are no saves until Milestone 3, so uninstalling costs nothing yet. A project keystore in CI secrets comes with the save system or the Play release.* *Decided 2026-10-24 (Milestone 3 slice 2): with the Play release. Local development builds keep their debug key, so saves survive on the phone; installing a CI build still means an uninstall, which now also wipes progress.*
 - **Device performance:** `PerfProbe` logs frame, main-thread, render-thread and GPU times, GC, batches and SetPass calls in development builds; 0 B per move with the real HUD is checked with it during real moves ([performance budget](performance-budget.md)).
 
 ## 8. Milestones
@@ -189,7 +189,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | # | Slice | Builds on | Done when |
 |---|---|---|---|
 | 1 | **Level catalog**: `LevelCatalog` ScriptableObject (levels in play order) on `AppServices`, Inspector validation (unique keys, no empty entries, every level valid), replacing `AppRoot`'s single start level. *Decided 2026-10-24: three placeholder levels for now (the real 12 come in slice 7); keys must match `level-NN`; a guard test lists the shipped keys and fails if one disappears; `level-test` stays outside the catalog as the Game scene's Debug Level and test fixture.* | ADR-0005, ADR-0006, ADR-0010 | The game starts from the catalog; an EditMode test checks every catalog level is playable and every key is unique. *Done 2026-10-24.* |
-| 2 | **Save system**: `IProgressStore`, `ProgressDataV1`, JSON store with atomic write (`.tmp` → `File.Replace`, `.bak`), load order file → backup → defaults, newer-version files left alone, mapping to `Progression`, golden-file test for v1 | ADR-0006 | Progress round-trips; a corrupt file falls back to the backup, then to defaults; a newer file is never overwritten |
+| 2 | **Save system**: `IProgressStore`, `ProgressDataV1`, JSON store with atomic write (`.tmp` → `File.Replace`, `.bak`), load order file → backup → defaults, newer-version files left alone, `SavedProgress` (records ready for `Progression`, settings, intro flag), golden-file test for v1. *Decided 2026-10-24: v1 has the full ADR-0006 shape; bad records are dropped one by one; an unreadable file is set aside as `.corrupt`; the CI keystore waits for the Play release (ADR-0006 Refinements).* | ADR-0006 | Progress round-trips; a corrupt file falls back to the backup, then to defaults; a newer file is never overwritten. *Done 2026-10-24 (not yet wired into the app: slice 3).* |
 | 3 | **Saving at the right moments**: the win is recorded and saved before the result panel and celebration; save on `OnApplicationPause(true)` if anything changed | ADR-0006, ADR-0013 | Killing the app during the win celebration keeps the unlock |
 | 4 | **Level select** (or a main menu first, §9): locked/unlocked levels, best stars, back button | ADR-0012, ADR-0013 | Any unlocked level can be started from it; locked ones can't |
 | 5 | **Level flow**: win → stars + fact card → level select (or next level); lose → retry / level select | §4 | The full loop works in the Editor without restarting Play |
@@ -197,7 +197,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 | 7 | **The 12 levels**: level assets and fact cards (credits in §10) | §3.6 | All 12 are in the catalog and pass validation |
 | 8 | **Device pass**: play through on the phone, kill the app mid-level and after a win, quick `PerfProbe` check of the new screens | Performance budget | Milestone 3 done-when met on the mid-range phone |
 
-> **Decide before starting:** main menu or straight to level select (§9); save moments beyond ADR-0006; analytics events and sink (local log only, or a backend with consent); placeholder or final level design for the 12 levels, and where fact images come from; a project keystore in CI so a CI build no longer wipes saved progress (§7).
+> **Decide before starting:** main menu or straight to level select (§9); save moments beyond ADR-0006; analytics events and sink (local log only, or a backend with consent); placeholder or final level design for the 12 levels, and where fact images come from. *The CI keystore was decided in slice 2: with the Play release (§7).*
 
 ## 9. Open questions
 

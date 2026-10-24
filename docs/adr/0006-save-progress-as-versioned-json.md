@@ -107,6 +107,16 @@ Decided while building the level catalog, which supplies the level order `Progre
 - **`level-test` stays outside the catalog**, as the Game scene's Debug Level and a test fixture (its key can't pass the `level-NN` rule, and a test checks it too). *Why:* the debug level and tests need a fixed level that changes to real levels can't break, and players should never see it.
 - **Three placeholder levels for now**; the real 12 come in slice 7. *Why:* three is the smallest number that tests unlocking a chain of levels, the save file and level select, without designing levels early.
 
+### Refinements (2026-10-24, Milestone 3 slice 2)
+
+Decided while building the store (`JsonProgressStore` behind `IProgressStore`, in `Mycelia.App`):
+
+- **Version 1 has the full shape above** (levels, settings, `introSeen`), though settings and the intro arrive in Milestone 4. *Why:* the first file players get already has every field, so Milestone 4 only starts using them, with no new version or golden file.
+- **Bad records are dropped one by one**: stars outside 1–3, an empty key, or a repeated key (the highest stars are kept). The rest of the file still loads, and the count is reported. *Why:* one bad record should never cost the player the rest of their progress.
+- **An unreadable `progress.json` is moved to `progress.json.corrupt`** (replacing an older one) before the backup is read. *Why:* a bug report can include the file that failed. It also keeps the next save from turning the bad file into the backup and losing the good one.
+- **CI keeps per-run debug keys until the Play release.** *Why:* the phone runs local development builds, whose local debug key stays the same, so saves survive there; one keystore made for the release covers both.
+- Smaller choices: default settings are SFX 0.8, music 0.6, haptics on; volumes read from a file are clamped to 0–1; `Load` reports an outcome (`NoSave`, `Loaded`, `RecoveredFromBackup`, `Reset`, `NewerVersion`) for the `save_recovered` / `save_reset` events in slice 6; neither call throws, and a failed save returns false and logs a warning. Once a newer-version file is seen, the store refuses to save for the rest of the session.
+
 ## Consequences
 
 - **Positive:**
