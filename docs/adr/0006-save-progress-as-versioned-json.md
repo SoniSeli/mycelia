@@ -97,6 +97,16 @@ The unlock rule and the best-stars-only-goes-up rule are pure C# in the domain (
 - **Encryption or anti-tamper:** single-player, no economy, nothing worth protecting.
 - **Cloud save:** a v1 non-goal. Saving goes through an `IProgressStore` interface, so a cloud implementation (e.g. Play Games Saved Games) could be added later without touching callers.
 
+### Refinements (2026-10-24, Milestone 3 slice 1)
+
+Decided while building the level catalog, which supplies the level order `Progression` derives unlocks from:
+
+- **`LevelCatalog`** (Content) lists the levels players see, in play order, and finds them by key. `AppServices` carries it, and `AppRoot` opens its first level until Level Select exists.
+- **Catalog keys must read `level-NN`** (`level-` and two digits). *Why:* keys look the same everywhere (saves, analytics and the examples above). The number is only a name, so reordering levels later never renames a key, and `level-07` need not stay seventh.
+- **A guard test lists the shipped level keys** and fails if one disappears from the catalog; adding levels is fine. *Why:* a renamed or removed key silently drops players' stars and unlocks, and a test catches that in CI, where an Inspector tooltip can be missed. The list starts with the three placeholder keys, which the real levels keep in slice 7.
+- **`level-test` stays outside the catalog**, as the Game scene's Debug Level and a test fixture (its key can't pass the `level-NN` rule, and a test checks it too). *Why:* the debug level and tests need a fixed level that changes to real levels can't break, and players should never see it.
+- **Three placeholder levels for now**; the real 12 come in slice 7. *Why:* three is the smallest number that tests unlocking a chain of levels, the save file and level select, without designing levels early.
+
 ## Consequences
 
 - **Positive:**
