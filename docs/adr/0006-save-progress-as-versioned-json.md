@@ -117,6 +117,15 @@ Decided while building the store (`JsonProgressStore` behind `IProgressStore`, i
 - **CI keeps per-run debug keys until the Play release.** *Why:* the phone runs local development builds, whose local debug key stays the same, so saves survive there; one keystore made for the release covers both.
 - Smaller choices: default settings are SFX 0.8, music 0.6, haptics on; volumes read from a file are clamped to 0–1; `Load` reports an outcome (`NoSave`, `Loaded`, `RecoveredFromBackup`, `Reset`, `NewerVersion`) for the `save_recovered` / `save_reset` events in slice 6; neither call throws, and a failed save returns false and logs a warning. Once a newer-version file is seen, the store refuses to save for the rest of the session.
 
+### Refinements (2026-10-24, Milestone 3 slice 3)
+
+Decided while wiring saves into the game (`PlayerProgress` on `AppServices`, `LevelResultRecorder` between chain input, playback and the HUD):
+
+- **A win is recorded in memory when the winning move is committed, and written when that move has finished playing**, just before the result panel shows. `AppRoot` also saves on `OnApplicationPause(true)` if anything is unsaved. *Why:* no disk write lands on a move frame (the 25 ms budget), and the win is in memory from the moment it is decided, so going to the background during the winning animation still saves it. Only a crash during that second loses it. The write allocates once per level, at its end; the 0 B per move rule (ADR-0009) is unaffected.
+- **A failed save is retried quietly**: a warning is logged, the changes stay marked unsaved, and the next save moment tries again. *Why:* an error that should almost never happen isn't worth UI and text; the game keeps working from memory.
+- **Checked on the phone in this slice** (Redmi Note 12 Pro+, development build). *Why:* it catches an Android-only problem with the file swap before level select and the flow build on it. Result: the save lives in `/sdcard/Android/data/com.soniseli.mycelia/files`; with an existing file, a win replaced it through `File.Replace` (the old file became `.bak`, no `.tmp` left), and both records loaded again after a force-stop.
+- Smaller choices: wins on a level outside the catalog (the Debug Level) or a locked one are not recorded and log a warning. Pressing Play in the Editor saves to the Editor's own `persistentDataPath`. Development builds log the load outcome at boot. JsonUtility writes floats at full precision (`0.800000011920929`); they read back as the same float.
+
 ## Consequences
 
 - **Positive:**
