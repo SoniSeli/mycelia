@@ -19,6 +19,7 @@ Each file records one significant decision: its context, the options considered,
 | [0011](0011-fit-camera-to-board-and-pool-views-up-front.md) | Fit the camera to the board, pool spore views up front, and pack board sprites in one atlas | Accepted (amended 2026-10-24) |
 | [0012](0012-use-ugui-with-textmeshpro.md) | Build the game's UI with uGUI and TextMeshPro | Accepted (refined 2026-10-23, 2026-10-24; amended 2026-10-24) |
 | [0013](0013-pause-the-level-and-handle-back.md) | Pause the level when the player looks away, and handle the back button in the Game scene | Accepted (refined 2026-10-23, 2026-10-24) |
+| [0014](0014-log-playtest-analytics-to-a-local-file.md) | Log playtest analytics to a local file behind an analytics interface | Accepted |
 
 ## Candidates to decide
 
