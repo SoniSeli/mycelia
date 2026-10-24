@@ -50,11 +50,13 @@ namespace Mycelia.App
             // Play again and Restart start the same level with a fresh seed, through the loader like any scene change.
             Action restart = () => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(level));
             resultPanel.Init(restart);
-            playback.Init(boardView, config.Width, config.Height, hud);
+            // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
+            var results = new LevelResultRecorder(Session, services.Progress, playback, hud);
+            playback.Init(boardView, config.Width, config.Height, results);
             Pause = new LevelPause(Session, playback, playback, pauseOverlay, new PausedFrameRate(SceneId.Game));
             pauseOverlay.Init(Pause.Resume, restart);
             pauseController.Init(Pause);
-            chainInput.Init(Session, boardCamera, chainView, playback, Pause);
+            chainInput.Init(Session, boardCamera, chainView, results, Pause);
         }
     }
 }

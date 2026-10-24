@@ -9,8 +9,9 @@ namespace Mycelia.App
     /// </summary>
     public sealed class AppServices
     {
-        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels)
+        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress)
         {
+            Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             Scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             Seeds = seeds ?? throw new ArgumentNullException(nameof(seeds));
             if (spores == null) throw new ArgumentNullException(nameof(spores));
@@ -29,5 +30,8 @@ namespace Mycelia.App
 
         /// <summary>The levels players see, in play order (design §3.6).</summary>
         public LevelCatalog Levels { get; }
+
+        /// <summary>Unlocks and best stars, loaded at boot and saved at the ADR-0006 moments.</summary>
+        public PlayerProgress Progress { get; }
     }
 }

@@ -110,7 +110,7 @@ namespace Mycelia.App.Tests
 
             seeds = new FixedSeedSource(Seed);
             loader = new FakeSceneLoader();
-            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels);
+            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys));
             level = ProjectAssets.TestLevel;
         }
 

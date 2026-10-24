@@ -14,22 +14,36 @@ namespace Mycelia.App
         [SerializeField] LevelCatalog levels;
 
         SceneLoader scenes;
+        PlayerProgress progress;
 
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
             FrameRatePolicy.Apply(SceneId.Bootstrap);
 
+            progress = PlayerProgress.Load(new JsonProgressStore(Application.persistentDataPath), levels.Keys);
+            if (Debug.isDebugBuild)
+                Debug.Log($"[Mycelia] Progress: {progress.LoadOutcome}, {progress.Levels.Records.Count} level record(s).");
+
             scenes = new SceneLoader();
             var services = new AppServices(
                 scenes: scenes,
                 seeds: new CryptoSeedSource(),
                 spores: spores,
-                levels: levels);
+                levels: levels,
+                progress: progress);
 
             // A build opens the first level until Level Select exists (design §8.2, slice 4).
             StartScene start = StartScene.Choose(new GameSceneArgs(levels.Levels[0]), TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);
+        }
+
+        // ADR-0006: the OS may suspend or kill the app right after this, so the write is synchronous. It also catches
+        // a win whose move was still playing when the app went to the background.
+        void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                progress?.SaveIfChanged();
         }
 
         void OnDestroy() => scenes?.Dispose();
