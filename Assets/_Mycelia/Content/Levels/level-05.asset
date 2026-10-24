@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfeb7f1e90a4294b997f7dac6dc29b5, type: 3}
+  m_Name: level-05
+  m_EditorClassIdentifier: Mycelia.Content::Mycelia.Content.LevelDefinition
+  key: level-05
+  width: 7
+  height: 7
+  moves: 18
+  sporeTypes:
+  - {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
+  - {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+  - {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
+  - {fileID: 11400000, guid: e245c8b5e426c8c43b09505b866a3ead, type: 2}
+  objectives:
+  - sporeType: {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+    target: 18
+  - sporeType: {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
+    target: 18
+  overrideStarThresholds: 0
+  twoStarPercent: 25
+  threeStarPercent: 50
+  factText: "Mycelium can replace plastics in packaging. For example, Ecovative\u2019s
+    Mushroom\xAE Packaging grows fungus on waste fibers to form custom box shapes.
+    The result is a foam-like material that cushions products yet fully composts
+    back to earth, unlike Styrofoam."
+  factImage: {fileID: 21300000, guid: 1805f5dac2d3e9e40a8536989fb897e8, type: 3}
+  factImageCredit: 'Photo: cdn.shopify.com'

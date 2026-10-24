@@ -36,7 +36,11 @@ namespace Mycelia.Content.Tests
 
         // Saves and analytics name levels by key (ADR-0006): renaming or removing a shipped key would lose players'
         // stars and unlocks. Add a key here once its level ships; never remove one.
-        static readonly string[] ShippedLevelKeys = { "level-01", "level-02", "level-03" };
+        static readonly string[] ShippedLevelKeys =
+        {
+            "level-01", "level-02", "level-03", "level-04", "level-05", "level-06",
+            "level-07", "level-08", "level-09", "level-10", "level-11", "level-12",
+        };
 
         [Test]
         public void TheProjectHasExactlyOneValidLevelCatalog()

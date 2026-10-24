@@ -88,6 +88,17 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
+        public void ACreditWithoutItsImage_IsHidden()
+        {
+            // The credit names who made the image; a build without the (local-only) photo shows neither.
+            Init(new FactCard("Text.", null, "Photo: example.org"));
+
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(Shown("Fact Credit"), Is.False);
+        }
+
+        [Test]
         public void AFactWithAnImageAndCredit_ShowsThem_OnATallerCard()
         {
             hud.Panel.Show(SessionState.Won, 1);
@@ -101,6 +112,26 @@ namespace Mycelia.Game.Tests
             Assert.That(Shown("Fact Credit"), Is.True);
             Assert.That(Find("Fact Credit").GetComponent<TMP_Text>().text, Is.EqualTo("Photo: Jane Doe, CC BY 4.0"));
             Assert.That(CardHeight, Is.GreaterThan(withoutImage));
+        }
+
+        [Test]
+        public void ALongFact_GrowsTheCard_AndMovesTheCreditBelowIt()
+        {
+            // Slice 7: facts keep their full text, so the card grows to fit it instead of cutting it.
+            float box = ((RectTransform)Find("Fact Text")).sizeDelta.y;
+            Init(new FactCard("Short.", null, "Credit"));
+            hud.Panel.Show(SessionState.Won, 1);
+            float shortCard = CardHeight;
+            float shortCredit = ((RectTransform)Find("Fact Credit")).anchoredPosition.y;
+
+            Init(new FactCard(string.Join(" ", System.Linq.Enumerable.Repeat("Mycelium grows through soil and wood.", 12)), null, "Credit"));
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(CardHeight, Is.GreaterThan(shortCard));
+            Assert.That(((RectTransform)Find("Fact Credit")).anchoredPosition.y, Is.LessThan(shortCredit), "The credit sits lower, under the longer text.");
+            float grown = CardHeight - shortCard;
+            float textGrew = ((RectTransform)Find("Fact Text")).sizeDelta.y - box;
+            Assert.That(grown, Is.EqualTo(textGrew).Within(0.01f), "The card grows by exactly what the text needs.");
         }
 
         [Test]

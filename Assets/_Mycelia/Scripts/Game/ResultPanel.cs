@@ -54,6 +54,7 @@ namespace Mycelia.Game
         FactCard factCard;
         Vector2 factTextTop;
         Vector2 factCreditTop;
+        float factTextHeight;
         bool measured;
 
         public Color EarnedStarColour => earnedStarColour;
@@ -90,30 +91,40 @@ namespace Mycelia.Game
             gameObject.SetActive(true);
         }
 
-        // Fills the fact card and returns the extra height its image needs.
+        // Fills the fact card and returns the extra height its image and its text need beyond the scene's layout.
+        // The text box grows to fit the whole fact (never cut), and the credit moves down below it.
         float ShowFact()
         {
             if (!measured)
             {
                 factTextTop = factText.rectTransform.anchoredPosition;
                 factCreditTop = factCredit.rectTransform.anchoredPosition;
+                factTextHeight = factText.rectTransform.sizeDelta.y;
                 measured = true;
             }
 
             bool hasImage = factCard.Image != null;
-            bool hasCredit = !string.IsNullOrEmpty(factCard.Credit);
-            float extra = hasImage ? imageHeight : 0;
+            // The credit belongs to the image: without the image, it isn't shown.
+            bool hasCredit = hasImage && !string.IsNullOrEmpty(factCard.Credit);
+            float imageExtra = hasImage ? imageHeight : 0;
 
             fact.SetActive(!string.IsNullOrEmpty(factCard.Text) || hasImage);
             factImage.gameObject.SetActive(hasImage);
             if (hasImage)
                 factImage.sprite = factCard.Image;
+
+            RectTransform textRect = factText.rectTransform;
             factText.text = factCard.Text ?? "";
-            factText.rectTransform.anchoredPosition = factTextTop - new Vector2(0, extra);
+            float needed = factText.GetPreferredValues(factText.text, textRect.rect.width, 0).y;
+            float textHeight = Mathf.Max(factTextHeight, Mathf.Ceil(needed));
+            float textExtra = textHeight - factTextHeight;
+            textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textHeight);
+            textRect.anchoredPosition = factTextTop - new Vector2(0, imageExtra);
+
             factCredit.gameObject.SetActive(hasCredit);
             factCredit.text = factCard.Credit ?? "";
-            factCredit.rectTransform.anchoredPosition = factCreditTop - new Vector2(0, extra);
-            return extra;
+            factCredit.rectTransform.anchoredPosition = factCreditTop - new Vector2(0, imageExtra + textExtra);
+            return imageExtra + textExtra;
         }
     }
 }

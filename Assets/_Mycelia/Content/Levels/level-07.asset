@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfeb7f1e90a4294b997f7dac6dc29b5, type: 3}
+  m_Name: level-07
+  m_EditorClassIdentifier: Mycelia.Content::Mycelia.Content.LevelDefinition
+  key: level-07
+  width: 7
+  height: 7
+  moves: 17
+  sporeTypes:
+  - {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
+  - {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+  - {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
+  - {fileID: 11400000, guid: e245c8b5e426c8c43b09505b866a3ead, type: 2}
+  objectives:
+  - sporeType: {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
+    target: 19
+  - sporeType: {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+    target: 19
+  - sporeType: {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
+    target: 19
+  overrideStarThresholds: 0
+  twoStarPercent: 25
+  threeStarPercent: 50
+  factText: "Mycelium can be turned into fashion like vegan \u201Cleather.\u201D
+    Companies grow fungi on trays of sawdust to make sheets of leather-like mycelium.
+    After drying and processing, these sheets are dyed and cut into shoes, bags or
+    jackets - a flexible, vegan alternative to animal leather."
+  factImage: {fileID: 21300000, guid: 67d9d79ac5aab2944979b908c26d3db2, type: 3}
+  factImageCredit: 'Photo: indiebio.co'

@@ -3,7 +3,8 @@
     "rootNamespace": "Mycelia.Content.Editor",
     "references": [
         "Mycelia.Content",
-        "Mycelia.Domain"
+        "Mycelia.Domain",
+        "Mycelia.Balancing"
     ],
     "includePlatforms": [
         "Editor"

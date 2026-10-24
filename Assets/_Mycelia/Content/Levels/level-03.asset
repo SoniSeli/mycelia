@@ -15,22 +15,21 @@ MonoBehaviour:
   key: level-03
   width: 6
   height: 6
-  moves: 22
+  moves: 16
   sporeTypes:
   - {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
   - {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
   - {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
   - {fileID: 11400000, guid: e245c8b5e426c8c43b09505b866a3ead, type: 2}
   objectives:
-  - sporeType: {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
-    target: 12
-  - sporeType: {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
-    target: 12
   - sporeType: {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
-    target: 12
+    target: 15
   overrideStarThresholds: 0
   twoStarPercent: 25
   threeStarPercent: 50
-  factText: Placeholder fact for level-03.
-  factImage: {fileID: 0}
-  factImageCredit: 
+  factText: "Mycelium makes delicious, sustainable food. By fermenting fungi on simple
+    plant waste, companies create protein-rich mycoprotein ingredients (think the
+    brand Quorn). This fungal protein has all essential amino acids, plus fiber and
+    vitamins, but no saturated fat or cholesterol. It\u2019s a meat-free superfood!"
+  factImage: {fileID: 21300000, guid: 50fbe034da6f1a640a1f3f892d2ffc06, type: 3}
+  factImageCredit: 'Photo: blogs.imperial.ac.uk'
