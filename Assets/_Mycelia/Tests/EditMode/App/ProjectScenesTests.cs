@@ -59,7 +59,7 @@ namespace Mycelia.App.Tests
 
                 var serialized = new SerializedObject(appRoots[0]);
                 Assert.That(serialized.FindProperty("spores").objectReferenceValue, Is.Not.Null, "Spores");
-                Assert.That(serialized.FindProperty("startLevel").objectReferenceValue, Is.Not.Null, "Start Level");
+                Assert.That(serialized.FindProperty("levels").objectReferenceValue, Is.Not.Null, "Levels");
             });
         }
 

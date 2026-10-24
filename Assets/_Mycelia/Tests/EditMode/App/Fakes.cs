@@ -31,6 +31,8 @@ namespace Mycelia.App.Tests
     {
         public static SporeCatalog Spores => Single<SporeCatalog>("t:SporeCatalog");
 
+        public static LevelCatalog Levels => Single<LevelCatalog>("t:LevelCatalog");
+
         public static LevelDefinition TestLevel => Single<LevelDefinition>("level-test t:LevelDefinition");
 
         static T Single<T>(string filter) where T : UnityEngine.Object =>

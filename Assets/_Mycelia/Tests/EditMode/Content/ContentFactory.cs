@@ -51,6 +51,14 @@ namespace Mycelia.Content.Tests
             return level;
         }
 
+        public LevelCatalog LevelCatalog(params LevelDefinition[] levels)
+        {
+            var catalog = ScriptableObject.CreateInstance<LevelCatalog>();
+            catalog.SetLevels(levels);
+            created.Add(catalog);
+            return catalog;
+        }
+
         public void Dispose()
         {
             foreach (Object obj in created)

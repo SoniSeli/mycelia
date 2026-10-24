@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfeb7f1e90a4294b997f7dac6dc29b5, type: 3}
+  m_Name: level-02
+  m_EditorClassIdentifier: Mycelia.Content::Mycelia.Content.LevelDefinition
+  key: level-02
+  width: 6
+  height: 6
+  moves: 20
+  sporeTypes:
+  - {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
+  - {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+  - {fileID: 11400000, guid: 3b65b133e0fd5d246994c932c1948c69, type: 2}
+  - {fileID: 11400000, guid: e245c8b5e426c8c43b09505b866a3ead, type: 2}
+  objectives:
+  - sporeType: {fileID: 11400000, guid: 4ba69295a4ac03d4780fb529afc49200, type: 2}
+    target: 12
+  - sporeType: {fileID: 11400000, guid: 03593f9ba844626408155d494b72a347, type: 2}
+    target: 12
+  overrideStarThresholds: 0
+  twoStarPercent: 25
+  threeStarPercent: 50
+  factText: Placeholder fact for level-02.
+  factImage: {fileID: 0}
+  factImageCredit: 

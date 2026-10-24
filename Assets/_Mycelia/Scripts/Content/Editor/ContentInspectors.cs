@@ -56,6 +56,20 @@ namespace Mycelia.Content.Editor
             ProblemPanel.Create(this, () => ((SporeCatalog)target).FindProblems());
     }
 
+    [CustomEditor(typeof(LevelCatalog))]
+    sealed class LevelCatalogInspector : UnityEditor.Editor
+    {
+        public override VisualElement CreateInspectorGUI() =>
+            ProblemPanel.Create(this, () =>
+            {
+                var problems = new List<string>();
+                SporeCatalog spores = ProblemPanel.FindCatalog(problems);
+                if (spores != null)
+                    problems.AddRange(((LevelCatalog)target).FindProblems(spores));
+                return problems;
+            });
+    }
+
     [CustomEditor(typeof(LevelDefinition))]
     sealed class LevelDefinitionInspector : UnityEditor.Editor
     {

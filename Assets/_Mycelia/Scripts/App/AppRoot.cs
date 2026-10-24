@@ -11,8 +11,7 @@ namespace Mycelia.App
     {
         [SerializeField] SporeCatalog spores;
 
-        [SerializeField, Tooltip("The level a build opens, until Level Select exists (design §8.1).")]
-        LevelDefinition startLevel;
+        [SerializeField] LevelCatalog levels;
 
         SceneLoader scenes;
 
@@ -25,9 +24,11 @@ namespace Mycelia.App
             var services = new AppServices(
                 scenes: scenes,
                 seeds: new CryptoSeedSource(),
-                spores: spores);
+                spores: spores,
+                levels: levels);
 
-            StartScene start = StartScene.Choose(new GameSceneArgs(startLevel), TakeEditorStartScene());
+            // A build opens the first level until Level Select exists (design §8.2, slice 4).
+            StartScene start = StartScene.Choose(new GameSceneArgs(levels.Levels[0]), TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);
         }
 

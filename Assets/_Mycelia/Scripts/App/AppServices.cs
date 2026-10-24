@@ -9,12 +9,14 @@ namespace Mycelia.App
     /// </summary>
     public sealed class AppServices
     {
-        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores)
+        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels)
         {
             Scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             Seeds = seeds ?? throw new ArgumentNullException(nameof(seeds));
             if (spores == null) throw new ArgumentNullException(nameof(spores));
             Spores = spores;
+            if (levels == null) throw new ArgumentNullException(nameof(levels));
+            Levels = levels;
         }
 
         public ISceneLoader Scenes { get; }
@@ -24,5 +26,8 @@ namespace Mycelia.App
 
         /// <summary>Every spore type, to map levels and draw spores (ADR-0005).</summary>
         public SporeCatalog Spores { get; }
+
+        /// <summary>The levels players see, in play order (design §3.6).</summary>
+        public LevelCatalog Levels { get; }
     }
 }
