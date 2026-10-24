@@ -89,6 +89,15 @@ Decided while building the level flow (design §4):
 - *Refined 2026-10-24 (slice 7):* **the fact text is shown in full and the card grows to fit it.** The text box takes the height its text needs (at least its scene height), the credit moves below it, and the card grows by as much; the fact text is 36 pt. *Why (Soni):* the detail is the point; cutting a fact to one sentence loses the explanation that makes it interesting. **The image credit shows only with its image**, so a build without the local-only photos ([facts.md](../facts.md)) shows neither.
 - Smaller choices: leaving a level (the result panel, the pause overlay, or back) writes anything unsaved first, which covers a win whose move was still playing when the player paused and left; Retry and Level select are both in the button green on the result panel, and Level select is grey (secondary) on the pause panel; the fact text is top-aligned, 42 pt, with the credit in 28 pt caption grey.
 
+### Refinements (2026-10-24, Milestone 4 slice 1)
+
+Decided with Soni's UI/UX brief (design §8.3):
+
+- **The game font is Shantell Sans** (Shantell Martin with Arrow Type, SIL Open Font License 1.1), the only font on every text: Bold for titles, buttons and numbers, SemiBold for long text (the fact, its credit, the subtitle). The brief asked for "Paper Noise", which is free for personal use only. Three rounds of rendered previews compared Mali, Sniglet, Delius, Playpen Sans and Shantell Sans. *Why (Soni):* it has the most personality. **Letter spacing −2** (TextMeshPro's normal spacing offset, on both font assets). *Why (Soni):* keep the font's design: a small nudge closer, not a re-cut.
+- **Both font assets are static**: every character the scenes, prefabs and level texts use (107, with typographic quotes and dashes) is baked into a 1024 × 1024 atlas, so no glyphs are made while playing, and the font files stay out of the build. A fact using a new character needs the atlas rebuilt; `ProjectFontTests` fails until it is. TextMeshPro's default font for new texts is the SemiBold asset.
+- **Every screen has the same backdrop**: the deep blue to turquoise gradient and slowly drifting spores, drawn in the world behind the board and the UI, not on a canvas. A `Backdrop` sits under each scene's camera and refits when the camera changes size (the board camera fits itself to each level); the spores' size, speed and spread scale with the view. The gradient is blended in sRGB, like the reference image, rather than in the project's linear light. *Why world space:* a background canvas would have to bleed outside the safe area and draw behind the board, against rules 4 and 8; two renderers behind everything need neither.
+- **The UI kit is drawn for the project** (round icon buttons, modal panel, goal pill, toggle, softer star) as white shapes the UI tints, packed in the UI atlas with Soni's mushroom and level-node shape; later slices put them on the screens.
+
 ## Consequences
 
 - **Positive:**

@@ -64,6 +64,10 @@ Decided with the main menu and level select (ADR-0012 Refinements):
 - **Back on the result panel now opens level select** (the follow-up below). `PauseController` takes what "leave" means from the Game scene's entry, instead of sending the app to the background itself.
 - Menus read back through a small `BackButton` component (the same Back action as the Game scene), and their entries decide what it does.
 
+### Refinements (2026-10-24, Milestone 4 slice 1)
+
+- **The background spores pause with the level.** The Game scene's `Backdrop` is an `IPausable` like everything else that animates, so the whole screen holds still under the pause overlay. The menus have no level to pause, so theirs keep drifting.
+
 ## Consequences
 
 - **Positive:**

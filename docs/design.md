@@ -168,7 +168,7 @@ Three layers, each depending only on the one below it:
 | 1 | Domain logic and tests | Every rule in §3 is covered by a passing test |
 | 2 | Board view, touch input, pooling, lifecycle, safe area | Low-end reference device chosen; one level is playable on it within budget. *Amended 2026-10-23: one level is playable on the mid-range phone within budget; the low-end reference device moves to Milestone 5 ([performance budget](performance-budget.md)). Amended 2026-10-24: "within budget" covers the lines measured in slice 8; the live Profiler connection and the rest move to Milestone 5. Done 2026-10-24.* |
 | 3 | Level flow, save system, analytics events | All 12 levels are playable and progress persists. *Done 2026-10-24 on the mid-range phone (slice 8).* |
-| 4 | App shell, back button, haptics, colour-blind mode | Full flow works on device |
+| 4 | App shell, back button, haptics, colour-blind mode | Full flow works on device. *Amended 2026-10-24: Milestone 4 carries Soni's UI/UX overhaul (new look on every screen, onboarding, settings, outline-differentiated spores) before haptics and audio; plan in §8.3.* |
 | 5 | Content and build-size pass | Build size and memory are within budget, on the low-end reference device too (moved here from Milestone 2); managed stripping level decided. *Moved here from Milestone 2 on 2026-10-24: the live Profiler connection, and the budget lines not yet measured (memory growth over 10 levels, cold start to level select, the 15-minute session, overdraw, scripts-only CPU time).* |
 | 6 | Release | Public build link, README, GIF, performance write-up |
 
@@ -204,6 +204,26 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 
 > **Decide before starting:** placeholder or final level design for the 12 levels, and where fact images come from. *Decided along the way: the CI keystore with the Play release (slice 2, §7); save moments (slice 3); main menu first (slice 4, §9); analytics to a local file (slice 6, ADR-0014).*
 
+### 8.3 Milestone 4 plan (draft)
+
+Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical gradient and slowly drifting glowing spores behind every screen, one rounded font for all text, and soft, organic, round shapes with no hard grid boxes. Most of the brief overlaps Milestone 4's theme (settings, first-run intro, colour-blind spores, app shell), so it comes first, and haptics and audio follow. The mockups and the brief are kept outside the repository; Soni's own mushroom (cap and stem) and level-node shape are in `Art/UI`. Already in place: back on every screen (ADR-0013), the main menu and level select (Milestone 3), and the save's settings and `introSeen` fields.
+
+| # | Slice | Builds on | Done when |
+|---|---|---|---|
+| 1 | **Design system**: the game font (an SIL Open Font License font close to the brief's "Paper Noise", which is licensed for personal use only) as the only font on every text; gradient background and ambient spore particles on every screen; rounded UI kit (panel, round icon button, toggle). *Decided 2026-10-24: Shantell Sans, Bold and SemiBold, spacing −2, as static font assets; a world-space `Backdrop` under each scene's camera, pausing with the level; the kit drawn for the project ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) and [ADR-0013](adr/0013-pause-the-level-and-handle-back.md) Refinements).* | ADR-0012, ADR-0013 | Every existing screen renders in the new look; SetPass and overdraw checked against the budget. *Done 2026-10-24: rendered at 1080 × 2400 and measured on the phone; the backdrop adds 2–3 SetPass, so level 11's pause screen is at 12 (budget ≤ 10), to be brought back in slice 4 ([performance budget](performance-budget.md)).* |
+| 2 | **Scene fade**: screens fade out and in on every scene change; input is blocked during the fade. *Found 2026-10-24: one quick tap on Play also starts the level whose button sits under the same spot on level select (the tap carries across the scene change); the fade's input block must fix it, with a test.* | ADR-0010 | Every transition fades; nothing can be pressed mid-fade |
+| 3 | **Spores and board**: circles told apart by outline (smooth, scalloped, spiked, notched), no cell tiles, medium size; grayscale and colour-blindness simulation check | ADR-0005, ADR-0011 | The four types stay distinct in every simulation; the silhouette validation still guards them |
+| 4 | **Gameplay HUD**: goals and moves left together at the top; settings and pause buttons; pause modal (Resume, Quit). *From slice 1: the goal slots must batch, bringing a four-goal level back to SetPass ≤ 10, paused included.* | ADR-0012, ADR-0013 | A level plays with the new HUD; pause and back still behave; SetPass ≤ 10 on the phone |
+| 5 | **Settings modal**, shared by the main menu, level select and gameplay: sound, haptics and accessibility options; saved on change | ADR-0006, ADR-0013 | Settings persist; back closes the modal; opening it mid-level pauses the level |
+| 6 | **Main menu and level select**: title and a slowly breathing mushroom that starts the game; "Levels" with Soni's level-node shape, help and settings buttons | ADR-0012 | The menu flow works in the new design |
+| 7 | **Level complete**: title, stars, "Interesting Fact", justified fact text, photo with its source, Continue and Retry; the loss panel restyled | §3.6, ADR-0012 | Wins and losses both work end to end |
+| 8 | **Onboarding**: three pages (welcome, how to play, the SDGs the game relates to) with a Next button; shown on the first launch only, replayed from level select | ADR-0006 | A fresh install shows it once; it replays on request |
+| 9 | **Haptics**: a light tick per spore added to a chain, a stronger one on commit and win; follows the setting | ADR-0013 | Felt on the phone; off when disabled; 0 B per move |
+| 10 | **Audio**: sound effects and music at the set volumes; pauses with the level and in the background | ADR-0013 | Sounds play and pause correctly |
+| 11 | **Device pass**: the full new flow on the phone | Performance budget | Milestone 4 done-when met on the mid-range phone |
+
+> **Decided before starting (2026-10-24):** an OFL lookalike font instead of Paper Noise (shortlist rendered, Soni picks); the list of assets to draw for the project approved (four outline spores, round icon buttons, a glow dot for the particles, modal panel, goal pill, toggle, a softer star; the gradient made in code); the mushroom and level-node shape are Soni's own work; the UN SDG icons stay out of the repository until their use is checked against the UN's guidelines. **To decide in their slices:** the spore colours, the pause modal's buttons, Retry after a win (ADR-0012 Refinements decided against it), what "accessibility modes" means given that colour-blind support is always on (§6), whether the background particles pause with a level (ADR-0013), and the onboarding text.
+
 ## 9. Open questions
 
 - [x] Neighbour rule and minimum chain length: 8-way, minimum 2 (§3.2)
@@ -228,6 +248,9 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
 | Placeholder spore silhouettes (circle, triangle, square, diamond), board cell tile, UI panel, star and lock | Made for this project | Own work |
 | Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
-| LiberationSans font (placeholder UI font, shipped as TextMeshPro's SDF font asset) | Red Hat, Inc. / Google Corporation, via Unity's TextMeshPro essential resources | SIL Open Font License 1.1 (`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`) |
+| LiberationSans font (TextMeshPro's default font asset; no longer used on any screen since Milestone 4) | Red Hat, Inc. / Google Corporation, via Unity's TextMeshPro essential resources | SIL Open Font License 1.1 (`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`) |
+| Shantell Sans (the game font, Bold and SemiBold, baked into static TextMeshPro font assets) | The Shantell Sans Project Authors (Shantell Martin with Arrow Type), [github.com/arrowtype/shantell-sans](https://github.com/arrowtype/shantell-sans), release 1.011 | SIL Open Font License 1.1 (`Assets/_Mycelia/Art/Fonts/ShantellSans - OFL.txt`) |
+| Mushroom (cap and stem) and level-node shape | Soni Seli | Own work |
+| UI kit: round icon buttons, modal panel, goal pill, toggle, star; backdrop gradient and spore glow | Made for this project (drawn by code) | Own work |
 | TextMeshPro essential resources (shaders, settings, style sheet) | Unity Technologies, from the `com.unity.ugui` package | Unity Companion License; the sample emoji set is removed |
 | Fact card photos (12, one per level; **local only, not in the repo**) | Collected by Soni Seli from the web; source per level in [facts.md](facts.md) | **Unknown.** Kept in the git-ignored `Assets/ThirdParty/FactPhotos/`; must be licensed or replaced before any public build, store listing or README media |
