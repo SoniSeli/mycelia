@@ -210,7 +210,8 @@ namespace Mycelia.App.Tests
             {
                 foreach (UnityEngine.UI.Button button in roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true)))
                 {
-                    Canvas canvas = button.GetComponentInParent<Canvas>(true).rootCanvas;
+                    // The button's own canvas: a raycaster reads only the graphics of its canvas, not of canvases nested in it.
+                    Canvas canvas = button.GetComponentInParent<Canvas>(true);
                     bool hears = canvas.TryGetComponent(out UnityEngine.UI.GraphicRaycaster raycaster) && raycaster.enabled;
                     Assert.That(hears, Is.True, $"{button.name} on {canvas.name}");
                 }
@@ -364,6 +365,81 @@ namespace Mycelia.App.Tests
                 Assert.That(layout.constraintCount, Is.EqualTo(3));
                 Assert.That(roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.ScrollRect>(true)), Is.Empty);
             });
+        }
+
+        // Design §8.3 slice 6: the slowly breathing mushroom is Play, and it changes every frame, so it has its own canvas
+        // (ADR-0012 rule 1) and the rest of the menu is never rebuilt for it.
+        [Test]
+        public void MainMenu_PlayIsTheBreathingMushroom_OnItsOwnCanvas()
+        {
+            WithScene(SceneId.MainMenu, roots =>
+            {
+                Game.MainMenuView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.MainMenuView>(true)).Single();
+                var play = (UnityEngine.UI.Button)new SerializedObject(view).FindProperty("play").objectReferenceValue;
+                var breathing = play.GetComponent<Game.Breathing>();
+
+                Assert.That(breathing, Is.Not.Null);
+                Assert.That(breathing.Period, Is.InRange(2f, 6f), "A slow breath, seconds per breath.");
+                Assert.That(breathing.Amount, Is.InRange(0.02f, 0.1f), "A gentle one, never a bounce.");
+                Assert.That(play.GetComponentsInChildren<UnityEngine.UI.Image>(true).Select(image => image.sprite.name),
+                    Is.EquivalentTo(new[] { "mushroom-cap", "mushroom-stem" }));
+                Assert.That(play.GetComponentsInChildren<TMPro.TMP_Text>(true), Is.Empty, "No label: the mushroom is the button.");
+                Canvas own = play.GetComponentInParent<Canvas>(true);
+                Assert.That(own.isRootCanvas, Is.False, "It breathes on a canvas nested in the menu's.");
+                Assert.That(own.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).All(graphic => graphic.transform.IsChildOf(play.transform)),
+                    "Only the mushroom changes on that canvas.");
+            });
+        }
+
+        // Design §8.3 slice 6: the mushroom is the only Play control, and settings sit alone in a footer at the bottom centre.
+        [Test]
+        public void MainMenu_HasOnlyTheMushroom_AndSettingsInTheFooter()
+        {
+            WithScene(SceneId.MainMenu, roots =>
+            {
+                Game.MainMenuView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.MainMenuView>(true)).Single();
+                var serialized = new SerializedObject(view);
+                var play = (UnityEngine.UI.Button)serialized.FindProperty("play").objectReferenceValue;
+                var settings = (UnityEngine.UI.Button)serialized.FindProperty("settings").objectReferenceValue;
+                var menuButtons = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+                    .Where(button => button.GetComponentInParent<Game.SettingsModal>(true) == null);
+
+                Assert.That(menuButtons, Is.EquivalentTo(new[] { play, settings }));
+                AssertInFooter((RectTransform)settings.transform, x: 0f);
+            });
+        }
+
+        // Design §8.3 slice 6: help (?) and settings side by side, centred, in a footer under the levels. Help does
+        // nothing until onboarding exists (slice 8; Soni: development builds only until then).
+        [Test]
+        public void LevelSelect_HasHelpAndSettings_SideBySideInTheFooter()
+        {
+            WithScene(SceneId.LevelSelect, roots =>
+            {
+                Game.LevelSelectView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.LevelSelectView>(true)).Single();
+                var serialized = new SerializedObject(view);
+                var settings = (RectTransform)((UnityEngine.UI.Button)serialized.FindProperty("settings").objectReferenceValue).transform;
+                var footer = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+                    .Where(button => button.GetComponentInParent<Game.SettingsModal>(true) == null && button.GetComponent<Game.LevelButton>() == null)
+                    .ToArray();
+                var help = (RectTransform)footer.Single(button => button.image.sprite.name == "icon-help").transform;
+
+                Assert.That(footer.Select(button => button.transform), Is.EquivalentTo(new Transform[] { help, settings }));
+                Assert.That(settings.GetComponent<UnityEngine.UI.Image>().sprite.name, Is.EqualTo("icon-settings"));
+                AssertInFooter(help, x: help.anchoredPosition.x);
+                AssertInFooter(settings, x: -help.anchoredPosition.x);
+                Assert.That(help.anchoredPosition.x, Is.LessThan(0f), "Help on the left.");
+                Assert.That(help.anchoredPosition.y, Is.EqualTo(settings.anchoredPosition.y));
+            });
+        }
+
+        // Anchored to the bottom centre of the safe area, at the given distance from the centre line.
+        static void AssertInFooter(RectTransform button, float x)
+        {
+            Assert.That(button.anchorMin, Is.EqualTo(new Vector2(0.5f, 0f)), button.name);
+            Assert.That(button.anchorMax, Is.EqualTo(new Vector2(0.5f, 0f)), button.name);
+            Assert.That(button.anchoredPosition.x, Is.EqualTo(x).Within(0.01f), button.name);
+            Assert.That(button.parent.GetComponent<Game.SafeAreaFitter>() != null || button.parent.GetComponentInParent<Game.SafeAreaFitter>() != null, button.name);
         }
 
         // Design §6: the pause overlay covers the board, the HUD and the result panel.

@@ -68,6 +68,33 @@ namespace Mycelia.Game.Tests
             Assert.That(button.GetComponent<Button>().interactable, Is.False);
         }
 
+        // Design §8.3 slice 6: open levels on a bright node, locked ones on a dimmed one.
+        [Test]
+        public void OpenAndLockedLevels_SitOnTheirOwnNodeColours()
+        {
+            LevelButton open = Button();
+            LevelButton locked = Button();
+
+            open.Show(new LevelButtonState(1, unlocked: true, bestStars: 0), () => { });
+            locked.Show(new LevelButtonState(2, unlocked: false, bestStars: 0), () => { });
+
+            Assert.That(open.GetComponent<Image>().color, Is.EqualTo(open.OpenColour));
+            Assert.That(locked.GetComponent<Image>().color, Is.EqualTo(locked.LockedColour));
+            Assert.That(open.OpenColour, Is.Not.EqualTo(open.LockedColour));
+        }
+
+        [Test]
+        public void ALevelUnlockedSinceItWasShown_TurnsBright()
+        {
+            LevelButton button = Button();
+            button.Show(new LevelButtonState(2, unlocked: false, bestStars: 0), () => { });
+
+            button.Show(new LevelButtonState(2, unlocked: true, bestStars: 0), () => { });
+
+            Assert.That(button.GetComponent<Image>().color, Is.EqualTo(button.OpenColour));
+            Assert.That(Lock(button).activeSelf, Is.False);
+        }
+
         [Test]
         public void TheView_HasOneButtonPerLevel_InPlayOrder()
         {

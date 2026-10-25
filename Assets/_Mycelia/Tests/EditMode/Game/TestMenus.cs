@@ -11,10 +11,11 @@ namespace Mycelia.Game.Tests
         public static LevelButton Button(Transform parent = null)
         {
             RectTransform root = Child("Level Button", parent);
-            root.gameObject.AddComponent<Image>();
+            var node = root.gameObject.AddComponent<Image>();
             var button = root.gameObject.AddComponent<Button>();
             var level = root.gameObject.AddComponent<LevelButton>();
             Set(level, "button", button);
+            Set(level, "node", node);
             Set(level, "number", Child("Number", root).gameObject.AddComponent<TextMeshProUGUI>());
             Set(level, "lockIcon", Child("Lock", root).gameObject.AddComponent<Image>());
             var stars = new Image[3];

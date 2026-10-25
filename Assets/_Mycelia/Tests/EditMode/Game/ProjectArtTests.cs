@@ -19,6 +19,75 @@ namespace Mycelia.Game.Tests
         static SpriteRenderer SporePrefab =>
             LoadAll<GameObject>("t:Prefab").Select(prefab => prefab.GetComponent<SporeView>()).Single(view => view != null).Renderer;
 
+        // Design §8.3 slice 6: each level is one of Soni's chunky nodes, with soft stars and the lock icon.
+        [Test]
+        public void TheLevelButton_IsSonisChunkyNode_WithSoftStarsAndTheLock()
+        {
+            LevelButton button = LoadAll<GameObject>("t:Prefab").Select(prefab => prefab.GetComponent<LevelButton>()).Single(b => b != null);
+            var serialized = new SerializedObject(button);
+            var node = (UnityEngine.UI.Image)serialized.FindProperty("node").objectReferenceValue;
+            var lockIcon = (UnityEngine.UI.Image)serialized.FindProperty("lockIcon").objectReferenceValue;
+            SerializedProperty stars = serialized.FindProperty("stars");
+
+            Assert.That(node.sprite.name, Is.EqualTo("chunky"));
+            Assert.That(node.preserveAspect, Is.True, "The shape is drawn, not stretched.");
+            Assert.That(lockIcon.sprite.name, Is.EqualTo("lock"));
+            Assert.That(stars.arraySize, Is.EqualTo(3));
+            for (int i = 0; i < stars.arraySize; i++)
+                Assert.That(((UnityEngine.UI.Image)stars.GetArrayElementAtIndex(i).objectReferenceValue).sprite.name, Is.EqualTo("star-soft"));
+
+            // Soni: the number, the row of stars and the lock sit centred on the node.
+            var number = (RectTransform)((Component)serialized.FindProperty("number").objectReferenceValue).transform;
+            float[] starX = Enumerable.Range(0, 3).Select(i => ((Component)stars.GetArrayElementAtIndex(i).objectReferenceValue).GetComponent<RectTransform>().anchoredPosition.x).ToArray();
+            Assert.That(number.anchoredPosition.x, Is.EqualTo(0f).Within(0.01f), "Number");
+            Assert.That(starX.Sum(), Is.EqualTo(0f).Within(0.01f), "Stars");
+            Assert.That(starX[1], Is.EqualTo(0f).Within(0.01f), "Middle star");
+            Assert.That(lockIcon.rectTransform.anchoredPosition, Is.EqualTo(Vector2.zero), "Lock");
+            Assert.That(button.GetComponent<UnityEngine.UI.Button>().colors.disabledColor, Is.EqualTo(Color.white),
+                "The node's own colour dims a locked level, not the button's tint on top of it.");
+        }
+
+        // Design §8.3 slice 6 (Soni): the stars have a dark outline, so they read on the light node; the fill stays white
+        // to take the UI's tint.
+        [Test]
+        public void TheStar_HasADarkOutline_AroundAWhiteFill()
+        {
+            var texture = new Texture2D(2, 2);
+            Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes("Assets/_Mycelia/Art/UI/star-soft.png")), Is.True);
+            int middle = texture.width / 2;
+            // Up the middle column from the centre: white, then the outline's opaque dark pixels before the edge.
+            Color[] column = Enumerable.Range(texture.height / 2, texture.height / 2).Select(y => texture.GetPixel(middle, y)).ToArray();
+            Color[] opaque = column.Where(pixel => pixel.a > 0.9f).ToArray();
+
+            Assert.That(opaque.First().grayscale, Is.GreaterThan(0.95f), "White at the centre.");
+            Assert.That(opaque.Last().grayscale, Is.LessThan(0.3f), "Dark at the rim.");
+            Object.DestroyImmediate(texture);
+        }
+
+        // Design §8.3 slice 6 (Soni): the lock's shackle ends inside its body, with no bumps poking out underneath.
+        [Test]
+        public void TheLock_HasAFlatBottom_WithNothingPokingOutUnderItsBody()
+        {
+            var texture = new Texture2D(2, 2);
+            Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes("Assets/_Mycelia/Art/UI/lock.png")), Is.True);
+            int bottom = Enumerable.Range(0, texture.height).First(y => Enumerable.Range(0, texture.width).Any(x => texture.GetPixel(x, y).a > 0.5f));
+
+            // Count separate opaque runs in the lowest few rows: the body's bottom is one run; bumps would be two.
+            for (int y = bottom; y < bottom + 4; y++)
+            {
+                int runs = 0;
+                bool inside = false;
+                for (int x = 0; x < texture.width; x++)
+                {
+                    bool opaque = texture.GetPixel(x, y).a > 0.5f;
+                    if (opaque && !inside) runs++;
+                    inside = opaque;
+                }
+                Assert.That(runs, Is.EqualTo(1), $"Row {y} from the bottom.");
+            }
+            Object.DestroyImmediate(texture);
+        }
+
         // Design §8.3 took the cell tiles away: the board atlas holds the spores and nothing else.
         [Test]
         public void TheBoardAtlas_PacksEverySporeSprite_AndNothingElse()

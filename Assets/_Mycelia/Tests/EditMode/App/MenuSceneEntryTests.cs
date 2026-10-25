@@ -54,7 +54,7 @@ namespace Mycelia.App.Tests
         LevelButton ButtonTemplate(Transform parent)
         {
             var template = Child<LevelButton>("Level Button", parent);
-            template.gameObject.AddComponent<Image>();
+            Set(template, "node", template.gameObject.AddComponent<Image>());
             Set(template, "button", template.gameObject.AddComponent<Button>());
             Set(template, "number", Child<TMPro.TextMeshProUGUI>("Number", template.transform));
             Set(template, "lockIcon", Child<Image>("Lock", template.transform));
