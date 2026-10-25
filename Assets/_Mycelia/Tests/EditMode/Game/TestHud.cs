@@ -49,7 +49,9 @@ namespace Mycelia.Game.Tests
             RectTransform card = Child("Card", panelRoot);
             Set(Panel, "card", card);
             Set(Panel, "cardBackground", card.gameObject.AddComponent<Image>());
-            Set(Panel, "title", Child("Title", card).gameObject.AddComponent<TextMeshProUGUI>());
+            RectTransform panelTitle = TopChild("Title", card, -60);
+            panelTitle.sizeDelta = new Vector2(1000, 130);
+            Set(Panel, "title", panelTitle.gameObject.AddComponent<TextMeshProUGUI>());
             var stars = new Image[3];
             for (int i = 0; i < stars.Length; i++)
             {

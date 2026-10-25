@@ -52,7 +52,8 @@ namespace Mycelia.Game
         [SerializeField] Color missingStarColour = new Color(1f, 1f, 1f, 0.55f);
 
         [Header("Loss card")]
-        [SerializeField] Vector2 lossCardSize = new Vector2(860, 600);
+        [SerializeField, Tooltip("Room for the title, the stars at the win's size and the buttons, with space around them.")]
+        Vector2 lossCardSize = new Vector2(980, 720);
         [SerializeField, Tooltip("Retry and Continue sit this far left and right of the card's centre.")]
         float lossButtonOffset = 110;
 
@@ -68,11 +69,15 @@ namespace Mycelia.Game
         float minPhotoHeight = 160;
         [SerializeField, Range(0, 1), Tooltip("On taller screens, Continue rises by this share of the height left once the spaces are at their most.")]
         float continueRise = 0.3f;
+        [SerializeField, Range(0, 1), Tooltip("On taller screens, the title and stars move down by this share of the same height.")]
+        float headerDrop = 0.2f;
         [SerializeField, Range(0, 1), Tooltip("Of the height left after that, this share goes above the fact and the rest below, so it sits a little above centre.")]
         float aboveShare = 0.4f;
 
         FactCard factCard;
         float continueY;
+        float titleY;
+        float starsY;
         bool measured;
 
         public Color EarnedStarColour => earnedStarColour;
@@ -88,6 +93,8 @@ namespace Mycelia.Game
             if (!measured)
             {
                 continueY = ((RectTransform)levelSelect.transform).anchoredPosition.y;
+                titleY = title.rectTransform.anchoredPosition.y;
+                starsY = stars.Length > 0 ? stars[0].rectTransform.anchoredPosition.y : 0;
                 measured = true;
             }
             Hide();
@@ -114,6 +121,7 @@ namespace Mycelia.Game
             levelSelect.gameObject.SetActive(true);
             SetX(retry, -lossButtonOffset);
             SetPosition(levelSelect, won ? 0 : lossButtonOffset, continueY);
+            LowerHeader(0);
 
             if (won)
             {
@@ -135,6 +143,14 @@ namespace Mycelia.Game
             gameObject.SetActive(true);
         }
 
+        // Moves the title and the stars down from where the scene puts them.
+        void LowerHeader(float drop)
+        {
+            title.rectTransform.anchoredPosition = new Vector2(title.rectTransform.anchoredPosition.x, titleY - drop);
+            foreach (Image star in stars)
+                star.rectTransform.anchoredPosition = new Vector2(star.rectTransform.anchoredPosition.x, starsY - drop);
+        }
+
         static void SetPosition(Button button, float x, float y) => ((RectTransform)button.transform).anchoredPosition = new Vector2(x, y);
 
         static void SetX(Button button, float x)
@@ -145,8 +161,8 @@ namespace Mycelia.Game
 
         // Lays the fact out between the stars and Continue: the heading, the whole text (never cut), the photo in its own
         // shape and its source under the photo's left edge. The photo takes what is left at the least spacing; on a taller
-        // screen the spaces grow up to their maximum; of the height still left, Continue rises by a share and the rest
-        // sits mostly below the fact, so it rests a little above centre.
+        // screen the spaces grow up to their maximum; of the height still left, the title and stars come down by a share,
+        // Continue rises by a share, and the rest sits mostly below the fact, so it rests a little above centre.
         void ShowFact()
         {
             bool hasText = !string.IsNullOrEmpty(factCard.Text);
@@ -183,7 +199,9 @@ namespace Mycelia.Game
             float left = Mathf.Max(0, space - content - gaps * spacing);
             float rise = left * continueRise;
             SetPosition(levelSelect, 0, continueY + rise);
-            float y = top - (left - rise) * aboveShare;
+            float drop = left * headerDrop;
+            LowerHeader(drop);
+            float y = top - drop - (left - drop - rise) * aboveShare;
 
             PlaceTop(headingRect, 0, y);
             y -= headingHeight + spacing;

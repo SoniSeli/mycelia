@@ -468,6 +468,30 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Soni (slice 7): the loss card holds the win's big stars with room around them, so it doesn't look cluttered.
+        [Test]
+        public void TheLossCard_HasRoomAroundItsStars()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.ResultPanel panel = roots.SelectMany(root => root.GetComponentsInChildren<Game.ResultPanel>(true)).Single();
+                var serialized = new SerializedObject(panel);
+                Vector2 card = serialized.FindProperty("lossCardSize").vector2Value;
+                SerializedProperty stars = serialized.FindProperty("stars");
+                var starRects = Enumerable.Range(0, stars.arraySize)
+                    .Select(i => ((UnityEngine.UI.Image)stars.GetArrayElementAtIndex(i).objectReferenceValue).rectTransform).ToArray();
+                var retry = (RectTransform)((UnityEngine.UI.Button)serialized.FindProperty("retry").objectReferenceValue).transform;
+                const float room = 80;
+
+                float starsHalfWidth = starRects.Max(star => Mathf.Abs(star.anchoredPosition.x) + star.sizeDelta.x / 2);
+                float starsBottom = starRects.Min(star => star.anchoredPosition.y - star.sizeDelta.y);
+                float buttonsTop = -card.y + retry.anchoredPosition.y + retry.sizeDelta.y;
+                Assert.That(card.x / 2 - starsHalfWidth, Is.GreaterThanOrEqualTo(room), "Beside the stars.");
+                Assert.That(starsBottom - buttonsTop, Is.GreaterThanOrEqualTo(room), "Between the stars and the buttons.");
+                Assert.That(card.x, Is.LessThanOrEqualTo(1000f), "Still a card, with the board showing on both sides.");
+            });
+        }
+
         // Anchored to the bottom centre of the safe area, at the given distance from the centre line.
         static void AssertInFooter(RectTransform button, float x)
         {

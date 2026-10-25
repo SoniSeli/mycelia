@@ -4296,7 +4296,7 @@ MonoBehaviour:
   factCredit: {fileID: 405577315}
   earnedStarColour: {r: 1, g: 0.8, b: 0.25, a: 1}
   missingStarColour: {r: 1, g: 1, b: 1, a: 0.55}
-  lossCardSize: {x: 860, y: 600}
+  lossCardSize: {x: 980, y: 720}
   lossButtonOffset: 110
   photoMaxWidth: 940
   gap: 30
@@ -4304,6 +4304,7 @@ MonoBehaviour:
   creditGap: 8
   minPhotoHeight: 160
   continueRise: 0.3
+  headerDrop: 0.2
   aboveShare: 0.4
 --- !u!222 &1727629250
 CanvasRenderer:

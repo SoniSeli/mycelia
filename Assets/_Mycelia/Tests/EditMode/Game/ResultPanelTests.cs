@@ -142,9 +142,9 @@ namespace Mycelia.Game.Tests
         float ContinueTop => -Rect("Card").rect.height + Rect("Level Select").anchoredPosition.y + Rect("Level Select").sizeDelta.y;
 
         // Soni (slice 7): on a tall phone the fact sits a little above centre between the stars and Continue, with room
-        // between its parts, and Continue rises off the bottom edge.
+        // between its parts; Continue rises off the bottom edge and the title and stars come down from the top.
         [Test]
-        public void OnATallScreen_TheFactSitsAboveCentre_WithItsSpacesAtTheirMost_AndContinueRises()
+        public void OnATallScreen_TheFactSitsAboveCentre_WithItsSpacesAtTheirMost_ContinueRises_AndTheTitleComesDown()
         {
             Init(new FactCard("Text.", factSprite, "Photo: example.org"));
 
@@ -152,6 +152,8 @@ namespace Mycelia.Game.Tests
 
             RectTransform heading = Rect("Interesting Fact"), text = Rect("Fact Text"), photo = Rect("Fact Image"), credit = Rect("Fact Credit");
             Assert.That(Rect("Level Select").anchoredPosition.y, Is.GreaterThan(40f), "Continue rises from where it sits on a short screen.");
+            Assert.That(Rect("Title").anchoredPosition.y, Is.LessThan(-60f), "The title comes down from where it sits on a short screen.");
+            Assert.That(Rect("Star 2").anchoredPosition.y - Rect("Title").anchoredPosition.y, Is.EqualTo(-140f).Within(0.01f), "The stars come down with it.");
             Assert.That(StarsBottom - heading.anchoredPosition.y, Is.LessThan(Bottom(credit) - ContinueTop), "Less room above the fact than below it.");
             Assert.That(StarsBottom - heading.anchoredPosition.y, Is.GreaterThan(Setting("gap")), "But more than the least.");
             Assert.That(Bottom(heading) - text.anchoredPosition.y, Is.EqualTo(Setting("maxGap")).Within(0.01f), "Heading to text.");
@@ -174,6 +176,8 @@ namespace Mycelia.Game.Tests
             Assert.That(StarsBottom - heading.anchoredPosition.y, Is.EqualTo(Setting("gap")).Within(0.5f), "Right under the stars.");
             Assert.That(Bottom(credit) - ContinueTop, Is.EqualTo(Setting("gap")).Within(0.5f), "Right above Continue.");
             Assert.That(Rect("Level Select").anchoredPosition.y, Is.EqualTo(40f), "Continue stays where it is.");
+            Assert.That(Rect("Title").anchoredPosition.y, Is.EqualTo(-60f), "So do the title...");
+            Assert.That(Rect("Star 2").anchoredPosition.y, Is.EqualTo(-200f), "...and the stars.");
         }
 
         [Test]
@@ -252,6 +256,7 @@ namespace Mycelia.Game.Tests
             Assert.That(Shown("Dim"), Is.True);
             Assert.That(hud.Board.activeSelf, Is.True, "The board stays in view.");
             Assert.That(hud.Band.gameObject.activeSelf, Is.True);
+            Assert.That(Rect("Title").anchoredPosition.y, Is.EqualTo(-60f), "The title is back in its place on the card.");
         }
 
         [Test]
