@@ -23,38 +23,56 @@ namespace Mycelia.Game
     }
 
     /// <summary>
-    /// Shows how the level ended (design §3.4–3.6, §4). A win shows 1–3 stars and the level's fact card, with Level
-    /// select so the player sees the new unlock and their stars. A loss says "Out of moves", with Retry and Level
-    /// select. The card's height follows what it holds; positions are set here, not by a layout group (ADR-0012).
+    /// Shows how the level ended (design §3.4–3.6, §4, §8.3). A win fills the screen over the backdrop, with the board and
+    /// the HUD hidden: "Level Completed", 1–3 stars, the level's fact under "Interesting Fact", its photo and source, and
+    /// Continue to level select, so the player sees the new unlock and their stars. A loss is a small card over the dimmed
+    /// board: "Out of moves", three dimmed stars, Retry and Continue. Positions are set here, not by a layout group (ADR-0012).
     /// </summary>
     public sealed class ResultPanel : MonoBehaviour
     {
-        public const string WonTitle = "Level complete";
+        public const string WonTitle = "Level Completed";
         public const string LostTitle = "Out of moves";
 
         [SerializeField] TMP_Text title;
         [SerializeField] Image[] stars = Array.Empty<Image>();
         [SerializeField, FormerlySerializedAs("playAgain")] Button retry;
-        [SerializeField] Button levelSelect;
-        [SerializeField, Tooltip("The visible panel; its height is set per outcome. Children are anchored to its top or bottom.")]
+        [SerializeField, Tooltip("Continue: back to level select.")] Button levelSelect;
+        [SerializeField, Tooltip("Holds everything shown: the whole panel for a win, a small card for a loss. Children are anchored to its top or bottom.")]
         RectTransform card;
+        [SerializeField, Tooltip("The card's shape, drawn only for a loss.")] Image cardBackground;
+        [SerializeField, Tooltip("Dims the board behind a loss's card.")] GameObject dim;
+        [SerializeField, Tooltip("Hidden while a win shows, so it fills the screen: the board and the HUD.")]
+        GameObject[] hiddenByWin = Array.Empty<GameObject>();
         [SerializeField] GameObject fact;
+        [SerializeField, Tooltip("\"Interesting Fact\", over the text.")] TMP_Text factHeading;
         [SerializeField] Image factImage;
         [SerializeField] TMP_Text factText;
         [SerializeField] TMP_Text factCredit;
         [SerializeField] Color earnedStarColour = new Color(1f, 0.8f, 0.25f);
-        [SerializeField] Color missingStarColour = new Color(1f, 1f, 1f, 0.2f);
+        [SerializeField] Color missingStarColour = new Color(1f, 1f, 1f, 0.55f);
 
-        [Header("Card heights")]
-        [SerializeField, Min(0)] float lossHeight = 640;
-        [SerializeField, Min(0)] float winHeight = 1030;
-        [SerializeField, Min(0), Tooltip("Added to a win's card when the fact has an image; the text and credit move down by as much.")]
-        float imageHeight = 380;
+        [Header("Loss card")]
+        [SerializeField] Vector2 lossCardSize = new Vector2(860, 600);
+        [SerializeField, Tooltip("Retry and Continue sit this far left and right of the card's centre.")]
+        float lossButtonOffset = 110;
+
+        [Header("Win layout")]
+        [SerializeField, Min(0)] float photoMaxWidth = 940;
+        [SerializeField, Min(0), Tooltip("The least space between the stars, the heading, the text, the photo and Continue; used on short screens.")]
+        float gap = 30;
+        [SerializeField, Min(0), Tooltip("On taller screens the spaces grow up to this.")]
+        float maxGap = 80;
+        [SerializeField, Min(0), Tooltip("Between the photo and its source.")]
+        float creditGap = 12;
+        [SerializeField, Min(0), Tooltip("A photo that would be shorter than this is left out rather than squeezed.")]
+        float minPhotoHeight = 160;
+        [SerializeField, Range(0, 1), Tooltip("On taller screens, Continue rises by this share of the height left once the spaces are at their most.")]
+        float continueRise = 0.3f;
+        [SerializeField, Range(0, 1), Tooltip("Of the height left after that, this share goes above the fact and the rest below, so it sits a little above centre.")]
+        float aboveShare = 0.4f;
 
         FactCard factCard;
-        Vector2 factTextTop;
-        Vector2 factCreditTop;
-        float factTextHeight;
+        float continueY;
         bool measured;
 
         public Color EarnedStarColour => earnedStarColour;
@@ -67,6 +85,11 @@ namespace Mycelia.Game
             levelSelect.onClick.RemoveAllListeners();
             levelSelect.onClick.AddListener(() => onLevelSelect());
             factCard = fact;
+            if (!measured)
+            {
+                continueY = ((RectTransform)levelSelect.transform).anchoredPosition.y;
+                measured = true;
+            }
             Hide();
         }
 
@@ -76,55 +99,125 @@ namespace Mycelia.Game
         {
             bool won = outcome == SessionState.Won;
             title.SetText(won ? WonTitle : LostTitle);
+            // A loss shows the three stars dimmed: what a win earns.
             for (int i = 0; i < stars.Length; i++)
             {
-                stars[i].gameObject.SetActive(won);
-                stars[i].color = i < earnedStars ? earnedStarColour : missingStarColour;
+                stars[i].gameObject.SetActive(true);
+                stars[i].color = won && i < earnedStars ? earnedStarColour : missingStarColour;
             }
 
+            foreach (GameObject hidden in hiddenByWin)
+                hidden.SetActive(!won);
+            dim.SetActive(!won);
+            cardBackground.enabled = !won;
             retry.gameObject.SetActive(!won);
             levelSelect.gameObject.SetActive(true);
-            float height = won ? winHeight + ShowFact() : lossHeight;
-            if (!won)
+            SetX(retry, -lossButtonOffset);
+            SetPosition(levelSelect, won ? 0 : lossButtonOffset, continueY);
+
+            if (won)
+            {
+                card.anchorMin = Vector2.zero;
+                card.anchorMax = Vector2.one;
+                card.sizeDelta = Vector2.zero;
+            }
+            else
+            {
+                card.anchorMin = card.anchorMax = new Vector2(0.5f, 0.5f);
+                card.sizeDelta = lossCardSize;
+            }
+            card.anchoredPosition = Vector2.zero;
+
+            if (won)
+                ShowFact();
+            else
                 fact.SetActive(false);
-            card.sizeDelta = new Vector2(card.sizeDelta.x, height);
             gameObject.SetActive(true);
         }
 
-        // Fills the fact card and returns the extra height its image and its text need beyond the scene's layout.
-        // The text box grows to fit the whole fact (never cut), and the credit moves down below it.
-        float ShowFact()
+        static void SetPosition(Button button, float x, float y) => ((RectTransform)button.transform).anchoredPosition = new Vector2(x, y);
+
+        static void SetX(Button button, float x)
         {
-            if (!measured)
+            var rect = (RectTransform)button.transform;
+            rect.anchoredPosition = new Vector2(x, rect.anchoredPosition.y);
+        }
+
+        // Lays the fact out between the stars and Continue: the heading, the whole text (never cut), the photo in its own
+        // shape and its source under the photo's left edge. The photo takes what is left at the least spacing; on a taller
+        // screen the spaces grow up to their maximum; of the height still left, Continue rises by a share and the rest
+        // sits mostly below the fact, so it rests a little above centre.
+        void ShowFact()
+        {
+            bool hasText = !string.IsNullOrEmpty(factCard.Text);
+            fact.SetActive(hasText || factCard.Image != null);
+
+            RectTransform headingRect = factHeading.rectTransform, textRect = factText.rectTransform, creditRect = factCredit.rectTransform;
+            factText.text = factCard.Text ?? "";
+            float textHeight = hasText ? Mathf.Ceil(factText.GetPreferredValues(factText.text, textRect.rect.width, 0).y) : 0;
+            textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textHeight);
+
+            // The space to fill, in the card's coordinates (0 at its top, negative downwards).
+            RectTransform lastStar = stars[stars.Length - 1].rectTransform;
+            var continueRect = (RectTransform)levelSelect.transform;
+            float top = lastStar.anchoredPosition.y - lastStar.rect.height - gap;
+            float bottom = -card.rect.height + continueY + continueRect.rect.height + gap;
+            float space = top - bottom;
+
+            float headingHeight = headingRect.rect.height;
+            float creditBlock = string.IsNullOrEmpty(factCard.Credit) ? 0 : creditGap + creditRect.rect.height;
+            Vector2 photo = factCard.Image != null
+                ? Fit(factCard.Image.rect.size, photoMaxWidth, space - headingHeight - textHeight - creditBlock - 2 * gap)
+                : Vector2.zero;
+            bool showPhoto = photo.y >= minPhotoHeight;
+            // The credit belongs to the photo: without the photo, it isn't shown.
+            bool showCredit = showPhoto && creditBlock > 0;
+            if (!showPhoto)
+                photo = Vector2.zero;
+
+            int gaps = showPhoto ? 2 : 1;
+            float content = headingHeight + textHeight + photo.y + (showCredit ? creditBlock : 0);
+            // Spare space is shared by the gaps and the margins above and below the block.
+            float spare = space - content - gaps * gap;
+            float spacing = gap + Mathf.Clamp(spare / (gaps + 2), 0, Mathf.Max(0, maxGap - gap));
+            float left = Mathf.Max(0, space - content - gaps * spacing);
+            float rise = left * continueRise;
+            SetPosition(levelSelect, 0, continueY + rise);
+            float y = top - (left - rise) * aboveShare;
+
+            PlaceTop(headingRect, 0, y);
+            y -= headingHeight + spacing;
+            PlaceTop(textRect, 0, y);
+            y -= textHeight + spacing;
+
+            factImage.gameObject.SetActive(showPhoto);
+            if (showPhoto)
             {
-                factTextTop = factText.rectTransform.anchoredPosition;
-                factCreditTop = factCredit.rectTransform.anchoredPosition;
-                factTextHeight = factText.rectTransform.sizeDelta.y;
-                measured = true;
+                factImage.sprite = factCard.Image;
+                PlaceTop(factImage.rectTransform, 0, y);
+                factImage.rectTransform.sizeDelta = photo;
             }
 
-            bool hasImage = factCard.Image != null;
-            // The credit belongs to the image: without the image, it isn't shown.
-            bool hasCredit = hasImage && !string.IsNullOrEmpty(factCard.Credit);
-            float imageExtra = hasImage ? imageHeight : 0;
-
-            fact.SetActive(!string.IsNullOrEmpty(factCard.Text) || hasImage);
-            factImage.gameObject.SetActive(hasImage);
-            if (hasImage)
-                factImage.sprite = factCard.Image;
-
-            RectTransform textRect = factText.rectTransform;
-            factText.text = factCard.Text ?? "";
-            float needed = factText.GetPreferredValues(factText.text, textRect.rect.width, 0).y;
-            float textHeight = Mathf.Max(factTextHeight, Mathf.Ceil(needed));
-            float textExtra = textHeight - factTextHeight;
-            textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textHeight);
-            textRect.anchoredPosition = factTextTop - new Vector2(0, imageExtra);
-
-            factCredit.gameObject.SetActive(hasCredit);
+            factCredit.gameObject.SetActive(showCredit);
             factCredit.text = factCard.Credit ?? "";
-            factCredit.rectTransform.anchoredPosition = factCreditTop - new Vector2(0, imageExtra + textExtra);
-            return imageExtra + textExtra;
+            PlaceTop(creditRect, -photo.x / 2, y - photo.y - creditGap);
+            creditRect.pivot = new Vector2(0f, 1f);
+        }
+
+        // Anchored to the card's top centre, hanging down from y.
+        static void PlaceTop(RectTransform rect, float x, float y)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(x, y);
+        }
+
+        // The largest size of the given shape that fits inside maxWidth x maxHeight.
+        static Vector2 Fit(Vector2 shape, float maxWidth, float maxHeight)
+        {
+            if (shape.x <= 0 || shape.y <= 0 || maxHeight <= 0)
+                return Vector2.zero;
+            return shape * Mathf.Min(maxWidth / shape.x, maxHeight / shape.y);
         }
     }
 }

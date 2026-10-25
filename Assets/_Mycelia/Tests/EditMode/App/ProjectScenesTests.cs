@@ -433,6 +433,41 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // Design §8.3 slice 7: "Interesting Fact" over the justified fact and its photo, the soft stars, round Retry and
+        // Continue buttons; a win hides the board and every HUD button, so the result fills the screen.
+        [Test]
+        public void TheResult_ShowsAnInterestingFact_AndAWinHidesTheBoardAndHud()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.ResultPanel panel = roots.SelectMany(root => root.GetComponentsInChildren<Game.ResultPanel>(true)).Single();
+                var serialized = new SerializedObject(panel);
+                T Field<T>(string name) where T : UnityEngine.Object => (T)serialized.FindProperty(name).objectReferenceValue;
+                var fact = Field<GameObject>("fact");
+
+                Assert.That(fact.GetComponentsInChildren<TMPro.TMP_Text>(true).Select(text => text.text), Has.Member("Interesting Fact"));
+                Assert.That(Field<TMPro.TMP_Text>("factText").alignment, Is.EqualTo(TMPro.TextAlignmentOptions.TopJustified));
+                Assert.That(Field<TMPro.TMP_Text>("factCredit").horizontalAlignment, Is.EqualTo(TMPro.HorizontalAlignmentOptions.Left));
+                Assert.That(Field<UnityEngine.UI.Button>("retry").image.sprite.name, Is.EqualTo("icon-retry"));
+                Assert.That(Field<UnityEngine.UI.Button>("levelSelect").image.sprite.name, Is.EqualTo("icon-next"));
+                SerializedProperty stars = serialized.FindProperty("stars");
+                for (int i = 0; i < stars.arraySize; i++)
+                    Assert.That(((UnityEngine.UI.Image)stars.GetArrayElementAtIndex(i).objectReferenceValue).sprite.name, Is.EqualTo("star-soft"));
+
+                SerializedProperty hidden = serialized.FindProperty("hiddenByWin");
+                var hiddenObjects = Enumerable.Range(0, hidden.arraySize).Select(i => (GameObject)hidden.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
+                bool HiddenByAWin(Component component) => hiddenObjects.Any(hiddenObject => component.transform.IsChildOf(hiddenObject.transform));
+                Assert.That(HiddenByAWin(roots.SelectMany(root => root.GetComponentsInChildren<Game.BoardView>(true)).Single()), Is.True, "The board.");
+                var hudButtons = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+                    .Where(button => button.GetComponentInParent<Game.ResultPanel>(true) == null && button.GetComponentInParent<Game.PauseOverlay>(true) == null
+                        && button.GetComponentInParent<Game.SettingsModal>(true) == null)
+                    .ToArray();
+                Assert.That(hudButtons, Is.Not.Empty);
+                Assert.That(hudButtons.Where(button => !HiddenByAWin(button)).Select(button => button.name), Is.Empty, "Every HUD button.");
+                Assert.That(hiddenObjects.Any(hiddenObject => hiddenObject.GetComponentInChildren<Game.HudView>(true) != null), Is.True, "The HUD.");
+            });
+        }
+
         // Anchored to the bottom centre of the safe area, at the given distance from the centre line.
         static void AssertInFooter(RectTransform button, float x)
         {

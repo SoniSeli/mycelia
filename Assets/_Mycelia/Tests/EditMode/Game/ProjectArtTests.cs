@@ -47,10 +47,11 @@ namespace Mycelia.Game.Tests
                 "The node's own colour dims a locked level, not the button's tint on top of it.");
         }
 
-        // Design §8.3 slice 6 (Soni): the stars have a dark outline, so they read on the light node; the fill stays white
+        // Design §8.3 slices 6–7 (Soni): the stars have a soft outline, a shade of their own colour, so they read on the light
+        // node without a heavy line; the fill stays white
         // to take the UI's tint.
         [Test]
-        public void TheStar_HasADarkOutline_AroundAWhiteFill()
+        public void TheStar_HasASoftOutline_AroundAWhiteFill()
         {
             var texture = new Texture2D(2, 2);
             Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes("Assets/_Mycelia/Art/UI/star-soft.png")), Is.True);
@@ -60,7 +61,7 @@ namespace Mycelia.Game.Tests
             Color[] opaque = column.Where(pixel => pixel.a > 0.9f).ToArray();
 
             Assert.That(opaque.First().grayscale, Is.GreaterThan(0.95f), "White at the centre.");
-            Assert.That(opaque.Last().grayscale, Is.LessThan(0.3f), "Dark at the rim.");
+            Assert.That(opaque.Last().grayscale, Is.InRange(0.5f, 0.7f), "A soft grey at the rim, not dark ink.");
             Object.DestroyImmediate(texture);
         }
 

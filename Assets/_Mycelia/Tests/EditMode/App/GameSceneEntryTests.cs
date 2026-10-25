@@ -110,8 +110,18 @@ namespace Mycelia.App.Tests
             Transform fact = UiChild("Fact", resultPanel.transform);
             factText = UiChild("Fact Text", fact).gameObject.AddComponent<TextMeshProUGUI>();
             SetReference(resultPanel, "levelSelect", resultLevelSelect);
-            SetReference(resultPanel, "card", UiChild("Card", resultPanel.transform));
+            var resultCard = (RectTransform)UiChild("Card", resultPanel.transform);
+            SetReference(resultPanel, "card", resultCard);
+            SetReference(resultPanel, "cardBackground", resultCard.gameObject.AddComponent<Image>());
+            SetReference(resultPanel, "dim", UiChild("Dim", resultPanel.transform).gameObject);
             SetReference(resultPanel, "fact", fact.gameObject);
+            SetReference(resultPanel, "factHeading", UiChild("Interesting Fact", fact).gameObject.AddComponent<TextMeshProUGUI>());
+            // The panel lays the fact out under its stars.
+            var serializedPanel = new SerializedObject(resultPanel);
+            SerializedProperty resultStars = serializedPanel.FindProperty("stars");
+            resultStars.arraySize = 1;
+            resultStars.GetArrayElementAtIndex(0).objectReferenceValue = UiChild("Star 1", resultPanel.transform).gameObject.AddComponent<Image>();
+            serializedPanel.ApplyModifiedPropertiesWithoutUndo();
             SetReference(resultPanel, "factImage", UiChild("Fact Image", fact).gameObject.AddComponent<Image>());
             SetReference(resultPanel, "factText", factText);
             SetReference(resultPanel, "factCredit", UiChild("Fact Credit", fact).gameObject.AddComponent<TextMeshProUGUI>());

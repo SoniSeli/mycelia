@@ -1,3 +1,4 @@
+using System.Linq;
 using Mycelia.Domain.Sessions;
 using NUnit.Framework;
 using TMPro;
@@ -18,8 +19,9 @@ namespace Mycelia.Game.Tests
         public void CreatePanel()
         {
             hud = new TestHud();
-            texture = new Texture2D(4, 4);
-            factSprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+            // A photo twice as wide as it is tall.
+            texture = new Texture2D(8, 4);
+            factSprite = Sprite.Create(texture, new Rect(0, 0, 8, 4), Vector2.one * 0.5f);
             retryClicks = levelSelectClicks = 0;
             Init(new FactCard("Mycelium can span kilometres.", null, ""));
         }
@@ -41,11 +43,13 @@ namespace Mycelia.Game.Tests
             return null;
         }
 
+        RectTransform Rect(string name) => (RectTransform)Find(name);
         string Title => Find("Title").GetComponent<TMP_Text>().text;
         bool Shown(string name) => Find(name).gameObject.activeSelf;
-        float CardHeight => ((RectTransform)Find("Card")).sizeDelta.y;
 
         Image[] Stars => System.Array.FindAll(hud.Panel.GetComponentsInChildren<Image>(true), image => image.name.StartsWith("Star"));
+
+        static string LongFact(int sentences) => string.Join(" ", Enumerable.Repeat("Mycelium grows through soil and wood.", sentences));
 
         [Test]
         public void ThePanel_StartsHidden()
@@ -59,7 +63,7 @@ namespace Mycelia.Game.Tests
             hud.Panel.Show(SessionState.Won, 2);
 
             Assert.That(hud.Panel.gameObject.activeSelf, Is.True);
-            Assert.That(Title, Is.EqualTo("Level complete"));
+            Assert.That(Title, Is.EqualTo("Level Completed"));
             Assert.That(System.Array.TrueForAll(Stars, star => star.gameObject.activeSelf), "All three stars are shown.");
             Assert.That(Stars[0].color, Is.EqualTo(hud.Panel.EarnedStarColour));
             Assert.That(Stars[1].color, Is.EqualTo(hud.Panel.EarnedStarColour));
@@ -67,15 +71,30 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void AWin_ShowsTheLevelsFact_AndOnlyLevelSelect()
+        public void AWin_ShowsTheLevelsFact_AndOnlyContinue()
         {
-            // Slice 5: every win returns to level select, so the player sees the new unlock and their stars.
+            // Slice 5, kept in Milestone 4 slice 7 (Soni): every win returns to level select, so the player sees the new
+            // unlock and their stars.
             hud.Panel.Show(SessionState.Won, 3);
 
             Assert.That(Shown("Fact"), Is.True);
             Assert.That(Find("Fact Text").GetComponent<TMP_Text>().text, Is.EqualTo("Mycelium can span kilometres."));
             Assert.That(Shown("Level Select"), Is.True);
             Assert.That(Shown("Retry"), Is.False);
+            Assert.That(Rect("Level Select").anchoredPosition.x, Is.EqualTo(0f), "Continue sits centred.");
+        }
+
+        // Design §8.3 slice 7: a win fills the screen over the backdrop, with nothing of the level showing through.
+        [Test]
+        public void AWin_FillsTheScreen_HidingTheBoardAndHud()
+        {
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(Rect("Card").rect.size, Is.EqualTo(((RectTransform)hud.Panel.transform).rect.size), "The card fills the panel.");
+            Assert.That(Find("Card").GetComponent<Image>().enabled, Is.False, "No card shape: the backdrop shows.");
+            Assert.That(Shown("Dim"), Is.False);
+            Assert.That(hud.Board.activeSelf, Is.False);
+            Assert.That(hud.Band.gameObject.activeSelf, Is.False);
         }
 
         [Test]
@@ -98,63 +117,141 @@ namespace Mycelia.Game.Tests
             Assert.That(Shown("Fact Credit"), Is.False);
         }
 
+        // Design §8.3 slice 7: text, then the photo at full width in its own shape, then its source under its bottom-left corner.
         [Test]
-        public void AFactWithAnImageAndCredit_ShowsThem_OnATallerCard()
+        public void AFactsPhoto_KeepsItsShape_UnderTheText_WithItsSourceUnderItsLeftEdge()
         {
-            hud.Panel.Show(SessionState.Won, 1);
-            float withoutImage = CardHeight;
+            Init(new FactCard("Text.", factSprite, "Photo: example.org"));
 
-            Init(new FactCard("Text.", factSprite, "Photo: Jane Doe, CC BY 4.0"));
             hud.Panel.Show(SessionState.Won, 1);
 
+            RectTransform photo = Rect("Fact Image"), text = Rect("Fact Text"), credit = Rect("Fact Credit");
             Assert.That(Shown("Fact Image"), Is.True);
             Assert.That(Find("Fact Image").GetComponent<Image>().sprite, Is.SameAs(factSprite));
+            Assert.That(photo.sizeDelta, Is.EqualTo(new Vector2(940, 470)), "As wide as the text, twice as wide as tall.");
+            Assert.That(photo.anchoredPosition.y, Is.LessThan(text.anchoredPosition.y - text.sizeDelta.y), "Under the text.");
             Assert.That(Shown("Fact Credit"), Is.True);
-            Assert.That(Find("Fact Credit").GetComponent<TMP_Text>().text, Is.EqualTo("Photo: Jane Doe, CC BY 4.0"));
-            Assert.That(CardHeight, Is.GreaterThan(withoutImage));
+            Assert.That(Find("Fact Credit").GetComponent<TMP_Text>().text, Is.EqualTo("Photo: example.org"));
+            Assert.That(credit.anchoredPosition.x - credit.pivot.x * credit.sizeDelta.x, Is.EqualTo(-470f).Within(0.01f), "Starts at the photo's left edge.");
+            Assert.That(credit.anchoredPosition.y, Is.LessThanOrEqualTo(photo.anchoredPosition.y - photo.sizeDelta.y), "Under the photo.");
         }
 
+        float Setting(string name) => new UnityEditor.SerializedObject(hud.Panel).FindProperty(name).floatValue;
+        static float Bottom(RectTransform rect) => rect.anchoredPosition.y - rect.sizeDelta.y;
+        float StarsBottom => Bottom(Rect("Star 3"));
+        float ContinueTop => -Rect("Card").rect.height + Rect("Level Select").anchoredPosition.y + Rect("Level Select").sizeDelta.y;
+
+        // Soni (slice 7): on a tall phone the fact sits a little above centre between the stars and Continue, with room
+        // between its parts, and Continue rises off the bottom edge.
         [Test]
-        public void ALongFact_GrowsTheCard_AndMovesTheCreditBelowIt()
+        public void OnATallScreen_TheFactSitsAboveCentre_WithItsSpacesAtTheirMost_AndContinueRises()
         {
-            // Slice 7: facts keep their full text, so the card grows to fit it instead of cutting it.
-            float box = ((RectTransform)Find("Fact Text")).sizeDelta.y;
-            Init(new FactCard("Short.", null, "Credit"));
-            hud.Panel.Show(SessionState.Won, 1);
-            float shortCard = CardHeight;
-            float shortCredit = ((RectTransform)Find("Fact Credit")).anchoredPosition.y;
+            Init(new FactCard("Text.", factSprite, "Photo: example.org"));
 
-            Init(new FactCard(string.Join(" ", System.Linq.Enumerable.Repeat("Mycelium grows through soil and wood.", 12)), null, "Credit"));
             hud.Panel.Show(SessionState.Won, 1);
 
-            Assert.That(CardHeight, Is.GreaterThan(shortCard));
-            Assert.That(((RectTransform)Find("Fact Credit")).anchoredPosition.y, Is.LessThan(shortCredit), "The credit sits lower, under the longer text.");
-            float grown = CardHeight - shortCard;
-            float textGrew = ((RectTransform)Find("Fact Text")).sizeDelta.y - box;
-            Assert.That(grown, Is.EqualTo(textGrew).Within(0.01f), "The card grows by exactly what the text needs.");
+            RectTransform heading = Rect("Interesting Fact"), text = Rect("Fact Text"), photo = Rect("Fact Image"), credit = Rect("Fact Credit");
+            Assert.That(Rect("Level Select").anchoredPosition.y, Is.GreaterThan(40f), "Continue rises from where it sits on a short screen.");
+            Assert.That(StarsBottom - heading.anchoredPosition.y, Is.LessThan(Bottom(credit) - ContinueTop), "Less room above the fact than below it.");
+            Assert.That(StarsBottom - heading.anchoredPosition.y, Is.GreaterThan(Setting("gap")), "But more than the least.");
+            Assert.That(Bottom(heading) - text.anchoredPosition.y, Is.EqualTo(Setting("maxGap")).Within(0.01f), "Heading to text.");
+            Assert.That(Bottom(text) - photo.anchoredPosition.y, Is.EqualTo(Setting("maxGap")).Within(0.01f), "Text to photo.");
+        }
+
+        // Soni (slice 7): on a short (16:9) phone the parts stay close, and the photo gives way.
+        [Test]
+        public void OnAShortScreen_TheSpacesStayAtTheirLeast_AndThePhotoShrinksToFit()
+        {
+            ((RectTransform)hud.Panel.transform).sizeDelta = new Vector2(1080, 1700);
+            Init(new FactCard(LongFact(12), factSprite, "Photo: example.org"));
+
+            hud.Panel.Show(SessionState.Won, 1);
+
+            RectTransform heading = Rect("Interesting Fact"), text = Rect("Fact Text"), photo = Rect("Fact Image"), credit = Rect("Fact Credit");
+            Assert.That(photo.sizeDelta.y, Is.LessThan(470f), "Shrunk from its full width.");
+            Assert.That(Bottom(heading) - text.anchoredPosition.y, Is.EqualTo(Setting("gap")).Within(0.01f), "Heading to text.");
+            Assert.That(Bottom(text) - photo.anchoredPosition.y, Is.EqualTo(Setting("gap")).Within(0.01f), "Text to photo.");
+            Assert.That(StarsBottom - heading.anchoredPosition.y, Is.EqualTo(Setting("gap")).Within(0.5f), "Right under the stars.");
+            Assert.That(Bottom(credit) - ContinueTop, Is.EqualTo(Setting("gap")).Within(0.5f), "Right above Continue.");
+            Assert.That(Rect("Level Select").anchoredPosition.y, Is.EqualTo(40f), "Continue stays where it is.");
         }
 
         [Test]
-        public void ALoss_SaysSo_WithRetryAndLevelSelect_ButNoStarsOrFact()
+        public void AFactWithoutAPhoto_SitsAboveCentreToo()
+        {
+            hud.Panel.Show(SessionState.Won, 1);
+
+            RectTransform heading = Rect("Interesting Fact"), text = Rect("Fact Text");
+            Assert.That(StarsBottom - heading.anchoredPosition.y, Is.LessThan(Bottom(text) - ContinueTop));
+            Assert.That(StarsBottom - heading.anchoredPosition.y, Is.GreaterThan(Setting("gap")));
+        }
+
+        // Facts keep their full text (Milestone 3 slice 7); on a full screen the photo gives way instead.
+        [Test]
+        public void ALongFact_KeepsAllItsText_AndThePhotoShrinksToFitAboveContinue()
+        {
+            Init(new FactCard(LongFact(30), factSprite, "Credit"));
+
+            hud.Panel.Show(SessionState.Won, 1);
+
+            RectTransform photo = Rect("Fact Image"), text = Rect("Fact Text"), credit = Rect("Fact Credit");
+            TMP_Text factText = text.GetComponent<TMP_Text>();
+            float needed = factText.GetPreferredValues(factText.text, text.rect.width, 0).y;
+            Assert.That(text.sizeDelta.y, Is.GreaterThanOrEqualTo(needed), "The whole fact fits its box.");
+            Assert.That(Shown("Fact Image"), Is.True);
+            Assert.That(photo.sizeDelta.y, Is.LessThan(470f), "Smaller than it would be with a short fact.");
+            Assert.That(photo.sizeDelta.x / photo.sizeDelta.y, Is.EqualTo(2f).Within(0.01f), "Still in its own shape.");
+            float cardHeight = Rect("Card").rect.height;
+            float creditBottomFromCardBottom = cardHeight + credit.anchoredPosition.y - credit.sizeDelta.y;
+            RectTransform continueButton = Rect("Level Select");
+            Assert.That(creditBottomFromCardBottom, Is.GreaterThanOrEqualTo(continueButton.anchoredPosition.y + continueButton.sizeDelta.y),
+                "The source stays above Continue.");
+        }
+
+        [Test]
+        public void APhotoThatWouldFallBelowItsMinimumHeight_IsDroppedWithItsSource_RatherThanSqueezed()
+        {
+            // The photo would be 470 tall here: just under a minimum of 480.
+            var serialized = new UnityEditor.SerializedObject(hud.Panel);
+            serialized.FindProperty("minPhotoHeight").floatValue = 480;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Init(new FactCard("Text.", factSprite, "Credit"));
+
+            hud.Panel.Show(SessionState.Won, 1);
+
+            Assert.That(Shown("Fact Image"), Is.False);
+            Assert.That(Shown("Fact Credit"), Is.False);
+        }
+
+        [Test]
+        public void ALoss_SaysSo_WithThreeDimmedStars_RetryAndContinue_ButNoFact()
         {
             hud.Panel.Show(SessionState.Lost, 0);
 
             Assert.That(Title, Is.EqualTo("Out of moves"));
-            Assert.That(System.Array.TrueForAll(Stars, star => !star.gameObject.activeSelf), "No stars on a loss.");
+            Assert.That(Stars.All(star => star.gameObject.activeSelf && star.color == hud.Panel.MissingStarColour), "Three dimmed stars.");
             Assert.That(Shown("Fact"), Is.False);
             Assert.That(Shown("Retry"), Is.True);
             Assert.That(Shown("Level Select"), Is.True);
+            Assert.That(Rect("Retry").anchoredPosition.x, Is.LessThan(0f), "Retry on the left.");
+            Assert.That(Rect("Level Select").anchoredPosition.x, Is.EqualTo(-Rect("Retry").anchoredPosition.x), "Continue on the right, side by side.");
+            Assert.That(Rect("Retry").anchoredPosition.y, Is.EqualTo(Rect("Level Select").anchoredPosition.y));
         }
 
+        // Design §8.3 slice 7 (Soni): a loss is a small card over the dimmed board.
         [Test]
-        public void ALoss_UsesTheShortCard()
+        public void ALoss_IsASmallCardOverTheDimmedBoard()
         {
             hud.Panel.Show(SessionState.Won, 1);
-            float win = CardHeight;
-
             hud.Panel.Show(SessionState.Lost, 0);
 
-            Assert.That(CardHeight, Is.LessThan(win));
+            Vector2 panel = ((RectTransform)hud.Panel.transform).rect.size;
+            Assert.That(Rect("Card").rect.width, Is.LessThan(panel.x));
+            Assert.That(Rect("Card").rect.height, Is.LessThan(panel.y / 2));
+            Assert.That(Find("Card").GetComponent<Image>().enabled, Is.True);
+            Assert.That(Shown("Dim"), Is.True);
+            Assert.That(hud.Board.activeSelf, Is.True, "The board stays in view.");
+            Assert.That(hud.Band.gameObject.activeSelf, Is.True);
         }
 
         [Test]
@@ -169,7 +266,7 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void LevelSelect_AsksToLeaveTheLevel()
+        public void Continue_AsksToLeaveForLevelSelect()
         {
             hud.Panel.Show(SessionState.Won, 2);
 
