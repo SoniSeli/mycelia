@@ -68,6 +68,10 @@ Found on the mid-range phone (Redmi Note 12 Pro+ 5G), CI build of `afd1c41`:
 - **`HitRadius` goes from 0.4 to 0.45.** The deciding factor: at 0.4, catching a spore felt slightly too tight on the phone. At 0.45, a drag straight along a diagonal still passes at least 0.26 of a cell from each side neighbour's circle (0.31 before). The `CellHitTest` tests for diagonals now also run at 0.5, the largest radius `ChainDrag` accepts, so every value the setting allows keeps diagonal drags off the side neighbours.
 - **A first finger lifting while a second is down** does not move the chain to the second finger, so no extra handling is needed.
 
+
+### Refinements (2026-10-25, Milestone 4)
+
+- **The chain line is the chained spores' own colour, fully opaque, and draws behind them** (sorting order 0: above the backdrop's spores, below the board's), so only the stretches between spores show; the chained spores still grow to 1.15×. `ChainView` takes the colour from the chain's first spore, since a chain is one type. *Why (Soni):* the chain reads as one connected shape, the line joining the spores from behind.
 ## Consequences
 
 - **Positive:**

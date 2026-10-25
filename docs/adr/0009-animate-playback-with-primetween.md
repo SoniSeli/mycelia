@@ -93,6 +93,13 @@ Decided while building playback:
 - **Building a sequence grows with the square of its size.** `Sequence.Insert` walks every tween already in the sequence to find its end, so a move of *n* tweens costs on the order of *n*². On the phone, a big 7 × 7 move (about 150 tweens) took up to 25 ms to build in a development build, where PrimeTween's assertions run inside that walk, and 0.45–2.2 ms in a release build ([performance budget](../performance-budget.md), case study "A 25 ms move that only development builds see").
 - **Kept as it is.** The deciding factor: players only ever run release builds, so a hitch that exists only in development builds isn't one they can see, and rewriting playback to avoid it would add code that exists only for the measurement. If a release build ever shows it (bigger boards, more tweens per spore), the fix is fewer, larger tweens, or one tween that drives the views from our own arrays.
 
+
+### Refinements (2026-10-25, Milestone 4)
+
+- **A win shows itself on the board before the result.** `WinWave` sits between `LevelResultRecorder` and the HUD: moves, goals and losses pass straight through; on a win every spore left pops (1.25×, 0.36 s there and back) in a wave spreading out from the last chain's final spore (`MovePlayback.LastCleared`) at 0.06 s per cell, and 0.3 s after the last pop the HUD shows the result (about 1.2 s on a 7 × 7 board). Compared with spores floating away, a "Well done!" banner, and goal counters pulsing with the board glowing. *Why (Soni):* the player sees the win happen on the board they played before the screen changes, and the wave is clear and fits the chain-puzzle feel.
+- **A tap anywhere, or back, skips to the result.** An invisible button covers the safe area on the result canvas while the wave plays (it takes taps but draws nothing: `cullTransparentMesh`), and back skips before it leaves. *Why (Soni):* replays never wait.
+- The wave runs after the level has ended, when the level can no longer pause (ADR-0013), so it isn't an `IPausable`; Android stops the player loop in the background anyway. One sequence per win, within the tween capacity reserved for moves; it stops if the scene goes mid-wave (rule 5).
+- **Guard narrowed:** the check that a win hides every HUD button now looks at the buttons on the HUD's own canvas, since the skip button sits on the result canvas and must stay.
 ## Consequences
 
 - **Positive:**
