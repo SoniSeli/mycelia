@@ -110,6 +110,16 @@ Decided with the gameplay HUD (design §8.3; the brief: goals grouped with moves
 - **The HUD canvas takes touches** (a `GraphicRaycaster`) now that it has a button; its only raycast target is the pause button, so it still never takes a touch meant for the board (rule 2). A guard checks every button in every scene sits on a canvas that can hear it.
 - **The pause modal uses the kit's modal and pill shapes** in the colours it had, with the result card left for slice 7.
 
+### Refinements (2026-10-25, Milestone 4 slice 5)
+
+Decided with the settings modal (design §8.3; the brief: sound toggles and accessibility modes, opened from the menus and from the level):
+
+- **One `SettingsModal` prefab on every screen**, on its own canvas above everything but the pause modal (it never shows with it): switches for sound effects, music and haptics (the kit's track and knob), a close button, and a dimmed backdrop that closes it on a tap. The switches save now and take effect when haptics (slice 9) and sound (slice 10) arrive. *Why (Soni):* the settings themselves work and persist, and they get one place from the start.
+- **Accessibility is a note, not a switch:** "Colour-blind friendly: every spore has its own outline." Colour-blind support is always on (design §6), so there is nothing to switch, and nothing new to save. *Why (Soni):* nothing to switch, and nothing new in the save file.
+- **In a level, the settings button sits beside pause below the board** (pause left, settings right). The top-right corner by the title tab was the other candidate. *Why (Soni):* both buttons sit within thumb reach. On the menus it sits bottom-right until slice 6 lays them out anew.
+- **A modal's panel takes touches** (refining rule 2): otherwise a tap on the panel between its switches would fall through to the backdrop and close the modal. The scene guard allows touch targets inside the settings modal; everywhere else only buttons take touches.
+- Text: Bold only, so the open modal adds one text draw. Measured on the phone over level 11: SetPass 10 with settings open, 8 playing.
+
 ## Consequences
 
 - **Positive:**

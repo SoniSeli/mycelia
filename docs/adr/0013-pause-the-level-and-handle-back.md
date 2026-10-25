@@ -74,6 +74,12 @@ Decided with the main menu and level select (ADR-0012 Refinements):
 - **The overlay offers Resume, Restart and Quit.** The brief asked for Resume and Quit; Restart stays. *Why (Soni):* a bad start can be replayed in one tap, as most puzzle games allow. **Quit is the old Level select**, renamed, and still leads there. *Why (Soni):* level select shows progress and is one step out, like back.
 - Seen on the phone: the overlay's dim doesn't take touches (rule 2 of ADR-0012), so the HUD's pause button can still be pressed under it; that pauses nothing more. The settings button (slice 5) will sit beside it, so slice 5 decides what a tap under the overlay may do.
 
+### Refinements (2026-10-25, Milestone 4 slice 5)
+
+- **Settings opened during a level pause it, and cover it alone.** A `PauseScreen` stands in for the pause modal among the level's pausables: a pause shows the pause modal, unless the settings button asked for it, in which case only the settings modal shows. Closing settings resumes the level. *Why (Soni):* one tap in, one tap out. Once the level is over there is nothing to pause, and settings just open over the result card.
+- **The HUD pauses with the level**: its buttons take no taps while it is paused, which settles the open point above.
+- **Back closes settings first**, on every screen: in a level that resumes play; on the menus it does nothing else; after a level ends it closes settings before leaving.
+
 ## Consequences
 
 - **Positive:**
