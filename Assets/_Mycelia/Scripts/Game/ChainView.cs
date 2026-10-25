@@ -5,13 +5,14 @@ using UnityEngine;
 namespace Mycelia.Game
 {
     /// <summary>
-    /// Shows the chain being dragged: a line through the chained spores' centres, and those spores drawn slightly
-    /// larger so the chain reads without colour. Buffers are sized in <see cref="Init"/>; redrawing allocates nothing.
+    /// Shows the chain being dragged: a line in the chained spores' colour through their centres, behind them, and those
+    /// spores drawn slightly larger so the chain reads without colour. Buffers are sized in <see cref="Init"/>; redrawing
+    /// allocates nothing.
     /// </summary>
     public sealed class ChainView : MonoBehaviour, IChainFeedback
     {
-        /// <summary>The line draws above the spores (<see cref="SporeView.SortingOrder"/>).</summary>
-        public const int SortingOrder = 2;
+        /// <summary>The line draws behind the spores (<see cref="SporeView.SortingOrder"/>), above the backdrop.</summary>
+        public const int SortingOrder = 0;
 
         [SerializeField] LineRenderer line;
 
@@ -46,6 +47,10 @@ namespace Mycelia.Game
             emphasisedCount = 0;
 
             line.positionCount = chain.Count;
+            // A chain is one type, so the first spore gives the line its colour.
+            SporeView first = chain.Count > 0 ? boardView.SporeAt(chain.Cells[0]) : null;
+            if (first != null)
+                line.startColor = line.endColor = first.Renderer.color;
             for (int i = 0; i < chain.Count; i++)
             {
                 GridPosition cell = chain.Cells[i];

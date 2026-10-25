@@ -44,6 +44,9 @@ namespace Mycelia.Game
 
         public bool IsPlaying { get; private set; }
 
+        /// <summary>Where the last move's chain ended: the last spore it cleared (the Clear phase follows the chain's order).</summary>
+        public GridPosition LastCleared { get; private set; }
+
         public void Init(BoardView boardView, int columns, int rows, IPlaybackListener listener)
         {
             this.boardView = boardView;
@@ -146,6 +149,8 @@ namespace Mycelia.Game
                 if (move.TryGet(step, out SporeCleared cleared))
                 {
                     SporeView view = boardView.Take(cleared.Cell);
+                    if (phase.Phase == MovePhase.Clear)
+                        LastCleared = cleared.Cell;
                     leaving[leavingCount++] = view;
                     Color colour = view.Renderer.color;
                     sequence.Insert(start, Tween.Scale(view.transform, 1f, 0f, settings.ClearDuration, settings.ClearEase));

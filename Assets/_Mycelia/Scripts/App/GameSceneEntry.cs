@@ -24,6 +24,7 @@ namespace Mycelia.App
         [SerializeField] ChainInputController chainInput;
         [SerializeField] MovePlayback playback;
         [SerializeField] HudView hud;
+        [SerializeField] WinWave winWave;
         [SerializeField] ResultPanel resultPanel;
         [SerializeField] PauseOverlay pauseOverlay;
         [SerializeField] PauseController pauseController;
@@ -72,8 +73,10 @@ namespace Mycelia.App
                 if (services.Levels.Levels[i] == level)
                     number = i + 1;
             hud.Init(config, number, services.Spores, Pause.Pause, openSettings);
+            // A win plays its wave on the board before the HUD shows the result (Soni, 2026-10-25).
+            winWave.Init(boardView, config.Width, config.Height, () => playback.LastCleared, hud);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
-            var results = new LevelResultRecorder(Session, services.Progress, playback, hud, services.Analytics);
+            var results = new LevelResultRecorder(Session, services.Progress, playback, winWave, services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
             Action restart = () =>
             {
@@ -90,11 +93,14 @@ namespace Mycelia.App
             resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
             playback.Init(boardView, config.Width, config.Height, results);
             pauseOverlay.Init(Pause.Resume, restart, leave);
-            // Back once the result is shown steps out to level select (ADR-0013), after closing settings if they're open.
+            // Back once the level is over skips the win's wave to the result, then steps out to level select (ADR-0013),
+            // after closing settings if they're open.
             pauseController.Init(Pause, () =>
             {
                 if (settings.IsOpen)
                     settings.Close();
+                else if (winWave.IsPlaying)
+                    winWave.Skip();
                 else
                     leave();
             });

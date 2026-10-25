@@ -128,6 +128,9 @@ namespace Mycelia.App.Tests
             SetReference(resultPanel, "retry", retry);
             SetReference(hud, "resultPanel", resultPanel);
             SetReference(entry, "hud", hud);
+            var winWave = scene.AddComponent<WinWave>();
+            SetReference(winWave, "skip", UiChild("Skip", hudRoot).gameObject.AddComponent<Button>());
+            SetReference(entry, "winWave", winWave);
             SetReference(entry, "resultPanel", resultPanel);
 
             pauseOverlay = UiChild("Pause Panel", scene.transform).gameObject.AddComponent<PauseOverlay>();

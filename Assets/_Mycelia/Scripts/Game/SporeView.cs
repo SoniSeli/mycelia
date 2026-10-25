@@ -6,7 +6,7 @@ namespace Mycelia.Game
     /// <summary>One spore on the board. Views are pooled and reused for whichever spore needs one (ADR-0011).</summary>
     public sealed class SporeView : MonoBehaviour
     {
-        /// <summary>Spores draw above the backdrop (<see cref="Backdrop.SporeSortingOrder"/>) and below the chain line.</summary>
+        /// <summary>Spores draw above the backdrop (<see cref="Backdrop.SporeSortingOrder"/>) and the chain line.</summary>
         public const int SortingOrder = 1;
 
         [SerializeField] SpriteRenderer spriteRenderer;

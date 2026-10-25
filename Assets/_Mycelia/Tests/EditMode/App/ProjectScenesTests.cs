@@ -458,13 +458,34 @@ namespace Mycelia.App.Tests
                 var hiddenObjects = Enumerable.Range(0, hidden.arraySize).Select(i => (GameObject)hidden.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
                 bool HiddenByAWin(Component component) => hiddenObjects.Any(hiddenObject => component.transform.IsChildOf(hiddenObject.transform));
                 Assert.That(HiddenByAWin(roots.SelectMany(root => root.GetComponentsInChildren<Game.BoardView>(true)).Single()), Is.True, "The board.");
-                var hudButtons = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true))
-                    .Where(button => button.GetComponentInParent<Game.ResultPanel>(true) == null && button.GetComponentInParent<Game.PauseOverlay>(true) == null
-                        && button.GetComponentInParent<Game.SettingsModal>(true) == null)
-                    .ToArray();
+                // Every button on the HUD's canvas (pause, settings).
+                Canvas hudCanvas = roots.SelectMany(root => root.GetComponentsInChildren<Game.HudView>(true)).Single().GetComponentInParent<Canvas>(true).rootCanvas;
+                var hudButtons = hudCanvas.GetComponentsInChildren<UnityEngine.UI.Button>(true);
                 Assert.That(hudButtons, Is.Not.Empty);
                 Assert.That(hudButtons.Where(button => !HiddenByAWin(button)).Select(button => button.name), Is.Empty, "Every HUD button.");
                 Assert.That(hiddenObjects.Any(hiddenObject => hiddenObject.GetComponentInChildren<Game.HudView>(true) != null), Is.True, "The HUD.");
+            });
+        }
+
+        // Soni (2026-10-25): a tap anywhere skips the win's wave, so its button covers the screen above the HUD, draws
+        // nothing, and is off until a wave plays.
+        [Test]
+        public void TheWinWavesSkipButton_CoversTheScreenAboveTheHud_Invisibly()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.WinWave wave = roots.SelectMany(root => root.GetComponentsInChildren<Game.WinWave>(true)).Single();
+                var skip = (UnityEngine.UI.Button)new SerializedObject(wave).FindProperty("skip").objectReferenceValue;
+                var rect = (RectTransform)skip.transform;
+                Canvas hud = roots.SelectMany(root => root.GetComponentsInChildren<Game.HudView>(true)).Single().GetComponentInParent<Canvas>(true).rootCanvas;
+
+                Assert.That(skip.gameObject.activeSelf, Is.False);
+                Assert.That(rect.anchorMin, Is.EqualTo(Vector2.zero));
+                Assert.That(rect.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(rect.parent.GetComponent<Game.SafeAreaFitter>(), Is.Not.Null, "Over the whole safe area.");
+                Assert.That(skip.GetComponentInParent<Canvas>(true).rootCanvas.sortingOrder, Is.GreaterThan(hud.sortingOrder));
+                Assert.That(skip.image.color.a, Is.Zero);
+                Assert.That(skip.image.canvasRenderer.cullTransparentMesh, Is.True, "It takes taps but draws nothing.");
             });
         }
 

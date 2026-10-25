@@ -258,6 +258,17 @@ namespace Mycelia.Game.PlayTests
             Assert.That(listener.WasPlayingWhenEnded, Is.False, "The result shows after playback ends.");
         }
 
+        // The win's wave starts where the player lifted their finger: the chain's last spore.
+        [Test]
+        public void AMove_RemembersWhereItsChainEnded()
+        {
+            Start(FallGrid, new ScriptedRandom(1, 2, 1, 2, 1, 2, 1, 2));
+
+            playback.Play(Commit(At(0, 0), At(0, 1), At(1, 0)));
+
+            Assert.That(playback.LastCleared, Is.EqualTo(At(1, 0)));
+        }
+
         [Test]
         public void ALosingMove_ReportsTheLoss()
         {

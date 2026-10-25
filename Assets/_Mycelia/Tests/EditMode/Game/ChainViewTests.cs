@@ -93,10 +93,30 @@ namespace Mycelia.Game.Tests
             Assert.That(boardView.SporeAt(At(1, 0)).transform.localScale, Is.EqualTo(Vector3.one));
         }
 
+        // Soni (2026-10-25): the line joins the spores from behind, so the chain reads as one shape.
         [Test]
-        public void TheLine_IsDrawnAboveTheSpores()
+        public void TheLine_IsDrawnBehindTheSpores_AndAboveTheBackdrop()
         {
-            Assert.That(line.sortingOrder, Is.GreaterThan(SporeView.SortingOrder));
+            Assert.That(line.sortingOrder, Is.LessThan(SporeView.SortingOrder));
+            Assert.That(line.sortingOrder, Is.GreaterThan(Backdrop.SporeSortingOrder));
+        }
+
+        // Soni (2026-10-25): the line is the chained spores' own colour, fully opaque.
+        [Test]
+        public void TheLine_TakesTheChainedSporesColour()
+        {
+            Touch(1, 1);
+            Color b = boardView.SporeAt(At(1, 1)).Renderer.color;
+            Assert.That(line.startColor, Is.EqualTo(b));
+            Assert.That(line.endColor, Is.EqualTo(b));
+
+            session.Chain.Clear();
+            chainView.ChainEnded(session.Chain);
+            Touch(0, 0);
+            Color a = boardView.SporeAt(At(0, 0)).Renderer.color;
+            Assert.That(a, Is.Not.EqualTo(b), "The test needs two colours.");
+            Assert.That(line.startColor, Is.EqualTo(a), "A new chain of another type takes its colour.");
+            Assert.That(line.endColor.a, Is.EqualTo(1f));
         }
     }
 }
