@@ -90,6 +90,24 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
+        public void ChangedSettings_AreUnsavedUntilSaved_AndSaveWithTheLevels()
+        {
+            store.Stored = new SavedProgress(new[] { new LevelRecord("level-01", 2) }, GameSettings.Default, introSeen: true);
+            PlayerProgress progress = Load();
+            var quiet = new GameSettings(sfxVolume: 0f, musicVolume: 0f, haptics: true);
+
+            Assert.That(progress.Settings, Is.EqualTo(GameSettings.Default));
+            Assert.That(progress.ChangeSettings(GameSettings.Default), Is.False, "Nothing changed.");
+            Assert.That(progress.ChangeSettings(quiet), Is.True);
+            Assert.That(progress.HasUnsavedChanges, Is.True);
+
+            progress.SaveIfChanged();
+
+            Assert.That(store.Stored.Settings, Is.EqualTo(quiet));
+            Assert.That(store.Stored.Levels.Single().Key, Is.EqualTo("level-01"));
+        }
+
+        [Test]
         public void Saving_KeepsSettingsTheIntroFlagAndUnknownLevels()
         {
             var settings = new GameSettings(sfxVolume: 0.1f, musicVolume: 0.2f, haptics: false);

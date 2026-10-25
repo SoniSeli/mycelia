@@ -79,7 +79,7 @@ namespace Mycelia.Game.Tests
                 new LevelButtonState(1, true, 3),
                 new LevelButtonState(2, true, 0),
                 new LevelButtonState(3, false, 0),
-            }, _ => { });
+            }, _ => { }, () => { });
 
             Assert.That(view.Buttons.Count, Is.EqualTo(3));
             Assert.That(view.Buttons.Select(Number), Is.EqualTo(new[] { "1", "2", "3" }));
@@ -93,7 +93,7 @@ namespace Mycelia.Game.Tests
             LevelSelectView view = TestMenus.LevelSelect(out _);
             created.Add(view.gameObject);
             var chosen = new List<int>();
-            view.Init(new[] { new LevelButtonState(1, true, 1), new LevelButtonState(2, true, 0) }, chosen.Add);
+            view.Init(new[] { new LevelButtonState(1, true, 1), new LevelButtonState(2, true, 0) }, chosen.Add, () => { });
 
             view.Buttons[1].GetComponent<Button>().onClick.Invoke();
 
@@ -106,11 +106,29 @@ namespace Mycelia.Game.Tests
             MainMenuView menu = TestMenus.MainMenu();
             created.Add(menu.gameObject);
             int plays = 0;
-            menu.Init(() => plays++);
+            menu.Init(() => plays++, () => { });
 
             menu.GetComponentInChildren<Button>().onClick.Invoke();
 
             Assert.That(plays, Is.EqualTo(1));
+        }
+
+        // Design §8.3 slice 5: the settings modal opens from the main menu and level select too.
+        [Test]
+        public void TheSettingsButtons_OnBothMenus_AskToOpenSettings()
+        {
+            MainMenuView menu = TestMenus.MainMenu();
+            LevelSelectView select = TestMenus.LevelSelect(out _);
+            created.Add(menu.gameObject);
+            created.Add(select.gameObject);
+            int opened = 0;
+            menu.Init(() => { }, () => opened++);
+            select.Init(new[] { new LevelButtonState(1, true, 0) }, _ => { }, () => opened++);
+
+            menu.transform.Find("Settings").GetComponent<Button>().onClick.Invoke();
+            select.transform.Find("Settings").GetComponent<Button>().onClick.Invoke();
+
+            Assert.That(opened, Is.EqualTo(2));
         }
     }
 }

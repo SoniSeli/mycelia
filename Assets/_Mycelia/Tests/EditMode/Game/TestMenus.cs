@@ -32,6 +32,7 @@ namespace Mycelia.Game.Tests
             template.gameObject.SetActive(false);
             Set(view, "buttonPrefab", template);
             Set(view, "grid", grid);
+            Set(view, "settings", Child("Settings", root).gameObject.AddComponent<Button>());
             return view;
         }
 
@@ -42,6 +43,7 @@ namespace Mycelia.Game.Tests
             RectTransform play = Child("Play", root);
             play.gameObject.AddComponent<Image>();
             Set(view, "play", play.gameObject.AddComponent<Button>());
+            Set(view, "settings", Child("Settings", root).gameObject.AddComponent<Button>());
             return view;
         }
 

@@ -62,27 +62,42 @@ namespace Mycelia.App.Tests
             return template;
         }
 
-        (LevelSelectSceneEntry Entry, LevelSelectView View, BackButton Back) LevelSelect()
+        (LevelSelectSceneEntry Entry, LevelSelectView View, BackButton Back, TestSettingsModal Settings, Button SettingsButton) LevelSelect()
         {
             var entry = root.AddComponent<LevelSelectSceneEntry>();
             var view = Child<LevelSelectView>("Level Select", root.transform);
             Set(view, "buttonPrefab", ButtonTemplate(view.transform));
             Set(view, "grid", Child<RectTransform>("Grid", view.transform));
+            var settingsButton = Child<Button>("Settings Button", view.transform);
+            Set(view, "settings", settingsButton);
             BackButton back = Back();
+            var settings = new TestSettingsModal(root.transform);
             Set(entry, "view", view);
             Set(entry, "back", back);
-            return (entry, view, back);
+            Set(entry, "settings", settings.Modal);
+            return (entry, view, back, settings, settingsButton);
+        }
+
+        (MainMenuSceneEntry Entry, Button Play, BackButton Back, TestSettingsModal Settings, Button SettingsButton) MainMenu()
+        {
+            var entry = root.AddComponent<MainMenuSceneEntry>();
+            var view = Child<MainMenuView>("Main Menu", root.transform);
+            var play = Child<Image>("Play", view.transform).gameObject.AddComponent<Button>();
+            var settingsButton = Child<Button>("Settings Button", view.transform);
+            Set(view, "play", play);
+            Set(view, "settings", settingsButton);
+            BackButton back = Back();
+            var settings = new TestSettingsModal(root.transform);
+            Set(entry, "view", view);
+            Set(entry, "back", back);
+            Set(entry, "settings", settings.Modal);
+            return (entry, play, back, settings, settingsButton);
         }
 
         [Test]
         public void Play_OnTheMainMenu_OpensLevelSelect()
         {
-            var entry = root.AddComponent<MainMenuSceneEntry>();
-            var view = Child<MainMenuView>("Main Menu", root.transform);
-            var play = Child<Image>("Play", view.transform).gameObject.AddComponent<Button>();
-            Set(view, "play", play);
-            Set(entry, "view", view);
-            Set(entry, "back", Back());
+            var (entry, play, _, _, _) = MainMenu();
             AppServices services = Services();
 
             entry.Construct(services, args: null);
@@ -91,11 +106,45 @@ namespace Mycelia.App.Tests
             Assert.That(loader.Loads.Select(load => load.Scene), Is.EqualTo(new[] { SceneId.LevelSelect }));
         }
 
+        // Design §8.3 slice 5: the settings modal opens on the menus with the saved settings, and back closes it first.
+        [Test]
+        public void Settings_OnTheMainMenu_OpenWithTheSavedChoice_AndBackClosesThemFirst()
+        {
+            store.Stored = new SavedProgress(new LevelRecord[0], new GameSettings(0.8f, 0f, true), introSeen: false);
+            var (entry, _, back, settings, settingsButton) = MainMenu();
+            entry.Construct(Services(), args: null);
+
+            settingsButton.onClick.Invoke();
+            Assert.That(settings.Modal.IsOpen, Is.True);
+            Assert.That(settings.Music.isOn, Is.False, "Music was saved at volume 0.");
+
+            back.Press();
+            Assert.That(settings.Modal.IsOpen, Is.False);
+            Assert.That(loader.Loads, Is.Empty, "Back closed settings and did nothing else.");
+        }
+
+        [Test]
+        public void FlippingASwitch_OnLevelSelect_SavesIt_AndBackThenClosesBeforeLeaving()
+        {
+            var (entry, _, back, settings, settingsButton) = LevelSelect();
+            entry.Construct(Services(), args: null);
+            settingsButton.onClick.Invoke();
+
+            settings.Haptics.isOn = false;
+            Assert.That(store.Saves, Is.EqualTo(1));
+            Assert.That(store.Stored.Settings.Haptics, Is.False);
+
+            back.Press();
+            Assert.That(loader.Loads, Is.Empty);
+            back.Press();
+            Assert.That(loader.Loads.Select(load => load.Scene), Is.EqualTo(new[] { SceneId.MainMenu }));
+        }
+
         [Test]
         public void LevelSelect_ShowsEveryCatalogLevel_WithTheSavedProgress()
         {
             store.Stored = new SavedProgress(new[] { new LevelRecord("level-01", 2) }, GameSettings.Default, introSeen: false);
-            var (entry, view, _) = LevelSelect();
+            var (entry, view, _, _, _) = LevelSelect();
 
             entry.Construct(Services(), args: null);
 
@@ -109,7 +158,7 @@ namespace Mycelia.App.Tests
         public void ChoosingALevel_OpensTheGameOnThatLevel()
         {
             store.Stored = new SavedProgress(new[] { new LevelRecord("level-01", 2) }, GameSettings.Default, introSeen: false);
-            var (entry, view, _) = LevelSelect();
+            var (entry, view, _, _, _) = LevelSelect();
             entry.Construct(Services(), args: null);
 
             view.Buttons[1].GetComponent<Button>().onClick.Invoke();
@@ -122,7 +171,7 @@ namespace Mycelia.App.Tests
         [Test]
         public void Back_OnLevelSelect_ReturnsToTheMainMenu()
         {
-            var (entry, _, back) = LevelSelect();
+            var (entry, _, back, _, _) = LevelSelect();
             entry.Construct(Services(), args: null);
 
             back.Press();

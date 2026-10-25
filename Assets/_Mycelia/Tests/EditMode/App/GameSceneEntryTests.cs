@@ -30,6 +30,8 @@ namespace Mycelia.App.Tests
         Button pauseQuit;
         Button hudPause;
         TMP_Text hudTitle;
+        Button hudSettings;
+        TestSettingsModal settings;
         FakeProgressStore store;
         FakeAnalytics analytics;
         TMPro.TMP_Text factText;
@@ -99,6 +101,8 @@ namespace Mycelia.App.Tests
             SetReference(hud, "pauseButton", hudPause);
             hudTitle = UiChild("Title", hudRoot).gameObject.AddComponent<TextMeshProUGUI>();
             SetReference(hud, "title", hudTitle);
+            hudSettings = UiChild("Settings Button", hudRoot).gameObject.AddComponent<Button>();
+            SetReference(hud, "settingsButton", hudSettings);
             resultPanel = UiChild("Result Panel", hudRoot).gameObject.AddComponent<ResultPanel>();
             SetReference(resultPanel, "title", UiChild("Title", resultPanel.transform).gameObject.AddComponent<TextMeshProUGUI>());
             retry = UiChild("Retry", resultPanel.transform).gameObject.AddComponent<Button>();
@@ -127,6 +131,8 @@ namespace Mycelia.App.Tests
             pauseController.transform.SetParent(scene.transform);
             SetReference(entry, "pauseOverlay", pauseOverlay);
             SetReference(entry, "pauseController", pauseController);
+            settings = new TestSettingsModal(scene.transform);
+            SetReference(entry, "settings", settings.Modal);
 
             var backdropObject = new GameObject("Backdrop", typeof(MeshFilter), typeof(MeshRenderer));
             backdropObject.transform.SetParent(camera.transform, false);
@@ -289,6 +295,44 @@ namespace Mycelia.App.Tests
             entry.Construct(services, new GameSceneArgs(ProjectAssets.Levels.Levels[8]));
 
             Assert.That(hudTitle.text, Is.EqualTo("Level 9"));
+        }
+
+        // Decided 2026-10-25 (slice 5): settings opened mid-level pause it and cover it alone; closing them resumes play.
+        [Test]
+        public void TheSettingsButton_PausesTheLevel_ShowingSettingsNotThePauseModal()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            hudSettings.onClick.Invoke();
+
+            Assert.That(entry.Pause.IsPaused, Is.True);
+            Assert.That(settings.Modal.IsOpen, Is.True);
+            Assert.That(pauseOverlay.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void ClosingSettings_ResumesPlay()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            hudSettings.onClick.Invoke();
+
+            settings.Close.onClick.Invoke();
+
+            Assert.That(entry.Pause.IsPaused, Is.False);
+            Assert.That(settings.Modal.IsOpen, Is.False);
+        }
+
+        [Test]
+        public void Back_WithSettingsOpen_ResumesPlay()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            hudSettings.onClick.Invoke();
+
+            pauseController.Back();
+
+            Assert.That(entry.Pause.IsPaused, Is.False);
+            Assert.That(settings.Modal.IsOpen, Is.False);
+            Assert.That(loader.Loads, Is.Empty);
         }
 
         // Design §8.3: a pause button in the HUD opens the same pause as back and going to the background.

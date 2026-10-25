@@ -27,6 +27,7 @@ namespace Mycelia.App
         [SerializeField] ResultPanel resultPanel;
         [SerializeField] PauseOverlay pauseOverlay;
         [SerializeField] PauseController pauseController;
+        [SerializeField] SettingsModal settings;
         [SerializeField] Backdrop backdrop;
 
         public LevelSession Session { get; private set; }
@@ -48,13 +49,29 @@ namespace Mycelia.App
             boardCamera.Init(config.Width, config.Height);
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
-            Pause = new LevelPause(Session, playback, playback, pauseOverlay, backdrop, new PausedFrameRate(SceneId.Game));
+            // Settings opened mid-level pause it and cover it alone; closing them resumes play (design §8.3 slice 5).
+            var screen = new PauseScreen(pauseOverlay, settings, () => SettingsSwitches.ToChoice(services.Progress.Settings));
+            Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, new PausedFrameRate(SceneId.Game));
+            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice), () => Pause.Resume());
+            Action openSettings = () =>
+            {
+                if (Pause.CanPause)
+                {
+                    screen.ShowSettingsOnPause();
+                    Pause.Pause();
+                }
+                else
+                {
+                    // The level is over: nothing to pause.
+                    settings.Open(SettingsSwitches.ToChoice(services.Progress.Settings));
+                }
+            };
             // Numbered by place in the catalog, as on level select; the Editor's debug level has none (0).
             int number = 0;
             for (int i = 0; i < services.Levels.Levels.Count && number == 0; i++)
                 if (services.Levels.Levels[i] == level)
                     number = i + 1;
-            hud.Init(config, number, services.Spores, Pause.Pause);
+            hud.Init(config, number, services.Spores, Pause.Pause, openSettings);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
             var results = new LevelResultRecorder(Session, services.Progress, playback, hud, services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
@@ -73,8 +90,14 @@ namespace Mycelia.App
             resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
             playback.Init(boardView, config.Width, config.Height, results);
             pauseOverlay.Init(Pause.Resume, restart, leave);
-            // Back once the result is shown steps out to level select (ADR-0013).
-            pauseController.Init(Pause, leave);
+            // Back once the result is shown steps out to level select (ADR-0013), after closing settings if they're open.
+            pauseController.Init(Pause, () =>
+            {
+                if (settings.IsOpen)
+                    settings.Close();
+                else
+                    leave();
+            });
             chainInput.Init(Session, boardCamera, chainView, results, Pause, services.Scenes);
         }
     }

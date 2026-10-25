@@ -194,8 +194,10 @@ namespace Mycelia.App.Tests
         {
             WithScene(scene, roots =>
             {
+                // A modal's panel takes touches too, so a tap on it doesn't reach the backdrop that closes the modal.
                 var touchable = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
-                    .Where(graphic => graphic.raycastTarget && graphic.GetComponentInParent<UnityEngine.UI.Selectable>(true) == null);
+                    .Where(graphic => graphic.raycastTarget && graphic.GetComponentInParent<UnityEngine.UI.Selectable>(true) == null
+                        && graphic.GetComponentInParent<Game.SettingsModal>(true) == null);
                 Assert.That(touchable.Select(graphic => graphic.name), Is.Empty);
             });
         }
@@ -260,6 +262,27 @@ namespace Mycelia.App.Tests
                     Assert.That(text.GetComponentInParent<Canvas>(true), Is.SameAs(counters), text.name);
                     Assert.That(text.font, Is.SameAs(((TMPro.TMP_Text)moves).font), text.name);
                 }
+            });
+        }
+
+        // Design §8.3 slice 5: one settings modal on every screen, over everything but the pause modal (it never shows with
+        // it), so it covers the result card too; it starts closed, and its scene's entry opens it.
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryScreen_HasOneSettingsModal_AboveEveryCanvasButThePauseModal(SceneId scene)
+        {
+            WithScene(scene, roots =>
+            {
+                Game.SettingsModal settings = roots.SelectMany(root => root.GetComponentsInChildren<Game.SettingsModal>(true)).Single();
+                Canvas own = settings.GetComponentInParent<Canvas>(true).rootCanvas;
+                Assert.That(settings.gameObject.activeSelf, Is.False, "Starts closed.");
+
+                var others = roots.SelectMany(root => root.GetComponentsInChildren<Canvas>(true))
+                    .Where(canvas => canvas.isRootCanvas && canvas != own && canvas.GetComponentInChildren<Game.PauseOverlay>(true) == null);
+                foreach (Canvas other in others)
+                    Assert.That(own.sortingOrder, Is.GreaterThan(other.sortingOrder), other.name);
+
+                ISceneEntry entry = roots.SelectMany(root => root.GetComponentsInChildren<ISceneEntry>(true)).Single();
+                Assert.That(new SerializedObject((MonoBehaviour)entry).FindProperty("settings").objectReferenceValue, Is.SameAs(settings));
             });
         }
 

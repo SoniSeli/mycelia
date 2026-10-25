@@ -25,11 +25,12 @@ namespace Mycelia.Game.Tests
             config = new LevelConfig("level-hud", 6, 6, 20,
                 "ABCD".Select(TestSessions.IdOf).ToArray(),
                 new[] { new ObjectiveDefinition(TestSessions.IdOf('A'), 12), new ObjectiveDefinition(TestSessions.IdOf('B'), 8) });
-            pauses = 0;
-            hud.Hud.Init(config, 9, catalog, () => pauses++);
+            pauses = settingsOpened = 0;
+            hud.Hud.Init(config, 9, catalog, () => pauses++, () => settingsOpened++);
         }
 
         int pauses;
+        int settingsOpened;
 
         [TearDown]
         public void DestroyHud() => hud.Destroy();
@@ -68,7 +69,7 @@ namespace Mycelia.Game.Tests
             hud.Destroy();
             hud = new TestHud();
             var goals = Enumerable.Range(0, count).Select(i => new ObjectiveDefinition(TestSessions.IdOf("ABCD"[i]), 10)).ToArray();
-            hud.Hud.Init(new LevelConfig("level-hud", 6, 6, 20, "ABCD".Select(TestSessions.IdOf).ToArray(), goals), 1, catalog, () => { });
+            hud.Hud.Init(new LevelConfig("level-hud", 6, 6, 20, "ABCD".Select(TestSessions.IdOf).ToArray(), goals), 1, catalog, () => { }, () => { });
 
             for (int i = 0; i < count; i++)
             {
@@ -81,16 +82,43 @@ namespace Mycelia.Game.Tests
             }
         }
 
-        // Decided 2026-10-25 (slice 4): below the board, centred in the band the board leaves free there.
+        // Decided 2026-10-25: below the board, centred in the band the board leaves free there (slice 4), settings beside
+        // pause, within thumb reach (slice 5).
         [Test]
-        public void ThePauseButton_SitsCentredInTheBandBelowTheBoard()
+        public void PauseAndSettings_SitSideBySide_CentredInTheBandBelowTheBoard()
         {
-            var rect = (RectTransform)hud.PauseButton.transform;
+            var pause = (RectTransform)hud.PauseButton.transform;
+            var settings = (RectTransform)hud.SettingsButton.transform;
             var centre = new Vector2(0.5f, hud.Layout.Insets.Bottom / 2);
 
-            Assert.That(rect.anchorMin, Is.EqualTo(centre));
-            Assert.That(rect.anchorMax, Is.EqualTo(centre));
-            Assert.That(rect.anchoredPosition, Is.EqualTo(Vector2.zero));
+            foreach (RectTransform rect in new[] { pause, settings })
+            {
+                Assert.That(rect.anchorMin, Is.EqualTo(centre), rect.name);
+                Assert.That(rect.anchorMax, Is.EqualTo(centre), rect.name);
+                Assert.That(rect.anchoredPosition.y, Is.Zero, rect.name);
+            }
+            Assert.That(pause.anchoredPosition.x, Is.LessThan(0), "Pause on the left.");
+            Assert.That(settings.anchoredPosition.x, Is.EqualTo(-pause.anchoredPosition.x), "Settings mirrors it on the right.");
+        }
+
+        [Test]
+        public void TheSettingsButton_AsksToOpenSettings()
+        {
+            hud.SettingsButton.onClick.Invoke();
+
+            Assert.That(settingsOpened, Is.EqualTo(1));
+            Assert.That(pauses, Is.Zero);
+        }
+
+        // While a modal covers the paused level, the HUD's buttons behind it take no taps.
+        [Test]
+        public void WhileTheLevelIsPaused_TheHudButtonsTakeNoTaps()
+        {
+            hud.Hud.SetPaused(true);
+            Assert.That(hud.PauseButton.interactable || hud.SettingsButton.interactable, Is.False);
+
+            hud.Hud.SetPaused(false);
+            Assert.That(hud.PauseButton.interactable && hud.SettingsButton.interactable, Is.True);
         }
 
         [Test]
@@ -100,7 +128,7 @@ namespace Mycelia.Game.Tests
 
             hud.Destroy();
             hud = new TestHud();
-            hud.Hud.Init(config, 0, catalog, () => { });
+            hud.Hud.Init(config, 0, catalog, () => { }, () => { });
             Assert.That(hud.Title.text, Is.EqualTo("Level"));
         }
 

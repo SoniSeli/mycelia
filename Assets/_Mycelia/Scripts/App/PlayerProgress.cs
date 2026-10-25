@@ -13,7 +13,7 @@ namespace Mycelia.App
     public sealed class PlayerProgress
     {
         readonly IProgressStore store;
-        readonly GameSettings settings;
+        GameSettings settings;
         readonly bool introSeen;
 
         PlayerProgress(IProgressStore store, Progression levels, GameSettings settings, bool introSeen, LoadOutcome loadOutcome)
@@ -42,6 +42,20 @@ namespace Mycelia.App
         public LoadOutcome LoadOutcome { get; }
 
         public bool HasUnsavedChanges { get; private set; }
+
+        /// <summary>The player's settings, as last loaded or changed.</summary>
+        public GameSettings Settings => settings;
+
+        /// <summary>Changes the settings in memory. Returns true if anything changed; saving stays a separate step.</summary>
+        public bool ChangeSettings(GameSettings value)
+        {
+            if (value.Equals(settings))
+                return false;
+
+            settings = value;
+            HasUnsavedChanges = true;
+            return true;
+        }
 
         /// <summary>
         /// Records a win in memory. Returns true if it changed anything. Wins on a level outside the catalog (the
