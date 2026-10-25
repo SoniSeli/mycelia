@@ -101,6 +101,16 @@ public sealed class SporeCatalog : ScriptableObject
 - Every type a level references is in the catalog, and every objective's type is one of the level's types (from [design §3.5](../design.md#35-objectives-winning-and-losing)).
 - A list of shipped keys (`shipped-spore-keys.txt`) is checked into the repo. A test fails if any shipped key disappears from the catalog. Removing a type is a deliberate act, not an accident.
 
+### Refinements (2026-10-25, Milestone 4 slice 3)
+
+Decided with the new spores (design §8.3, Soni's UI/UX brief: "circles, differentiated by their outlines, not just colour"):
+
+- **The silhouettes are four circles with different outlines:** smooth, scalloped (eight round bumps), spiked (twelve short points) and **notched** (three round bites out of the edge). A ring (a circle with a hole) was the other candidate for the fourth and stood out most at a glance. *Why (Soni):* a notched spore stays a full circle, as the brief asks; a ring adds a hole, which is a different shape rather than a different outline. Drawn for the project as anti-aliased distance shapes, white with a darker lower rim and a soft glow (the mockup's look), so the type's colour tints all of it.
+- **The colours are the mockup's**, sampled from it: red `#F57270` (smooth), purple `#CB89FF` (scalloped; the brief's "blue"), green `#6DE58A` (spiked), orange `#F1B54C` (notched). Compared before deciding, in CIELAB distance under colour-blindness simulations (Machado et al. 2009) and against the backdrop where the board sits: the Okabe–Ito set in place since Milestone 2 kept its colours further apart for colour-blind players (closest pair 16–21 against the mockup's 13 for deuteranopia), but two of its colours nearly vanished on the new blue backdrop (contrast 1.1–1.2:1 at the board's bottom); a tuned version of the mockup's colours spread their brightness more (closest pair 20–21). *Why (Soni):* the mockup's colours are brighter on the blue backdrop. No colour carries identity on its own: red and green come close for deuteranopia and red and purple in grayscale, and each of those pairs has different outlines.
+- **The keys follow the outlines:** `spore-smooth`, `spore-scalloped`, `spore-spiked`, `spore-notched` (were `spore-circle`, `-diamond`, `-square`, `-triangle`). The assets were renamed in place, so levels keep their references. *Why (Soni):* nothing shipped stores a spore key yet (saves and analytics name levels only), so this is the last cheap moment for the keys to say what players see.
+- **The silhouette guard now reads the pixels**, since four circles could pass "no two types share a sprite" while looking alike. `ProjectSporeArtTests` reads each shipped sprite's opaque body (the glow is fainter than the threshold) and checks that every two spores differ in more than 4 % of their combined area (the closest pair, smooth and notched, differs in 7 %), that each one is a circle centred on its cell that its outline only changes, and that all four are medium-sized and cover about the same area ([ADR-0011](0011-fit-camera-to-board-and-pool-views-up-front.md) Refinements).
+- The renders of the game screen in the three simulations and grayscale showed the four types apart in each (design §6).
+
 ## Consequences
 
 - **Positive:**

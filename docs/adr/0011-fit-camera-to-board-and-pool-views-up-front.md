@@ -45,7 +45,7 @@ The deciding factor is **keeping the board in cell units and keeping every cost 
 - **`BoardLayout.Fit(columns, rows, screenSize, safeArea, insets)`** (pure struct): the board area is the safe area minus the insets (top 20 %, bottom 8 %, sides 4 % to start). Pixels per cell is the smaller of area width ÷ columns and area height ÷ rows, so cells stay square and the tighter direction is filled. The board's centre goes to the area's centre. It exposes `OrthographicSize`, `CameraPosition`, `WorldToScreen` and `ScreenToWorld`. The board's origin is the world origin, at its bottom-left corner.
 - **`BoardCamera`** applies the layout to the camera and refits when the screen size or safe area changes.
 - **`SporeViewPool`** creates all its views in its constructor. `Rent` throws when empty; returning a view twice throws.
-- **`BoardView.Init(board, catalog)`** creates the pool, a tile under every playable cell, and a spore view per spore, all before play. Spores draw above tiles (sorting order 1 over 0). The board object must sit at the world origin.
+- **`BoardView.Init(board, catalog)`** creates the pool, a tile under every playable cell, and a spore view per spore, all before play. Spores draw above tiles (sorting order 1 over 0). *Tiles removed in Milestone 4 (Refinements below).* The board object must sit at the world origin.
 - **Atlas:** `Art/BoardAtlas.spriteatlasv2` packs `Art/Spores` and `Art/Board`: padding 4, no rotation or tight packing, no mipmaps, ASTC 4×4 on Android.
 - **Materials:** both prefabs use URP's `Sprite-Unlit-Default` (ADR-0002).
 
@@ -53,12 +53,20 @@ The deciding factor is **keeping the board in cell units and keeping every cost 
 
 Twice the cells is not enough. Playback builds a whole move at once, so the chain's cleared views are still in use, animating out, when later phases rent new ones. When no reshuffle can fix a dead board, the Settle phase **regenerates** it, clearing and respawning every cell in the same move. Worst case: the board's views, plus the chain's cleared views, plus a full new board, which is **3 × cells** (108 for 6 × 6). The pool is now that size and still never grows. A PlayMode test scripts exactly this case (chain, then a dead refill, ten failed shuffles, then regeneration); with 2 × cells it exhausts the pool.
 
+### Refinements (2026-10-25, Milestone 4 slice 3)
+
+Decided with the new spores (design §8.3, [ADR-0005](0005-identify-spores-by-asset-with-runtime-id.md) Refinements):
+
+- **No cell tiles.** The brief asks for no grid boxes behind the spores, so `BoardView` draws only spores and the backdrop shows between them. The `Cell` prefab, its art and the atlas's `Art/Board` folder are gone; void cells now show as empty space (no level has one yet). The board atlas packs the four spore sprites and nothing else, guarded by `ProjectArtTests`.
+- **Spores are medium-sized: 0.68 of a cell across** (their body; the glow reaches a little further), **the smooth one 0.64**. The brief asks for bigger than the mockup's (0.54) and smaller than before (0.84). At one diameter for all four, the smooth spore looked bigger on the phone: the other outlines lose 7–18 % of a full circle to their bumps, spikes and bites, and their glow fills the gaps. *Why (Soni):* the smooth circle has no glowing outline to balance its size like the others, so it needs to be slightly smaller. It is now scaled to cover the average area of the other three. The guard checks the size band, and that every spore's area is within 8 % of the four's average (the widest now is 6.8 %; the smooth spore was 10.3 % over before). The size lives in the art, as before: each spore is drawn on a 256 px canvas imported at 256 pixels per unit, so a cell is still one world unit and nothing in the layout or the hit test changes. The hit radius stays 0.45 of a cell (design §6), now a little larger than the spore you see.
+- The insets are unchanged for now; the HUD moves to the top in slice 4, which tunes them.
+
 ## Consequences
 
 - **Positive:**
   - Layout rules are EditMode tests on six screens (16:9 to 21:9 phones with notches, 4:3 and 16:10 tablets) and three board shapes.
   - The input slice can map touches with `BoardLayout.ScreenToWorld` and integer maths.
-  - Guards: one atlas packs every catalog sprite and the cell tile; prefabs use the unlit material; every Mycelia component in every scene has its references set; the board sits at the world origin.
+  - Guards: one atlas packs every catalog sprite and the cell tile (the spores only since Milestone 4); prefabs use the unlit material; every Mycelia component in every scene has its references set; the board sits at the world origin.
 - **Negative:**
   - On tall phones the board is centred in a tall area, which leaves empty space above and below it until the HUD and background fill it. The insets are the dial.
   - New art folders must be added to the atlas (the atlas test catches spores, not other sprites).

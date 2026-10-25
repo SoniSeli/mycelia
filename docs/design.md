@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft |
 | **Author** | Soni Seli |
-| **Last updated** | 2026-10-21 |
+| **Last updated** | 2026-10-25 |
 | **Related** | [Performance budget](performance-budget.md) · [Decision records](adr/README.md) |
 
 > **How to read this draft.** Sections marked **Decide** are open questions to settle (most become an ADR). Everything else is a proposal: rewrite it in your own words before the first commit, since this document is part of your portfolio.
@@ -41,7 +41,7 @@ _Write these in your own words from how the game plays. They become the spec for
 ### 3.1 Board
 - A rectangular grid of cells, **6 × 6** by default; a level may override the size.
 - Every cell holds exactly one **spore** of a given **spore type**. Each level declares the spore types in play (default: 4).
-- Each spore type is a **fungus species** with its own colour *and* silhouette, so types never rely on colour alone ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md)).
+- Each spore type is a **fungus species** with its own colour *and* silhouette, so types never rely on colour alone ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md)). The silhouettes are circles with different outlines: smooth, scalloped, spiked and notched (Milestone 4).
 - Cells are addressed by `(column, row)`, with `(0, 0)` at the bottom-left.
 
 ### 3.2 Making a chain
@@ -149,7 +149,7 @@ Three layers, each depending only on the one below it:
 - **Screen:** portrait only. Supports aspect ratios from 16:9 to about 21:9 and tablets, with layout inside the device's safe area.
 - **App lifecycle:** progress saves atomically (temporary file → replace, with a backup) when a level is won, when settings change, and when the app is paused. A level in progress is not resumed (§3.6). When the app is paused or loses focus during a level, it shows a pause overlay and waits for the player. Audio pauses on interruptions. The Android back button behaves sensibly on every screen ([ADR-0013](adr/0013-pause-the-level-and-handle-back.md)).
 - **Performance:** see [performance-budget.md](performance-budget.md). The target is a low-end reference device, not the Editor.
-- **Accessibility:** colour-blind support is **always on, not a setting**. Every spore type is a species with a unique silhouette, enforced by a validation test, and is checked in grayscale and in colour-blindness simulations. Text is readable at phone size. Haptics can be turned off.
+- **Accessibility:** colour-blind support is **always on, not a setting**. Every spore type is a species with a unique silhouette (a circle with its own outline), enforced by a test that compares their pixels, and is checked in grayscale and in colour-blindness simulations. Text is readable at phone size. Haptics can be turned off.
 - **Localisation:** _out of scope for v1?_ If so, keep fact text in data so it can be localised later.
 
 ## 7. Testing strategy
@@ -212,7 +212,7 @@ Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical
 |---|---|---|---|
 | 1 | **Design system**: the game font (an SIL Open Font License font close to the brief's "Paper Noise", which is licensed for personal use only) as the only font on every text; gradient background and ambient spore particles on every screen; rounded UI kit (panel, round icon button, toggle). *Decided 2026-10-24: Shantell Sans, Bold and SemiBold, spacing −2, as static font assets; a world-space `Backdrop` under each scene's camera, pausing with the level; the kit drawn for the project ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) and [ADR-0013](adr/0013-pause-the-level-and-handle-back.md) Refinements).* | ADR-0012, ADR-0013 | Every existing screen renders in the new look; SetPass and overdraw checked against the budget. *Done 2026-10-24: rendered at 1080 × 2400 and measured on the phone; the backdrop adds 2–3 SetPass, so level 11's pause screen is at 12 (budget ≤ 10), to be brought back in slice 4 ([performance budget](performance-budget.md)).* |
 | 2 | **Scene fade**: screens fade out and in on every scene change; input is blocked during the fade. *Found 2026-10-24: one quick tap on Play also starts the level whose button sits under the same spot on level select (the tap carries across the scene change); the fade's input block must fix it, with a test.* *Decided 2026-10-25: the backdrop's gradient (first its deep blue), 0.25 s each way, the first screen fades in too; a request while the screen changes is ignored ([ADR-0010](adr/0010-hand-written-composition-root.md) Refinements).* | ADR-0010 | Every transition fades; nothing can be pressed mid-fade. *Done 2026-10-25: on the phone the fade shows, and the tap that used to start level 8 opens level select only (3 runs out of 3).* |
-| 3 | **Spores and board**: circles told apart by outline (smooth, scalloped, spiked, notched), no cell tiles, medium size; grayscale and colour-blindness simulation check | ADR-0005, ADR-0011 | The four types stay distinct in every simulation; the silhouette validation still guards them |
+| 3 | **Spores and board**: circles told apart by outline (smooth, scalloped, spiked, notched), no cell tiles, medium size; grayscale and colour-blindness simulation check. *Decided 2026-10-25: the mockup's colours (red, purple, green, orange), compared first with Okabe–Ito and a tuned set; notched as the fourth outline, not a ring; keys renamed after the outlines; 0.68 of a cell across, the smooth spore 0.64 so all four look the same size ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md) and [ADR-0011](adr/0011-fit-camera-to-board-and-pool-views-up-front.md) Refinements).* | ADR-0005, ADR-0011 | The four types stay distinct in every simulation; the silhouette validation still guards them. *Done 2026-10-25: rendered at 1080 × 2400 in normal vision, protanopia, deuteranopia, tritanopia and grayscale; the guard now compares the sprites' pixels.* |
 | 4 | **Gameplay HUD**: goals and moves left together at the top; settings and pause buttons; pause modal (Resume, Quit). *From slice 1: the goal slots must batch, bringing a four-goal level back to SetPass ≤ 10, paused included.* | ADR-0012, ADR-0013 | A level plays with the new HUD; pause and back still behave; SetPass ≤ 10 on the phone |
 | 5 | **Settings modal**, shared by the main menu, level select and gameplay: sound, haptics and accessibility options; saved on change | ADR-0006, ADR-0013 | Settings persist; back closes the modal; opening it mid-level pauses the level |
 | 6 | **Main menu and level select**: title and a slowly breathing mushroom that starts the game; "Levels" with Soni's level-node shape, help and settings buttons | ADR-0012 | The menu flow works in the new design |
@@ -222,7 +222,7 @@ Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical
 | 10 | **Audio**: sound effects and music at the set volumes; pauses with the level and in the background | ADR-0013 | Sounds play and pause correctly |
 | 11 | **Device pass**: the full new flow on the phone | Performance budget | Milestone 4 done-when met on the mid-range phone |
 
-> **Decided before starting (2026-10-24):** an OFL lookalike font instead of Paper Noise (shortlist rendered, Soni picks); the list of assets to draw for the project approved (four outline spores, round icon buttons, a glow dot for the particles, modal panel, goal pill, toggle, a softer star; the gradient made in code); the mushroom and level-node shape are Soni's own work; the UN SDG icons stay out of the repository until their use is checked against the UN's guidelines. **To decide in their slices:** the spore colours, the pause modal's buttons, Retry after a win (ADR-0012 Refinements decided against it), what "accessibility modes" means given that colour-blind support is always on (§6), whether the background particles pause with a level (ADR-0013), and the onboarding text.
+> **Decided before starting (2026-10-24):** an OFL lookalike font instead of Paper Noise (shortlist rendered, Soni picks); the list of assets to draw for the project approved (four outline spores, round icon buttons, a glow dot for the particles, modal panel, goal pill, toggle, a softer star; the gradient made in code); the mushroom and level-node shape are Soni's own work; the UN SDG icons stay out of the repository until their use is checked against the UN's guidelines. **To decide in their slices:** the spore colours (decided in slice 3), the pause modal's buttons, Retry after a win (ADR-0012 Refinements decided against it), what "accessibility modes" means given that colour-blind support is always on (§6), whether the background particles pause with a level (ADR-0013), and the onboarding text.
 
 ## 9. Open questions
 
@@ -232,7 +232,7 @@ Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical
 - [ ] Star thresholds (25 % / 50 %): tune in playtesting (§3.4). *With the defaults the balancing bot never earns 3★ on levels 11–12 ([balancing.md](balancing.md)). Decided 2026-10-24 after the first phone playtest: keep the defaults until other people have played; revisit in the Milestone 5 content pass.*
 - [x] Spore identity: ScriptableObject assets, runtime byte id, stable key ([ADR-0005](adr/0005-identify-spores-by-asset-with-runtime-id.md))
 - [x] Save format: versioned JSON with JsonUtility, no mid-level resume ([ADR-0006](adr/0006-save-progress-as-versioned-json.md))
-- [ ] Choose the 4 fungus species and design silhouettes that stay distinct at phone size and in colour-blindness simulations
+- [ ] Choose the 4 fungus species and design silhouettes that stay distinct at phone size and in colour-blindness simulations. *Silhouettes done 2026-10-25 (four outlines, Milestone 4 slice 3); the species names are still open.*
 - [x] Main menu or straight to level select: main menu first (§4, [ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements)
 - [ ] Reference low-end device: deferred to Milestone 2, since only a mid-range phone is available today (§6, performance budget). *Deferred again on 2026-10-23, to Milestone 5.*
 - [x] Render pipeline: URP with the 2D Renderer, unlit sprites by default ([ADR-0002](adr/0002-use-urp-with-2d-renderer.md))
@@ -246,8 +246,8 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
-| Placeholder spore silhouettes (circle, triangle, square, diamond), board cell tile, UI panel, star and lock | Made for this project | Own work |
-| Placeholder spore colours | Okabe–Ito colour-blind-safe palette (Okabe & Ito, 2008) | Colour values, freely usable |
+| Spore silhouettes (smooth, scalloped, spiked and notched circles; the placeholder shapes and the board cell tile they replaced), UI panel, star and lock | Made for this project (spores drawn by code) | Own work |
+| Spore colours | Sampled from Soni Seli's mockup (Milestone 4; the Okabe–Ito palette of Okabe & Ito, 2008, before it) | Own work |
 | LiberationSans font (TextMeshPro's default font asset; no longer used on any screen since Milestone 4) | Red Hat, Inc. / Google Corporation, via Unity's TextMeshPro essential resources | SIL Open Font License 1.1 (`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`) |
 | Shantell Sans (the game font, Bold and SemiBold, baked into static TextMeshPro font assets) | The Shantell Sans Project Authors (Shantell Martin with Arrow Type), [github.com/arrowtype/shantell-sans](https://github.com/arrowtype/shantell-sans), release 1.011 | SIL Open Font License 1.1 (`Assets/_Mycelia/Art/Fonts/ShantellSans - OFL.txt`) |
 | Mushroom (cap and stem) and level-node shape | Soni Seli | Own work |
