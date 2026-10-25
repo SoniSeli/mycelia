@@ -9,7 +9,6 @@ namespace Mycelia.Game.Tests
     public class BoardViewTests
     {
         GameObject sporeTemplate;
-        GameObject cellTemplate;
         GameObject boardObject;
         BoardView view;
         SporeCatalog catalog;
@@ -23,11 +22,9 @@ namespace Mycelia.Game.Tests
         public void CreateView()
         {
             sporeTemplate = TestViews.SporeTemplate();
-            cellTemplate = TestViews.CellTemplate();
             boardObject = new GameObject("Board");
             view = boardObject.AddComponent<BoardView>();
             TestViews.SetReference(view, "sporePrefab", sporeTemplate.GetComponent<SporeView>());
-            TestViews.SetReference(view, "cellPrefab", cellTemplate.GetComponent<SpriteRenderer>());
             catalog = TestViews.ProjectSpores;
 
             // 3 × 2: (2, 1) is void, (1, 1) is empty.
@@ -44,7 +41,6 @@ namespace Mycelia.Game.Tests
         {
             Object.DestroyImmediate(boardObject);
             Object.DestroyImmediate(sporeTemplate);
-            Object.DestroyImmediate(cellTemplate);
         }
 
         [Test]
@@ -73,26 +69,14 @@ namespace Mycelia.Game.Tests
             Assert.That(view.SporeAt(At(2, 1)), Is.Null);
         }
 
+        // Design §8.3: no tiles or boxes behind the spores; the backdrop shows between them.
         [Test]
-        public void EveryPlayableCell_HasATile_AndVoidCellsHaveNone()
+        public void TheBoard_DrawsOnlySpores_WithNoTilesBehindThem()
         {
             view.Init(board, catalog);
 
-            var tiles = view.CellsRoot.GetComponentsInChildren<SpriteRenderer>();
-            Assert.That(tiles.Length, Is.EqualTo(5));
-            foreach (SpriteRenderer tile in tiles)
-            {
-                Assert.That((Vector2)tile.transform.localPosition, Is.Not.EqualTo(BoardLayout.CellCentre(At(2, 1))));
-            }
-        }
-
-        [Test]
-        public void SporesAreDrawnAboveTheirTiles()
-        {
-            view.Init(board, catalog);
-
-            var tile = view.CellsRoot.GetComponentInChildren<SpriteRenderer>();
-            Assert.That(view.SporeAt(At(0, 0)).Renderer.sortingOrder, Is.GreaterThan(tile.sortingOrder));
+            foreach (Renderer renderer in boardObject.GetComponentsInChildren<Renderer>(includeInactive: true))
+                Assert.That(renderer.GetComponent<SporeView>(), Is.Not.Null, renderer.name);
         }
 
         [Test]

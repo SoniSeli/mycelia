@@ -14,7 +14,6 @@ namespace Mycelia.Game.Tests
             A A B";
 
         GameObject sporeTemplate;
-        GameObject cellTemplate;
         GameObject root;
         BoardView boardView;
         ChainView chainView;
@@ -27,11 +26,9 @@ namespace Mycelia.Game.Tests
         public void CreateViews()
         {
             sporeTemplate = TestViews.SporeTemplate();
-            cellTemplate = TestViews.CellTemplate();
             root = new GameObject("Board");
             boardView = root.AddComponent<BoardView>();
             TestViews.SetReference(boardView, "sporePrefab", sporeTemplate.GetComponent<SporeView>());
-            TestViews.SetReference(boardView, "cellPrefab", cellTemplate.GetComponent<SpriteRenderer>());
             line = new GameObject("Chain Line").AddComponent<LineRenderer>();
             line.transform.SetParent(root.transform);
             chainView = line.gameObject.AddComponent<ChainView>();
@@ -47,7 +44,6 @@ namespace Mycelia.Game.Tests
         {
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(sporeTemplate);
-            Object.DestroyImmediate(cellTemplate);
         }
 
         void Touch(int column, int row)

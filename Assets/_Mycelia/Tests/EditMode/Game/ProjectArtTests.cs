@@ -19,19 +19,28 @@ namespace Mycelia.Game.Tests
         static SpriteRenderer SporePrefab =>
             LoadAll<GameObject>("t:Prefab").Select(prefab => prefab.GetComponent<SporeView>()).Single(view => view != null).Renderer;
 
-        static SpriteRenderer CellPrefab => LoadAll<GameObject>("Cell t:Prefab").Single().GetComponent<SpriteRenderer>();
-
+        // Design §8.3 took the cell tiles away: the board atlas holds the spores and nothing else.
         [Test]
-        public void TheBoardAtlas_PacksEverySporeSprite_AndTheCellTile()
+        public void TheBoardAtlas_PacksEverySporeSprite_AndNothingElse()
         {
             SpriteAtlas atlas = LoadAll<SpriteAtlas>("BoardAtlas t:SpriteAtlas").Single();
-            var sprites = TestViews.ProjectSpores.Types.Select(type => type.Sprite).Append(CellPrefab.sprite);
+            Sprite[] spores = TestViews.ProjectSpores.Types.Select(type => type.Sprite).ToArray();
 
-            foreach (Sprite sprite in sprites)
+            foreach (Sprite sprite in spores)
             {
                 Assert.That(sprite, Is.Not.Null);
                 Assert.That(atlas.CanBindTo(sprite), Is.True, $"{sprite.name} is not in {atlas.name}.");
             }
+            Assert.That(PackedTextures(atlas), Is.EquivalentTo(spores.Select(AssetDatabase.GetAssetPath).Distinct()));
+        }
+
+        static string[] PackedTextures(SpriteAtlas atlas)
+        {
+            Object[] packables = atlas.GetPackables();
+            string[] folders = packables.Select(AssetDatabase.GetAssetPath).Where(AssetDatabase.IsValidFolder).ToArray();
+            return AssetDatabase.FindAssets("t:Texture2D", folders).Select(AssetDatabase.GUIDToAssetPath)
+                .Concat(packables.Where(packable => !(packable is DefaultAsset)).Select(AssetDatabase.GetAssetPath))
+                .Distinct().ToArray();
         }
 
         [Test]
@@ -74,13 +83,10 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void BoardSprites_UseTheUnlitSpriteMaterial()
+        public void Spores_UseTheUnlitSpriteMaterial()
         {
-            foreach (SpriteRenderer renderer in new[] { SporePrefab, CellPrefab })
-            {
-                Assert.That(renderer.sharedMaterial, Is.Not.Null, renderer.name);
-                Assert.That(renderer.sharedMaterial.name, Is.EqualTo("Sprite-Unlit-Default"), renderer.name);
-            }
+            Assert.That(SporePrefab.sharedMaterial, Is.Not.Null);
+            Assert.That(SporePrefab.sharedMaterial.name, Is.EqualTo("Sprite-Unlit-Default"));
         }
     }
 }

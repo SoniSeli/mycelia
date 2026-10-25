@@ -3280,7 +3280,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Mycelia.Game::Mycelia.Game.BoardView
   sporePrefab: {fileID: 8754142986078568366, guid: bb30b52657278b0449dfedb1586130ab, type: 3}
-  cellPrefab: {fileID: 804624451536514944, guid: cb81b3e930f054c49a0c32935fe7f307, type: 3}
 --- !u!4 &1120210208
 Transform:
   m_ObjectHideFlags: 0

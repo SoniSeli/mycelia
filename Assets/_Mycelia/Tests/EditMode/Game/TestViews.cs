@@ -16,13 +16,6 @@ namespace Mycelia.Game.Tests
             return template;
         }
 
-        public static GameObject CellTemplate()
-        {
-            var template = new GameObject("Cell Template");
-            template.AddComponent<SpriteRenderer>();
-            return template;
-        }
-
         public static void SetReference(Object target, string property, Object value)
         {
             var serialized = new SerializedObject(target);

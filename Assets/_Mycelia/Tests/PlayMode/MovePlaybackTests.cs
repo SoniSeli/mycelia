@@ -19,7 +19,6 @@ namespace Mycelia.Game.PlayTests
     {
         GameObject root;
         GameObject sporeTemplate;
-        GameObject cellTemplate;
         PlaybackSettings settings;
         BoardView boardView;
         MovePlayback playback;
@@ -62,12 +61,9 @@ namespace Mycelia.Game.PlayTests
             var sporeView = sporeTemplate.AddComponent<SporeView>();
             SetReference(sporeView, "spriteRenderer", sporeTemplate.GetComponent<SpriteRenderer>());
             sporeTemplate.SetActive(false);
-            cellTemplate = new GameObject("Cell Template", typeof(SpriteRenderer));
-            cellTemplate.SetActive(false);
 
             boardView = root.AddComponent<BoardView>();
             SetReference(boardView, "sporePrefab", sporeView);
-            SetReference(boardView, "cellPrefab", cellTemplate.GetComponent<SpriteRenderer>());
             settings = ScriptableObject.CreateInstance<PlaybackSettings>();
             playback = root.AddComponent<MovePlayback>();
             SetReference(playback, "settings", settings);
@@ -88,7 +84,6 @@ namespace Mycelia.Game.PlayTests
         {
             if (root != null) Object.DestroyImmediate(root);
             Object.DestroyImmediate(sporeTemplate);
-            Object.DestroyImmediate(cellTemplate);
             Object.DestroyImmediate(settings);
         }
 

@@ -7,16 +7,13 @@ using UnityEngine;
 namespace Mycelia.Game
 {
     /// <summary>
-    /// Draws the board: a tile under every playable cell and a pooled <see cref="SporeView"/> for every spore.
+    /// Draws the board: a pooled <see cref="SporeView"/> for every spore, with no tiles behind them (design §8.3).
     /// Everything it will ever need is created in <see cref="Init"/>, before play starts (ADR-0011).
     /// The board's origin is this object's position, which must be the world origin for <see cref="BoardLayout"/>.
     /// </summary>
     public sealed class BoardView : MonoBehaviour
     {
-        public const int CellSortingOrder = 0;
-
         [SerializeField] SporeView sporePrefab;
-        [SerializeField] SpriteRenderer cellPrefab;
 
         SporeCatalog catalog;
         SporeView[] spores;
@@ -24,7 +21,6 @@ namespace Mycelia.Game
 
         public SporeViewPool Pool { get; private set; }
         public SporeCatalog Catalog => catalog;
-        public Transform CellsRoot { get; private set; }
 
         public void Init(IReadOnlyBoard board, SporeCatalog catalog)
         {
@@ -34,7 +30,6 @@ namespace Mycelia.Game
             this.catalog = catalog;
             width = board.Width;
             int cells = board.Width * board.Height;
-            CellsRoot = CreateChild("Cells");
             // Three times the cells: playback rents new spores while cleared ones still animate out, and a move can
             // clear its chain and then regenerate the whole board (ADR-0011, amended).
             Pool = new SporeViewPool(sporePrefab, CreateChild("Spores"), 3 * cells);
@@ -47,18 +42,12 @@ namespace Mycelia.Game
                 if (!board.IsPlayable(cell))
                     continue;
 
-                Vector2 centre = BoardLayout.CellCentre(cell);
-                SpriteRenderer tile = Instantiate(cellPrefab, CellsRoot);
-                tile.name = $"Cell {column},{row}";
-                tile.sortingOrder = CellSortingOrder;
-                tile.transform.localPosition = centre;
-
                 SporeTypeId occupant = board.GetOccupant(cell);
                 if (occupant == SporeTypeId.None)
                     continue;
 
                 SporeView spore = Pool.Rent();
-                spore.Show(catalog.TypeOf(occupant), centre);
+                spore.Show(catalog.TypeOf(occupant), BoardLayout.CellCentre(cell));
                 spores[IndexOf(cell)] = spore;
             }
         }

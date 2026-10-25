@@ -144,7 +144,7 @@ namespace Mycelia.Game.Tests
             backdrop.FitIfChanged();
 
             Assert.That(Backdrop.GradientSortingOrder, Is.LessThan(Backdrop.SporeSortingOrder));
-            Assert.That(Backdrop.SporeSortingOrder, Is.LessThan(BoardView.CellSortingOrder));
+            Assert.That(Backdrop.SporeSortingOrder, Is.LessThan(SporeView.SortingOrder));
             Assert.That(backdrop.GetComponent<MeshRenderer>().sortingOrder, Is.EqualTo(Backdrop.GradientSortingOrder));
             Assert.That(spores.GetComponent<ParticleSystemRenderer>().sortingOrder, Is.EqualTo(Backdrop.SporeSortingOrder));
         }

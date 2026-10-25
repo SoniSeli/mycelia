@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76bb613abf6ff3c43bca519bcfe480db, type: 3}
-  m_Name: spore-square
+  m_Name: spore-notched
   m_EditorClassIdentifier: Mycelia.Content::Mycelia.Content.SporeType
-  key: spore-square
-  displayName: Placeholder Square
-  color: {r: 0, g: 0.61960787, b: 0.4509804, a: 1}
-  sprite: {fileID: 21300000, guid: ed6e22dfd52399f4291de2acedeeacac, type: 3}
-  accessibleLabel: square spore
+  key: spore-notched
+  displayName: Notched
+  color: {r: 0.94509804, g: 0.70980394, b: 0.29803923, a: 1}
+  sprite: {fileID: 21300000, guid: 20f4b05009d92a446b4601a4c4c227df, type: 3}
+  accessibleLabel: orange notched spore

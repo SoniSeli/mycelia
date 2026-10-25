@@ -60,12 +60,9 @@ namespace Mycelia.App.Tests
             sporePrefab.transform.SetParent(scene.transform);
             var sporeView = sporePrefab.AddComponent<SporeView>();
             SetReference(sporeView, "spriteRenderer", sporePrefab.GetComponent<SpriteRenderer>());
-            var cellPrefab = new GameObject("Cell Prefab", typeof(SpriteRenderer));
-            cellPrefab.transform.SetParent(scene.transform);
             boardView = new GameObject("Board", typeof(BoardView)).GetComponent<BoardView>();
             boardView.transform.SetParent(scene.transform);
             SetReference(boardView, "sporePrefab", sporeView);
-            SetReference(boardView, "cellPrefab", cellPrefab.GetComponent<SpriteRenderer>());
 
             var line = new GameObject("Chain Line", typeof(LineRenderer)).GetComponent<LineRenderer>();
             line.transform.SetParent(boardView.transform);

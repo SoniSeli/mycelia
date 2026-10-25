@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76bb613abf6ff3c43bca519bcfe480db, type: 3}
-  m_Name: spore-diamond
+  m_Name: spore-spiked
   m_EditorClassIdentifier: Mycelia.Content::Mycelia.Content.SporeType
-  key: spore-diamond
-  displayName: Placeholder Diamond
-  color: {r: 0.8, g: 0.4745098, b: 0.654902, a: 1}
-  sprite: {fileID: 21300000, guid: c57b210235a116b419100ef4ea63327b, type: 3}
-  accessibleLabel: diamond spore
+  key: spore-spiked
+  displayName: Spiked
+  color: {r: 0.42745098, g: 0.8980392, b: 0.5411765, a: 1}
+  sprite: {fileID: 21300000, guid: ed6e22dfd52399f4291de2acedeeacac, type: 3}
+  accessibleLabel: green spiked spore
