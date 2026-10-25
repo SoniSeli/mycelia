@@ -17,8 +17,8 @@ Each file records one significant decision: its context, the options considered,
 | [0009](0009-animate-playback-with-primetween.md) | Animate move playback with PrimeTween sequences | Accepted (refined 2026-10-23, 2026-10-24) |
 | [0010](0010-hand-written-composition-root.md) | Wire services with a hand-written composition root in the Bootstrap scene | Accepted (refined 2026-10-23, 2026-10-24, 2026-10-25) |
 | [0011](0011-fit-camera-to-board-and-pool-views-up-front.md) | Fit the camera to the board, pool spore views up front, and pack board sprites in one atlas | Accepted (amended 2026-10-24; refined 2026-10-25) |
-| [0012](0012-use-ugui-with-textmeshpro.md) | Build the game's UI with uGUI and TextMeshPro | Accepted (refined 2026-10-23, 2026-10-24; amended 2026-10-24) |
-| [0013](0013-pause-the-level-and-handle-back.md) | Pause the level when the player looks away, and handle the back button in the Game scene | Accepted (refined 2026-10-23, 2026-10-24) |
+| [0012](0012-use-ugui-with-textmeshpro.md) | Build the game's UI with uGUI and TextMeshPro | Accepted (refined 2026-10-23, 2026-10-24, 2026-10-25; amended 2026-10-24) |
+| [0013](0013-pause-the-level-and-handle-back.md) | Pause the level when the player looks away, and handle the back button in the Game scene | Accepted (refined 2026-10-23, 2026-10-24, 2026-10-25) |
 | [0014](0014-log-playtest-analytics-to-a-local-file.md) | Log playtest analytics to a local file behind an analytics interface | Accepted |
 | [0015](0015-balance-levels-with-a-simulated-bot.md) | Balance levels with a simulated bot over fixed seeds | Accepted |
 

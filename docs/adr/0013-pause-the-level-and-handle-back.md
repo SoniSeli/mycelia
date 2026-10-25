@@ -68,6 +68,12 @@ Decided with the main menu and level select (ADR-0012 Refinements):
 
 - **The background spores pause with the level.** The Game scene's `Backdrop` is an `IPausable` like everything else that animates, so the whole screen holds still under the pause overlay. The menus have no level to pause, so theirs keep drifting.
 
+### Refinements (2026-10-25, Milestone 4 slice 4)
+
+- **A pause button in the HUD** is a fourth way in, beside back, the background and focus loss; it calls the same `LevelPause.Pause`, so it does nothing once the level is over.
+- **The overlay offers Resume, Restart and Quit.** The brief asked for Resume and Quit; Restart stays. *Why (Soni):* a bad start can be replayed in one tap, as most puzzle games allow. **Quit is the old Level select**, renamed, and still leads there. *Why (Soni):* level select shows progress and is one step out, like back.
+- Seen on the phone: the overlay's dim doesn't take touches (rule 2 of ADR-0012), so the HUD's pause button can still be pressed under it; that pauses nothing more. The settings button (slice 5) will sit beside it, so slice 5 decides what a tap under the overlay may do.
+
 ## Consequences
 
 - **Positive:**

@@ -98,6 +98,18 @@ Decided with Soni's UI/UX brief (design §8.3):
 - **Every screen has the same backdrop**: the deep blue to turquoise gradient and slowly drifting spores, drawn in the world behind the board and the UI, not on a canvas. A `Backdrop` sits under each scene's camera and refits when the camera changes size (the board camera fits itself to each level); the spores' size, speed and spread scale with the view. The gradient is blended in sRGB, like the reference image, rather than in the project's linear light. *Why world space:* a background canvas would have to bleed outside the safe area and draw behind the board, against rules 4 and 8; two renderers behind everything need neither.
 - **The UI kit is drawn for the project** (round icon buttons, modal panel, goal pill, toggle, softer star) as white shapes the UI tints, packed in the UI atlas with Soni's mushroom and level-node shape; later slices put them on the screens.
 
+### Refinements (2026-10-25, Milestone 4 slice 4)
+
+Decided with the gameplay HUD (design §8.3; the brief: goals grouped with moves left at the top, settings and pause buttons, a pause modal with Resume and Quit):
+
+- **One card in the top band with moves left and the goals, and a round pause button centred below the board.** Compared with everything in one bar (four goals get tight next to two buttons) and the mockup's "Objective" pill with moves in the level-node shape; Soni chose the card with the pause button in the top-left corner, then, after seeing it, moved the button below the board. *Why (Soni):* everything the level asks of you reads in one place. `HudView` centres the button in the band the board leaves free below it, from the same insets as the top band.
+- **A tab above the card names the level: "Level N"**, from Soni's reference image: the card's colour and the kit's modal shape, rising from the card's top edge. N is the level's place in the catalog, the number level select shows; the Editor's debug level shows "Level". The tab overlaps the card to hide its own bottom corners, so both are now opaque (overlapping see-through panels would show a darker band); the title sits on the counters canvas with the other HUD text, so it adds no draw.
+- **The settings button comes with the settings modal in slice 5.** *Why (Soni):* no button that does nothing.
+- **Goals share their part of the card evenly** (anchors, not positions), each a spore icon above its count, so up to four fit on the narrowest screen; a guard checks a goal's icon and count stay apart and "40/40" fits the smallest share (170 × 190 units, a 16:9 phone with a notch).
+- **Every HUD text sits on the counters canvas.** With the caption on the HUD's own canvas, the same font drew twice: level 11 (four goals) measured SetPass 9 playing and 11 paused on the phone; with it on the counters canvas, 8 and 10, within budget ([performance budget](../performance-budget.md)). The caption never changes, so it costs nothing when the counters rebuild. Rule 1 still holds for what changes.
+- **The HUD canvas takes touches** (a `GraphicRaycaster`) now that it has a button; its only raycast target is the pause button, so it still never takes a touch meant for the board (rule 2). A guard checks every button in every scene sits on a canvas that can hear it.
+- **The pause modal uses the kit's modal and pill shapes** in the colours it had, with the result card left for slice 7.
+
 ## Consequences
 
 - **Positive:**
