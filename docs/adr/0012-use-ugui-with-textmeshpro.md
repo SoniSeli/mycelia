@@ -120,6 +120,19 @@ Decided with the settings modal (design §8.3; the brief: sound toggles and acce
 - **A modal's panel takes touches** (refining rule 2): otherwise a tap on the panel between its switches would fall through to the backdrop and close the modal. The scene guard allows touch targets inside the settings modal; everywhere else only buttons take touches.
 - Text: Bold only, so the open modal adds one text draw. Measured on the phone over level 11: SetPass 10 with settings open, 8 playing.
 
+### Refinements (2026-10-25, Milestone 4 slice 6)
+
+Decided with the main menu and level select (design §8.3; the brief's screens A and C and their mockups):
+
+- **The slowly breathing mushroom is Play**: the title at the top, Soni's mushroom (the cap tinted #9CE8F8 over the cream stem, 360 units across) in the middle, and nothing else; the Play button and the subtitle are gone. *Why (Soni):* the mockup as drawn: the breathing mushroom is the only thing in the middle, so it reads as the way in.
+- **The menus' buttons sit in a footer at the bottom centre**: settings alone on the main menu; help (?) on the left and settings on the right on level select. *Why (Soni):* as in the mockups, and within thumb reach.
+- **Help (?) shows now but does nothing until onboarding exists** (slice 8). This differs from slice 4's "no button that does nothing". *Why (Soni):* nobody outside sees the game before slice 8, so a button that does nothing for a few slices costs nothing.
+- **Each level is one of Soni's chunky nodes**: mint (#C3EFD8, sampled from the mockup) with the number in dark ink and three soft stars under it, earned ones gold and the rest light, all with a dark outline so they read on the light node; a locked level is the same node at 35 % opacity with the white lock instead of its number, and doesn't take taps. The number and stars, or the lock, sit centred on the node (Soni, after seeing them nudged toward the shape's top face). The mockup showed no stars and dimmed locked nodes that kept their numbers. *Why (Soni):* stars show what's done and locks show what's left, so the grid reads as progress in one look. `LevelButton` colours the node itself; the button's disabled tint is white, so the two never stack.
+- **The lock is redrawn** with the shackle ending inside the body: the old one ran through and showed two bumps under it (Soni). A guard checks the lock's lowest rows are one solid edge.
+- **Breathing is a small `Breathing` component, not a PrimeTween loop**: a sine ease, 3 s per breath, 5 % larger at its top, from the foot of the stem as if growing. *Why:* the scale is a pure function the tests check, and nothing is allocated or started per screen; it stops when the screen goes. The mushroom changes every frame, so it has its own nested canvas (rule 1), with its own `GraphicRaycaster`: a raycaster only reads the graphics of its own canvas, not of canvases nested in it. **Guard widened:** every button must sit on a canvas that hears taps, now its own canvas rather than its root canvas.
+- Smaller choices: the grid moved 60 units up so the footer fits on a 16:9 screen; the title is 160 pt, 240 units from the top of the safe area; the mushroom darkens slightly while pressed.
+- Measured on the phone: main menu SetPass 6 (the mushroom's canvas added none), level select 5, settings open 7; 0 B GC on every menu ([performance budget](../performance-budget.md)).
+
 ## Consequences
 
 - **Positive:**
