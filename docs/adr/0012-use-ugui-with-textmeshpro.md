@@ -133,6 +133,21 @@ Decided with the main menu and level select (design §8.3; the brief's screens A
 - Smaller choices: the grid moved 60 units up so the footer fits on a 16:9 screen; the title is 160 pt, 240 units from the top of the safe area; the mushroom darkens slightly while pressed.
 - Measured on the phone: main menu SetPass 6 (the mushroom's canvas added none), level select 5, settings open 7; 0 B GC on every menu ([performance budget](../performance-budget.md)).
 
+### Refinements (2026-10-25, Milestone 4 slice 7)
+
+Decided with the level complete screen (design §8.3; the brief's screen E and its mockup):
+
+- **A win fills the screen**: "Level Completed" (the brief's spelling), the stars, "Interesting Fact", the fact justified, its photo and its source, and Continue, straight on the backdrop. The board and the HUD are hidden while it shows, rather than covered, so nothing of the level shows through and nothing draws behind it. *Why (Soni):* the mockup as drawn: the fact gets the whole screen, with nothing of the level competing for attention.
+- **A win still offers Continue only** (to level select), not the brief's Retry: the 2026-10-24 refinement stands. *Why (Soni):* going back to the grid after every win shows the new unlock and the stars; a replay is one tap away there.
+- **The source is the short "Photo: <site>" credit**, small and left-aligned under the photo's bottom-left corner; the mockup showed the full image URL. *Why (Soni):* a URL is a source, not a licence: the credit names the site, and the full URLs stay in Soni's notes and [facts.md](../facts.md).
+- **A loss is a small opaque card over the dimmed board**: "Out of moves", three dimmed stars, Retry on the left and Continue on the right. *Why (Soni):* a loss is a quick moment, not a reward screen: a small card says "try again" without ceremony, and the dimmed stars show what was at stake.
+- **The fact keeps its full text; the photo gives way.** `ResultPanel` lays the fact out between the stars and Continue: "Interesting Fact", the whole text, the photo in its own shape and its source under the photo's left edge. At the least spacing (30) the photo is as wide as the text (940) or as tall as the space left allows; a photo that would be shorter than 160 units is left out with its source rather than squeezed. This replaces the Milestone 3 card that grew with its text.
+- **On taller phones the fact spreads out and sits a little above centre** (Soni, after seeing the first version leave the bottom of a tall screen empty): the spaces between heading, text and photo grow up to 80; of the height still left, Continue rises by 30 % and the rest goes 40 % above the fact and 60 % below. On a 16:9 screen nothing is left over, so the parts stay close and Continue keeps its place, as in the first version. The longest fact (level 3) and the tallest photo (level 5) both fit on a 16:9 screen (rendered).
+- **The win's stars are 230 units** (130 in the first version; 170 and 210 were also rendered). *Why (Soni):* the stars are the reward, so they lead the screen.
+- **The stars' outline is softer** (Soni picked option D of six rendered): a mid grey baked into the star, so under the UI's tint it becomes a darker shade of the star's own colour (amber on gold, grey on unearned), at 11 of 192 pixels. The same star image is used on level select, so its stars changed too. *Why (Soni):* the dark ink outline was too strong.
+- Smaller choices: the kit's round buttons (retry and next icons, 150 units) in place of the green text buttons; Continue sits at the bottom centre like the menus' footers; earned stars gold, the rest white at 55 %; "Interesting Fact" is the title's font at 60 pt, the fact SemiBold 42 pt; the loss's dim reaches past the safe area like the pause overlay's.
+- Measured on the phone (Soni playing, before the bigger stars and the spread-out layout, which change sizes and places only): the win SetPass 6, the loss card 10 over level 4 (9 playing), 0 B GC on both once open ([performance budget](../performance-budget.md)).
+
 ## Consequences
 
 - **Positive:**
