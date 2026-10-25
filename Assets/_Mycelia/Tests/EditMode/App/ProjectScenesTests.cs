@@ -200,6 +200,92 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // A button on a canvas without a raycaster draws but never hears a tap.
+        [TestCaseSource(nameof(UiScenes))]
+        public void EveryButton_IsOnACanvasThatTakesTouches(SceneId scene)
+        {
+            WithScene(scene, roots =>
+            {
+                foreach (UnityEngine.UI.Button button in roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Button>(true)))
+                {
+                    Canvas canvas = button.GetComponentInParent<Canvas>(true).rootCanvas;
+                    bool hears = canvas.TryGetComponent(out UnityEngine.UI.GraphicRaycaster raycaster) && raycaster.enabled;
+                    Assert.That(hears, Is.True, $"{button.name} on {canvas.name}");
+                }
+            });
+        }
+
+        // Design §8.3 (Milestone 4 slice 4): one card in the top band holding moves left and the goals together, and the pause
+        // button outside it, in the safe area, so HudView can place it below the board.
+        [Test]
+        public void TheHud_HasOneCardForMovesAndGoals_AndThePauseButtonOutsideTheBand()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.HudView hud = roots.SelectMany(root => root.GetComponentsInChildren<Game.HudView>(true)).Single();
+                var serialized = new SerializedObject(hud);
+                var band = (RectTransform)serialized.FindProperty("band").objectReferenceValue;
+                var pause = (RectTransform)((Component)serialized.FindProperty("pauseButton").objectReferenceValue).transform;
+                var moves = (RectTransform)((Component)serialized.FindProperty("movesText").objectReferenceValue).transform;
+                var goals = (RectTransform)serialized.FindProperty("slotsRoot").objectReferenceValue;
+
+                // The card: the nearest background behind both moves and goals.
+                RectTransform card = moves.GetComponentsInParent<RectTransform>(true)
+                    .FirstOrDefault(parent => goals.IsChildOf(parent) && parent.TryGetComponent(out UnityEngine.UI.Image _));
+                Assert.That(card, Is.Not.Null, "Moves and goals share a card with a background.");
+                Assert.That(card.IsChildOf(band) && card != band, Is.True, "The card sits inside the band.");
+                Assert.That(pause.IsChildOf(band), Is.False, "The pause button sits outside the top band.");
+                Assert.That(pause.parent, Is.SameAs(band.parent), "It shares the band's parent, the safe area.");
+                Assert.That(pause.GetComponent<UnityEngine.UI.Button>(), Is.Not.Null);
+
+                Rect bandRect = WorldRect(band), cardRect = WorldRect(card);
+                Assert.That(cardRect.yMin, Is.GreaterThanOrEqualTo(bandRect.yMin - 1f), "The card stays in the band.");
+                Assert.That(cardRect.yMax, Is.LessThanOrEqualTo(bandRect.yMax + 1f), "The card stays in the band.");
+            });
+        }
+
+        // Performance budget (SetPass <= 10, paused included; measured on the phone 2026-10-25): every HUD text sits on the
+        // counters canvas in one font, so all of it draws as one batch instead of one per canvas.
+        [Test]
+        public void EveryHudText_SharesTheCountersCanvas_AndOneFont()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.HudView hud = roots.SelectMany(root => root.GetComponentsInChildren<Game.HudView>(true)).Single();
+                var moves = (Component)new SerializedObject(hud).FindProperty("movesText").objectReferenceValue;
+                Canvas counters = moves.GetComponentInParent<Canvas>(true);
+
+                foreach (TMPro.TMP_Text text in hud.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                {
+                    Assert.That(text.GetComponentInParent<Canvas>(true), Is.SameAs(counters), text.name);
+                    Assert.That(text.font, Is.SameAs(((TMPro.TMP_Text)moves).font), text.name);
+                }
+            });
+        }
+
+        // Decided 2026-10-25 (slice 4): the brief's Resume and Quit, plus Restart; Quit leads to level select.
+        [Test]
+        public void ThePauseModal_OffersResumeRestartAndQuit()
+        {
+            WithScene(SceneId.Game, roots =>
+            {
+                Game.PauseOverlay overlay = roots.SelectMany(root => root.GetComponentsInChildren<Game.PauseOverlay>(true)).Single();
+                var serialized = new SerializedObject(overlay);
+                string Label(string button) =>
+                    ((Component)serialized.FindProperty(button).objectReferenceValue).GetComponentInChildren<TMPro.TMP_Text>(true).text;
+
+                Assert.That(new[] { Label("resume"), Label("restart"), Label("quit") }, Is.EqualTo(new[] { "Resume", "Restart", "Quit" }));
+                Assert.That(overlay.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(3));
+            });
+        }
+
+        static Rect WorldRect(RectTransform rect)
+        {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            return Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
+        }
+
         // ADR-0012 rules 1 and 3: a counter changing rebuilds only its own small canvas, with no layout group to recompute.
         [Test]
         public void TheHudCounters_LiveOnTheirOwnCanvas_WithoutLayoutGroups()

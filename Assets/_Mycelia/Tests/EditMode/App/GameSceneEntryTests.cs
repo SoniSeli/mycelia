@@ -27,7 +27,9 @@ namespace Mycelia.App.Tests
         ResultPanel resultPanel;
         Button retry;
         Button resultLevelSelect;
-        Button pauseLevelSelect;
+        Button pauseQuit;
+        Button hudPause;
+        TMP_Text hudTitle;
         FakeProgressStore store;
         FakeAnalytics analytics;
         TMPro.TMP_Text factText;
@@ -93,6 +95,10 @@ namespace Mycelia.App.Tests
             SetReference(hud, "movesText", UiChild("Moves", hudRoot).gameObject.AddComponent<TextMeshProUGUI>());
             SetReference(hud, "slotPrefab", slotPrefab);
             SetReference(hud, "slotsRoot", hudRoot);
+            hudPause = UiChild("Pause Button", hudRoot).gameObject.AddComponent<Button>();
+            SetReference(hud, "pauseButton", hudPause);
+            hudTitle = UiChild("Title", hudRoot).gameObject.AddComponent<TextMeshProUGUI>();
+            SetReference(hud, "title", hudTitle);
             resultPanel = UiChild("Result Panel", hudRoot).gameObject.AddComponent<ResultPanel>();
             SetReference(resultPanel, "title", UiChild("Title", resultPanel.transform).gameObject.AddComponent<TextMeshProUGUI>());
             retry = UiChild("Retry", resultPanel.transform).gameObject.AddComponent<Button>();
@@ -113,10 +119,10 @@ namespace Mycelia.App.Tests
             pauseOverlay = UiChild("Pause Panel", scene.transform).gameObject.AddComponent<PauseOverlay>();
             resume = UiChild("Resume", pauseOverlay.transform).gameObject.AddComponent<Button>();
             restart = UiChild("Restart", pauseOverlay.transform).gameObject.AddComponent<Button>();
-            pauseLevelSelect = UiChild("Level Select", pauseOverlay.transform).gameObject.AddComponent<Button>();
+            pauseQuit = UiChild("Quit", pauseOverlay.transform).gameObject.AddComponent<Button>();
             SetReference(pauseOverlay, "resume", resume);
             SetReference(pauseOverlay, "restart", restart);
-            SetReference(pauseOverlay, "levelSelect", pauseLevelSelect);
+            SetReference(pauseOverlay, "quit", pauseQuit);
             pauseController = new GameObject("Pause", typeof(PauseController)).GetComponent<PauseController>();
             pauseController.transform.SetParent(scene.transform);
             SetReference(entry, "pauseOverlay", pauseOverlay);
@@ -206,14 +212,14 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
-        public void LevelSelect_OnThePauseOverlay_SavesFirst_ThenOpensLevelSelect()
+        public void Quit_OnThePauseOverlay_SavesFirst_ThenOpensLevelSelect()
         {
             // A win whose move was still playing when the player paused and left is recorded but not yet written.
             entry.Construct(services, new GameSceneArgs(level));
             services.Progress.RecordWin("level-01", 2);
             entry.Pause.Pause();
 
-            pauseLevelSelect.onClick.Invoke();
+            pauseQuit.onClick.Invoke();
 
             Assert.That(store.Saves, Is.EqualTo(1));
             Assert.That(loader.Loads.Count, Is.EqualTo(1));
@@ -261,7 +267,7 @@ namespace Mycelia.App.Tests
             entry.Construct(services, new GameSceneArgs(level));
             entry.Pause.Pause();
 
-            pauseLevelSelect.onClick.Invoke();
+            pauseQuit.onClick.Invoke();
 
             Assert.That(analytics.Single("level_end").Value("outcome"), Is.EqualTo("abandoned"));
         }
@@ -274,6 +280,27 @@ namespace Mycelia.App.Tests
             resultPanel.Show(Domain.Sessions.SessionState.Won, 1);
 
             Assert.That(factText.text, Is.EqualTo(level.FactText).And.Not.Empty);
+        }
+
+        // The HUD names the level by its place in the catalog, the number level select shows.
+        [Test]
+        public void TheHudTitle_NumbersTheLevelByItsPlaceInTheCatalog()
+        {
+            entry.Construct(services, new GameSceneArgs(ProjectAssets.Levels.Levels[8]));
+
+            Assert.That(hudTitle.text, Is.EqualTo("Level 9"));
+        }
+
+        // Design §8.3: a pause button in the HUD opens the same pause as back and going to the background.
+        [Test]
+        public void ThePauseButton_PausesTheLevel_BehindTheOverlay()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            hudPause.onClick.Invoke();
+
+            Assert.That(entry.Pause.IsPaused, Is.True);
+            Assert.That(pauseOverlay.gameObject.activeSelf, Is.True);
         }
 
         [Test]

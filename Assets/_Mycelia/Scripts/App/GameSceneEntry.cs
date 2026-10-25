@@ -48,7 +48,13 @@ namespace Mycelia.App
             boardCamera.Init(config.Width, config.Height);
             boardView.Init(Session.Board, services.Spores);
             chainView.Init(boardView, config.Width * config.Height);
-            hud.Init(config, services.Spores);
+            Pause = new LevelPause(Session, playback, playback, pauseOverlay, backdrop, new PausedFrameRate(SceneId.Game));
+            // Numbered by place in the catalog, as on level select; the Editor's debug level has none (0).
+            int number = 0;
+            for (int i = 0; i < services.Levels.Levels.Count && number == 0; i++)
+                if (services.Levels.Levels[i] == level)
+                    number = i + 1;
+            hud.Init(config, number, services.Spores, Pause.Pause);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
             var results = new LevelResultRecorder(Session, services.Progress, playback, hud, services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
@@ -66,7 +72,6 @@ namespace Mycelia.App
             };
             resultPanel.Init(restart, leave, new FactCard(level.FactText, level.FactImage, level.FactImageCredit));
             playback.Init(boardView, config.Width, config.Height, results);
-            Pause = new LevelPause(Session, playback, playback, pauseOverlay, backdrop, new PausedFrameRate(SceneId.Game));
             pauseOverlay.Init(Pause.Resume, restart, leave);
             // Back once the result is shown steps out to level select (ADR-0013).
             pauseController.Init(Pause, leave);

@@ -25,8 +25,11 @@ namespace Mycelia.Game.Tests
             config = new LevelConfig("level-hud", 6, 6, 20,
                 "ABCD".Select(TestSessions.IdOf).ToArray(),
                 new[] { new ObjectiveDefinition(TestSessions.IdOf('A'), 12), new ObjectiveDefinition(TestSessions.IdOf('B'), 8) });
-            hud.Hud.Init(config, catalog);
+            pauses = 0;
+            hud.Hud.Init(config, 9, catalog, () => pauses++);
         }
+
+        int pauses;
 
         [TearDown]
         public void DestroyHud() => hud.Destroy();
@@ -55,14 +58,58 @@ namespace Mycelia.Game.Tests
             Assert.That(icon.color, Is.EqualTo(type.Color));
         }
 
-        [Test]
-        public void Goals_SitSideBySide_CentredInTheHud()
+        // Design §8.3: the goals share the card with Moves; each gets an equal share of the goal area, so up to four fit
+        // whatever the screen's width.
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(4)]
+        public void Goals_ShareTheirAreaEvenly_SideBySide(int count)
         {
-            Vector2 first = ((RectTransform)Slots[0].transform).anchoredPosition;
-            Vector2 second = ((RectTransform)Slots[1].transform).anchoredPosition;
+            hud.Destroy();
+            hud = new TestHud();
+            var goals = Enumerable.Range(0, count).Select(i => new ObjectiveDefinition(TestSessions.IdOf("ABCD"[i]), 10)).ToArray();
+            hud.Hud.Init(new LevelConfig("level-hud", 6, 6, 20, "ABCD".Select(TestSessions.IdOf).ToArray(), goals), 1, catalog, () => { });
 
-            Assert.That(first.x, Is.EqualTo(-second.x).Within(1e-3f));
-            Assert.That(second.x - first.x, Is.GreaterThanOrEqualTo(200f), "Slots don't overlap.");
+            for (int i = 0; i < count; i++)
+            {
+                var rect = (RectTransform)Slots[i].transform;
+                float share = 1f / count;
+                Assert.That(rect.anchorMin, Is.EqualTo(new Vector2(i * share, 0)), $"goal {i + 1}");
+                Assert.That(rect.anchorMax, Is.EqualTo(new Vector2((i + 1) * share, 1)), $"goal {i + 1}");
+                Assert.That(rect.offsetMin, Is.EqualTo(Vector2.zero), $"goal {i + 1}");
+                Assert.That(rect.offsetMax, Is.EqualTo(Vector2.zero), $"goal {i + 1}");
+            }
+        }
+
+        // Decided 2026-10-25 (slice 4): below the board, centred in the band the board leaves free there.
+        [Test]
+        public void ThePauseButton_SitsCentredInTheBandBelowTheBoard()
+        {
+            var rect = (RectTransform)hud.PauseButton.transform;
+            var centre = new Vector2(0.5f, hud.Layout.Insets.Bottom / 2);
+
+            Assert.That(rect.anchorMin, Is.EqualTo(centre));
+            Assert.That(rect.anchorMax, Is.EqualTo(centre));
+            Assert.That(rect.anchoredPosition, Is.EqualTo(Vector2.zero));
+        }
+
+        [Test]
+        public void TheTitle_NamesTheLevelByItsNumber_OrJustLevelWithoutOne()
+        {
+            Assert.That(hud.Title.text, Is.EqualTo("Level 9"));
+
+            hud.Destroy();
+            hud = new TestHud();
+            hud.Hud.Init(config, 0, catalog, () => { });
+            Assert.That(hud.Title.text, Is.EqualTo("Level"));
+        }
+
+        [Test]
+        public void ThePauseButton_AsksToPauseTheLevel()
+        {
+            hud.PauseButton.onClick.Invoke();
+
+            Assert.That(pauses, Is.EqualTo(1));
         }
 
         [Test]

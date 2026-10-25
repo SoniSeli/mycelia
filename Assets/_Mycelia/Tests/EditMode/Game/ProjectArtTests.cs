@@ -82,6 +82,49 @@ namespace Mycelia.Game.Tests
                 "The gradient and the spores share one material.");
         }
 
+        // Performance budget (SetPass <= 10) and design §8.3: uGUI batches graphics that share a texture only while they don't
+        // overlap others between them, so a goal's icon and count stay apart and four goals draw in two batches, not
+        // eight. 170 x 190 units is a goal's share of the card on a 16:9 phone with a notch, the smallest the HUD gets
+        // (band 20 % of 1770, minus the 140-unit button row, 92 % of the card for goals; 4 goals across 1080 x 0.92 x 0.74).
+        [Test]
+        public void AGoalSlot_KeepsItsIconAndCountApart_AndFits40Of40()
+        {
+            var parent = new GameObject("Goal Area", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                ((RectTransform)parent.transform).sizeDelta = new Vector2(170, 190);
+                ObjectiveSlot prefab = LoadAll<GameObject>("ObjectiveSlot t:Prefab").Single().GetComponent<ObjectiveSlot>();
+                ObjectiveSlot slot = Object.Instantiate(prefab, parent.transform);
+                var rect = (RectTransform)slot.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+                var icon = slot.GetComponentInChildren<UnityEngine.UI.Image>(true);
+                var count = slot.GetComponentInChildren<TMPro.TMP_Text>(true);
+                Rect iconRect = WorldRect(icon.rectTransform), countRect = WorldRect(count.rectTransform), slotRect = WorldRect(rect);
+
+                Assert.That(iconRect.Overlaps(countRect), Is.False, $"icon {iconRect}, count {countRect}");
+                Assert.That(Inside(iconRect, slotRect), Is.True, "The icon stays in its slot.");
+                Assert.That(Inside(countRect, slotRect), Is.True, "The count stays in its slot.");
+                Assert.That(count.GetPreferredValues("40/40").x, Is.LessThanOrEqualTo(countRect.width), "The largest count fits.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        static bool Inside(Rect inner, Rect outer) =>
+            inner.xMin >= outer.xMin - 0.5f && inner.xMax <= outer.xMax + 0.5f && inner.yMin >= outer.yMin - 0.5f && inner.yMax <= outer.yMax + 0.5f;
+
+        static Rect WorldRect(RectTransform rect)
+        {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            return Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
+        }
+
         [Test]
         public void Spores_UseTheUnlitSpriteMaterial()
         {

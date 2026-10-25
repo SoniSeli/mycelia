@@ -14,6 +14,8 @@ namespace Mycelia.Game.Tests
         public readonly TMP_Text Moves;
         public readonly RectTransform Band;
         public readonly RectTransform Slots;
+        public readonly Button PauseButton;
+        public readonly TMP_Text Title;
         public readonly BoardLayoutSettings Layout;
 
         public TestHud()
@@ -24,6 +26,8 @@ namespace Mycelia.Game.Tests
             Band = Child("Band", Root.transform);
             Moves = Child("Moves", Band).gameObject.AddComponent<TextMeshProUGUI>();
             Slots = Child("Objectives", Band);
+            PauseButton = Child("Pause Button", Root.transform).gameObject.AddComponent<Button>();
+            Title = Child("Title", Band).gameObject.AddComponent<TextMeshProUGUI>();
 
             RectTransform slotTemplate = Child("Slot Template", Root.transform);
             slotTemplate.sizeDelta = new Vector2(200, 120);
@@ -55,6 +59,8 @@ namespace Mycelia.Game.Tests
             Set(Hud, "movesText", Moves);
             Set(Hud, "slotPrefab", slot);
             Set(Hud, "slotsRoot", Slots);
+            Set(Hud, "pauseButton", PauseButton);
+            Set(Hud, "title", Title);
             Set(Hud, "resultPanel", Panel);
         }
 

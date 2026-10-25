@@ -1,27 +1,28 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Mycelia.Game
 {
     /// <summary>
     /// Covers the level while it is paused (design §6) and waits for the player: Resume carries on, Restart starts the
-    /// level again with a fresh seed, and Level select leaves it (a level in progress is not saved, ADR-0006).
+    /// level again with a fresh seed, and Quit leaves it for level select (a level in progress is not saved, ADR-0006).
     /// </summary>
     public sealed class PauseOverlay : MonoBehaviour, IPausable
     {
         [SerializeField] Button resume;
         [SerializeField] Button restart;
-        [SerializeField] Button levelSelect;
+        [SerializeField, FormerlySerializedAs("levelSelect")] Button quit;
 
-        public void Init(Action onResume, Action onRestart, Action onLevelSelect)
+        public void Init(Action onResume, Action onRestart, Action onQuit)
         {
             resume.onClick.RemoveAllListeners();
             resume.onClick.AddListener(() => onResume());
             restart.onClick.RemoveAllListeners();
             restart.onClick.AddListener(() => onRestart());
-            levelSelect.onClick.RemoveAllListeners();
-            levelSelect.onClick.AddListener(() => onLevelSelect());
+            quit.onClick.RemoveAllListeners();
+            quit.onClick.AddListener(() => onQuit());
             SetPaused(false);
         }
 

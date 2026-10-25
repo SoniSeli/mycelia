@@ -10,24 +10,24 @@ namespace Mycelia.Game.Tests
         PauseOverlay overlay;
         Button resume;
         Button restart;
-        Button levelSelect;
+        Button quit;
         int resumeClicks;
         int restartClicks;
-        int levelSelectClicks;
+        int quitClicks;
 
         [SetUp]
         public void CreateOverlay()
         {
-            resumeClicks = restartClicks = levelSelectClicks = 0;
+            resumeClicks = restartClicks = quitClicks = 0;
             root = new GameObject("Pause Panel", typeof(RectTransform));
             overlay = root.AddComponent<PauseOverlay>();
             resume = Child("Resume").AddComponent<Button>();
             restart = Child("Restart").AddComponent<Button>();
-            levelSelect = Child("Level Select").AddComponent<Button>();
+            quit = Child("Quit").AddComponent<Button>();
             TestHud.Set(overlay, "resume", resume);
             TestHud.Set(overlay, "restart", restart);
-            TestHud.Set(overlay, "levelSelect", levelSelect);
-            overlay.Init(() => resumeClicks++, () => restartClicks++, () => levelSelectClicks++);
+            TestHud.Set(overlay, "quit", quit);
+            overlay.Init(() => resumeClicks++, () => restartClicks++, () => quitClicks++);
         }
 
         [TearDown]
@@ -79,13 +79,13 @@ namespace Mycelia.Game.Tests
         }
 
         [Test]
-        public void LevelSelect_AsksToLeaveTheLevel()
+        public void Quit_AsksToLeaveTheLevel()
         {
             overlay.SetPaused(true);
 
-            levelSelect.onClick.Invoke();
+            quit.onClick.Invoke();
 
-            Assert.That(levelSelectClicks, Is.EqualTo(1));
+            Assert.That(quitClicks, Is.EqualTo(1));
             Assert.That(resumeClicks + restartClicks, Is.Zero);
         }
     }
