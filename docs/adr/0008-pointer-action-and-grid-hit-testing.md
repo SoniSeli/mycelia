@@ -72,6 +72,10 @@ Found on the mid-range phone (Redmi Note 12 Pro+ 5G), CI build of `afd1c41`:
 ### Refinements (2026-10-25, Milestone 4)
 
 - **The chain line is the chained spores' own colour, fully opaque, and draws behind them** (sorting order 0: above the backdrop's spores, below the board's), so only the stretches between spores show; the chained spores still grow to 1.15×. `ChainView` takes the colour from the chain's first spore, since a chain is one type. *Why (Soni):* the chain reads as one connected shape, the line joining the spores from behind.
+### Refinements (2026-10-26, Milestone 4 slice 9)
+
+- **Haptics join the feedback as a decorator**: `ChainHaptics` wraps the chain view (and the move player) and ticks on `Started`, `Extended` and `Backtracked`; a `Rejected` touch stays silent, replacing the example of a tick on `Rejected` above ([ADR-0016](0016-drive-android-haptics-through-the-vibrator.md)). *Why (Soni):* every change in the chain's length should be felt.
+
 ## Consequences
 
 - **Positive:**

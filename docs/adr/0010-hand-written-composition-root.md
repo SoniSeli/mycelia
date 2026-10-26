@@ -96,6 +96,10 @@ Decided with the intro (design §8.3):
 - **Only finishing counts as seen**: `PlayerProgress.MarkIntroSeen` and a save when Next is pressed on the last page (ADR-0006 Refinements). Leaving early shows it again on the next Play.
 - **No analytics event for the intro** (ADR-0014). *Why (Soni):* not needed now; add it in Milestone 5 if playtests show people skip the intro.
 
+### Refinements (2026-10-26, Milestone 4 slice 9)
+
+- **`AppServices.Haptics`** is the device's haptics behind the saved switch (`SwitchedHaptics` over `AndroidHaptics.Create()`), created once in `AppRoot`; the Game scene's entry wraps the chain view, the move player and the win wave with it, and every settings modal gets it for its test tick ([ADR-0016](0016-drive-android-haptics-through-the-vibrator.md)). The sketch's `AndroidHaptics` service is now real; audio is still to come (slice 10).
+
 ## Consequences
 
 - **Positive:**

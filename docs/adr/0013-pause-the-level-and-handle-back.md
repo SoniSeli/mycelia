@@ -80,6 +80,10 @@ Decided with the main menu and level select (ADR-0012 Refinements):
 - **The HUD pauses with the level**: its buttons take no taps while it is paused, which settles the open point above.
 - **Back closes settings first**, on every screen: in a level that resumes play; on the menus it does nothing else; after a level ends it closes settings before leaving.
 
+### Refinements (2026-10-26, Milestone 4 slice 9)
+
+- **Haptics don't register as an `IPausable`**: each is a one-shot of at most 150 ms started by a touch, a commit or an outcome, and none of those can happen while the level is paused ([ADR-0016](0016-drive-android-haptics-through-the-vibrator.md)). *Why (Soni):* every haptic is over before a pause can matter. A longer pattern would have to register.
+
 ## Consequences
 
 - **Positive:**
