@@ -52,7 +52,8 @@ namespace Mycelia.App
             chainView.Init(boardView, config.Width * config.Height);
             // Settings opened mid-level pause it and cover it alone; closing them resumes play (design §8.3 slice 5).
             var screen = new PauseScreen(pauseOverlay, settings, () => SettingsSwitches.ToChoice(services.Progress.Settings));
-            Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, new PausedFrameRate(SceneId.Game), services.Sounds);
+            var frameRate = new GameFrameRate(hud);
+            Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, frameRate, services.Sounds);
             settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics, services.Sounds), () => Pause.Resume());
             Action openSettings = () =>
             {
@@ -73,8 +74,9 @@ namespace Mycelia.App
                 if (services.Levels.Levels[i] == level)
                     number = i + 1;
             hud.Init(config, number, services.Spores, Pause.Pause, openSettings);
-            // A win plays its wave on the board before the HUD shows the result (Soni, 2026-10-25).
-            winWave.Init(boardView, config.Width, config.Height, () => playback.LastCleared, hud);
+            // A win plays its wave on the board before the HUD shows the result (Soni, 2026-10-25); the still result
+            // idles at the menu frame rate (design §8.3 slice 11).
+            winWave.Init(boardView, config.Width, config.Height, () => playback.LastCleared, frameRate);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
             // The outcome is felt and heard as it shows: a win as its wave starts, a loss with its card (ADR-0016, ADR-0017).
             var results = new LevelResultRecorder(Session, services.Progress, playback,

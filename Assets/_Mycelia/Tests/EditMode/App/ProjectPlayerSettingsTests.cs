@@ -12,5 +12,13 @@ namespace Mycelia.App.Tests
         {
             Assert.That(PlayerSettings.enableFrameTimingStats, Is.True);
         }
+
+        // The Unity splash added about 2 s to every cold start on the Redmi: 3.8 s to level select against a 3 s budget
+        // (performance budget, Milestone 4 slice 11).
+        [Test]
+        public void TheUnitySplashScreen_IsOff_ForTheColdStartBudget()
+        {
+            Assert.That(PlayerSettings.SplashScreen.show, Is.False);
+        }
     }
 }

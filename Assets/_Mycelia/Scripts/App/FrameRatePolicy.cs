@@ -4,7 +4,8 @@ namespace Mycelia.App
 {
     /// <summary>
     /// Target frame rate per scene (performance budget): 60 fps in gameplay, 30 fps everywhere else to save battery
-    /// and heat. The loader applies it as each scene opens; a paused game idles at the menu rate.
+    /// and heat. The loader applies it as each scene opens; a game that is paused or showing its result idles at the menu
+    /// rate.
     /// </summary>
     public static class FrameRatePolicy
     {
@@ -17,7 +18,7 @@ namespace Mycelia.App
             _ => Menus,
         };
 
-        public static int TargetFor(SceneId scene, bool paused) => paused ? Menus : TargetFor(scene);
+        public static int TargetFor(SceneId scene, bool idle) => idle ? Menus : TargetFor(scene);
 
         public static void Apply(SceneId scene) => Application.targetFrameRate = TargetFor(scene);
     }

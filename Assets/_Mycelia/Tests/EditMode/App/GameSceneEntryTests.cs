@@ -424,6 +424,51 @@ namespace Mycelia.App.Tests
             }
         }
 
+        // A still result screen idles like the pause overlay (design §8.3 slice 11); the win's wave still plays at 60.
+        [Test]
+        public void OnceALossShowsItsResult_TheGameIdlesAtTheMenuFrameRate()
+        {
+            int before = Application.targetFrameRate;
+            try
+            {
+                Application.targetFrameRate = FrameRatePolicy.Gameplay; // As the loader sets it before Construct.
+                entry.Construct(services, new GameSceneArgs(level));
+                var listener = (IPlaybackListener)typeof(MovePlayback).GetField("listener", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(boardView.GetComponent<MovePlayback>());
+                Assert.That(Application.targetFrameRate, Is.EqualTo(FrameRatePolicy.Gameplay), "Playing.");
+
+                listener.SessionEnded(Domain.Sessions.SessionState.Lost, 0);
+
+                Assert.That(Application.targetFrameRate, Is.EqualTo(FrameRatePolicy.Menus));
+                Assert.That(resultPanel.gameObject.activeSelf, Is.True, "The result shows.");
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
+        }
+
+        [Test]
+        public void WhileAWinsWavePlays_TheGameKeepsTheGameplayFrameRate()
+        {
+            int before = Application.targetFrameRate;
+            try
+            {
+                Application.targetFrameRate = FrameRatePolicy.Gameplay; // As the loader sets it before Construct.
+                entry.Construct(services, new GameSceneArgs(level));
+                var listener = (IPlaybackListener)typeof(MovePlayback).GetField("listener", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(boardView.GetComponent<MovePlayback>());
+
+                listener.SessionEnded(Domain.Sessions.SessionState.Won, 2);
+
+                Assert.That(Application.targetFrameRate, Is.EqualTo(FrameRatePolicy.Gameplay));
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
+        }
+
         [Test]
         public void Construct_ShowsTheStartingBoard()
         {
