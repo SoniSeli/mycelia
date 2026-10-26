@@ -87,6 +87,15 @@ Decided with the scene fade (design §8.3):
 - **`SceneTransition` holds the order of a change**, engine-free and tested: fade out, load once the screen is covered, build the scene through its entry, fade in. `SceneLoader` is only the glue to Unity's scene loading.
 - **Nothing can be pressed while the screen changes.** The fade catches UI taps until it is clear again. `ISceneLoader` reports the change as an input block, so the board ignores a touch that starts during it until the finger lifts. A second request during a change (a second tap, or back) is ignored: the first wins. Only the new scene's own `Construct` may open another scene, and the screen stays covered for it. This replaces the old exception for a load requested while another was loading. It also fixed a quick tap on Play starting the level whose button sat under the same spot on level select, a tap that carried across the scene change (found on the phone in slice 1, checked gone there).
 
+### Refinements (2026-10-26, Milestone 4 slice 8)
+
+Decided with the intro (design §8.3):
+
+- **The intro is a scene of its own, `Intro`, opened after the first tap on the mushroom**: the main menu stays the first screen; while the save says the intro was never finished, Play opens the intro instead of level select, and Next on its last page leads into level select. Level select's help (?) replays it, and the replay ends in level select too. *Why (Soni, drafted):* the title screen stays the game's front door, and the last page's "Ready to start growing?" leads straight into the levels; both ways in end in the same place. A scene of its own (with the usual fade) keeps level select's canvas from drawing under it.
+- **`IntroSceneArgs` says whether it is the first run**; the Editor's Play in the Intro scene opens it as a replay. Back turns back a page; on the first page it returns where the intro came from (the main menu on a first run, level select on a replay). There is no skip button. *Why (Soni, drafted):* it's only three pages, and back already leaves.
+- **Only finishing counts as seen**: `PlayerProgress.MarkIntroSeen` and a save when Next is pressed on the last page (ADR-0006 Refinements). Leaving early shows it again on the next Play.
+- **No analytics event for the intro** (ADR-0014). *Why (Soni):* not needed now; add it in Milestone 5 if playtests show people skip the intro.
+
 ## Consequences
 
 - **Positive:**

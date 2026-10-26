@@ -94,10 +94,11 @@ _Write these in your own words from how the game plays. They become the spec for
 ## 4. Player flow
 
 ```
-Launch → (first run) Intro tutorial → Main menu ⇄ Settings
-                                          │
-                                          ▼
-                                     Level select
+Launch → Main menu ⇄ Settings
+              │
+              ├── (first Play, until finished) Intro ──┐
+              ▼                                        ▼
+         Level select ── help (?) ──▶ Intro ──▶ Level select
                                          │
                                          ▼
                                        Level ── win ──▶ Stars + fact card ──▶ Level select
@@ -105,7 +106,7 @@ Launch → (first run) Intro tutorial → Main menu ⇄ Settings
                                          └── lose ──▶ Retry / Level select
 ```
 
-> **Decided 2026-10-24:** launch opens a main menu (title and Play) before level select, as the game's front door for a portfolio piece people open once to judge ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements). Back steps out one screen at a time, and leaves the app from the main menu.
+> **Decided 2026-10-24:** launch opens a main menu (title and Play) before level select, as the game's front door for a portfolio piece people open once to judge ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements). Back steps out one screen at a time, and leaves the app from the main menu. *Decided 2026-10-26 (Milestone 4 slice 8):* the intro opens after the first tap on the mushroom rather than before the main menu, and ends in level select ([ADR-0010](adr/0010-hand-written-composition-root.md) Refinements).
 
 ## 5. Architecture (proposal)
 
@@ -217,12 +218,12 @@ Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical
 | 5 | **Settings modal**, shared by the main menu, level select and gameplay: sound, haptics and accessibility options; saved on change. *Decided 2026-10-25: switches for sound effects, music and haptics, saved now and taking effect in slices 9–10; accessibility is a note (colour-blind support is always on); in a level the button sits beside pause, and settings opened there pause the level and resume it on close ([ADR-0006](adr/0006-save-progress-as-versioned-json.md), [ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) and [ADR-0013](adr/0013-pause-the-level-and-handle-back.md) Refinements).* | ADR-0006, ADR-0013 | Settings persist; back closes the modal; opening it mid-level pauses the level. *Done 2026-10-25 in tests and on the phone (opened over level 11: paused, SetPass 10).* |
 | 6 | **Main menu and level select**: title and a slowly breathing mushroom that starts the game; "Levels" with Soni's level-node shape, help and settings buttons. *Decided 2026-10-25: the mushroom alone is Play (no button, no subtitle); settings, and on level select help, in a bottom-centre footer; help shows but does nothing until slice 8; chunky nodes with soft stars on open levels and the lock (redrawn without the bumps under it) on locked ones ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements).* | ADR-0012 | The menu flow works in the new design. *Done 2026-10-25: on the phone the mushroom breathes and opens level select, help does nothing, settings and back behave; main menu SetPass 6, level select 5, 0 B GC.* |
 | 7 | **Level complete**: title, stars, "Interesting Fact", justified fact text, photo with its source, Continue and Retry; the loss panel restyled. *Decided 2026-10-25: a win fills the screen (board and HUD hidden) with Continue only; the short "Photo: <site>" credit under the photo's left edge; a loss is a small card over the dimmed board with three dimmed stars, Retry and Continue; the photo shrinks to fit, the fact never does; on taller phones the parts spread out and sit a little above centre; bigger stars (230) with a softer outline, on level select too ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements). Added 2026-10-25: a win first pops the spores in a wave from the last chain, then shows the result (a tap or back skips; [ADR-0009](adr/0009-animate-playback-with-primetween.md) Refinements); the chain line takes the spores' colour and draws behind them ([ADR-0008](adr/0008-pointer-action-and-grid-hit-testing.md) Refinements).* | §3.6, ADR-0012 | Wins and losses both work end to end. *Done 2026-10-25: on the phone Soni won level 5 and lost level 4 twice (Retry, then Continue); win SetPass 6, loss card 10.* |
-| 8 | **Onboarding**: three pages (welcome, how to play, the SDGs the game relates to) with a Next button; shown on the first launch only, replayed from level select | ADR-0006 | A fresh install shows it once; it replays on request |
+| 8 | **Onboarding**: three pages (welcome, how to play, the SDGs the game relates to) with a Next button; shown on the first launch only, replayed from level select. *Decided 2026-10-26: an Intro scene opened by the first Play (until finished) and by help (?), both ending in level select; back turns back a page and leaves from the first, no skip; seen only once finished; Soni's text edited to the real rules (no points, "same kind"); "How to Grow" animates a finger drawing two chains of the game's own spores; the three UN SDG icons committed, unmodified, with the UN's disclaimer and link; no analytics event ([ADR-0006](adr/0006-save-progress-as-versioned-json.md), [ADR-0010](adr/0010-hand-written-composition-root.md) and [ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements).* | ADR-0006 | A fresh install shows it once; it replays on request. *Done 2026-10-26 on the phone (an old save, as a fresh install would be): back on the first page returned to the main menu and the next Play showed the intro again; finishing it saved it as seen and opened level select; help replayed it; Play then went straight to level select. SetPass 6–8, 0 B GC on every page.* |
 | 9 | **Haptics**: a light tick per spore added to a chain, a stronger one on commit and win; follows the setting | ADR-0013 | Felt on the phone; off when disabled; 0 B per move |
 | 10 | **Audio**: sound effects and music at the set volumes; pauses with the level and in the background | ADR-0013 | Sounds play and pause correctly |
 | 11 | **Device pass**: the full new flow on the phone | Performance budget | Milestone 4 done-when met on the mid-range phone |
 
-> **Decided before starting (2026-10-24):** an OFL lookalike font instead of Paper Noise (shortlist rendered, Soni picks); the list of assets to draw for the project approved (four outline spores, round icon buttons, a glow dot for the particles, modal panel, goal pill, toggle, a softer star; the gradient made in code); the mushroom and level-node shape are Soni's own work; the UN SDG icons stay out of the repository until their use is checked against the UN's guidelines. **To decide in their slices:** the spore colours (decided in slice 3), the pause modal's buttons (decided in slice 4), Retry after a win (ADR-0012 Refinements decided against it), what "accessibility modes" means given that colour-blind support is always on (§6; decided in slice 5), whether the background particles pause with a level (ADR-0013), and the onboarding text.
+> **Decided before starting (2026-10-24):** an OFL lookalike font instead of Paper Noise (shortlist rendered, Soni picks); the list of assets to draw for the project approved (four outline spores, round icon buttons, a glow dot for the particles, modal panel, goal pill, toggle, a softer star; the gradient made in code); the mushroom and level-node shape are Soni's own work; the UN SDG icons stay out of the repository until their use is checked against the UN's guidelines (checked in slice 8, then committed). **To decide in their slices:** the spore colours (decided in slice 3), the pause modal's buttons (decided in slice 4), Retry after a win (ADR-0012 Refinements decided against it), what "accessibility modes" means given that colour-blind support is always on (§6; decided in slice 5), whether the background particles pause with a level (ADR-0013), and the onboarding text (decided in slice 8).
 
 ## 9. Open questions
 
@@ -241,7 +242,7 @@ Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical
 
 ## 10. Credits and provenance
 
-The idea was first prototyped on a third-party Asset Store template to check that it was fun to play. **All code in this repository was designed and written from scratch for this project.** Third-party art, audio and fonts are listed below with their licences. Asset Store content is kept out of the repository (`Assets/ThirdParty/` is git-ignored).
+The idea was first prototyped on a third-party Asset Store template to check that it was fun to play. **All code in this repository was designed and written from scratch for this project.** Third-party art, audio and fonts are listed below with their licences. Asset Store content is kept out of the repository (`Assets/ThirdParty/` is git-ignored); the UN SDG icons are the one exception, under the UN's published terms ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements 2026-10-26).
 
 | Asset | Source | Licence |
 |---|---|---|
@@ -253,4 +254,5 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Mushroom (cap and stem) and level-node shape | Soni Seli | Own work |
 | UI kit: round icon buttons, modal panel, goal pill, toggle, star; backdrop gradient and spore glow | Made for this project (drawn by code) | Own work |
 | TextMeshPro essential resources (shaders, settings, style sheet) | Unity Technologies, from the `com.unity.ugui` package | Unity Companion License; the sample emoji set is removed |
+| UN Sustainable Development Goal icons 9, 12 and 13 (the intro's last page; `Assets/_Mycelia/Art/UI/SDG/`, imported at 512 from the 3000-pixel English files) | United Nations, [un.org/sustainabledevelopment](https://www.un.org/sustainabledevelopment/news/communications-material/); terms in the UN's [SDG guidelines](https://www.un.org/sustainabledevelopment/wp-content/uploads/2023/09/E_SDG_Guidelines_Sep20238.pdf) (September 2023) | UN SDG guidelines: illustrative use without permission, icons unmodified, no implied endorsement, with the UN's disclaimer and a link to its SDG site (both on the page); **commercial use needs the UN's written permission**: check again before any store release |
 | Fact card photos (12, one per level; **local only, not in the repo**) | Collected by Soni Seli from the web; source per level in [facts.md](facts.md) | **Unknown.** Kept in the git-ignored `Assets/ThirdParty/FactPhotos/`; must be licensed or replaced before any public build, store listing or README media |

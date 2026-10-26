@@ -131,6 +131,10 @@ Decided while wiring saves into the game (`PlayerProgress` on `AppServices`, `Le
 - **Settings are saved the moment they change.** The settings modal reports every switch it flips; `PlayerProgress.ChangeSettings` records the new settings in memory and the save follows at once, so nothing waits for the next save moment. Flipping a switch back and forth writes once per flip; choosing what is already saved writes nothing.
 - **The save format doesn't change.** The modal has on/off switches; the save keeps v1's volumes. A sound is on while its volume is above 0; switching it off saves 0, switching it on keeps a volume it still has or brings back the default (0.8 for effects, 0.6 for music). Volume sliders, if they ever come, need no migration.
 
+### Refinements (2026-10-26, Milestone 4 slice 8)
+
+- **`introSeen` is set when the player finishes the intro**, and saved at once: a new save moment, on Next on the intro's last page, before level select opens (ADR-0010 Refinements). Leaving the intro early changes nothing, and a replay that finishes writes nothing (it was already seen). The field was in v1 from the start, so the format doesn't change; saves written before this slice have it false, so existing players see the intro once on their next Play.
+
 ## Consequences
 
 - **Positive:**
