@@ -68,6 +68,7 @@ namespace Mycelia.App.Tests
             var view = Child<LevelSelectView>("Level Select", root.transform);
             Set(view, "buttonPrefab", ButtonTemplate(view.transform));
             Set(view, "grid", Child<RectTransform>("Grid", view.transform));
+            Set(view, "help", Child<Button>("Help Button", view.transform));
             var settingsButton = Child<Button>("Settings Button", view.transform);
             Set(view, "settings", settingsButton);
             BackButton back = Back();
@@ -95,8 +96,9 @@ namespace Mycelia.App.Tests
         }
 
         [Test]
-        public void Play_OnTheMainMenu_OpensLevelSelect()
+        public void Play_OnTheMainMenu_OpensLevelSelect_OnceTheIntroWasSeen()
         {
+            store.Stored = new SavedProgress(new LevelRecord[0], GameSettings.Default, introSeen: true);
             var (entry, play, _, _, _) = MainMenu();
             AppServices services = Services();
 
@@ -104,6 +106,33 @@ namespace Mycelia.App.Tests
             play.onClick.Invoke();
 
             Assert.That(loader.Loads.Select(load => load.Scene), Is.EqualTo(new[] { SceneId.LevelSelect }));
+        }
+
+        // Design §8.3 slice 8: the first Play shows the intro, which then leads into level select.
+        [Test]
+        public void Play_OnTheFirstLaunch_OpensTheIntro_AsAFirstRun()
+        {
+            store.Stored = new SavedProgress(new LevelRecord[0], GameSettings.Default, introSeen: false);
+            var (entry, play, _, _, _) = MainMenu();
+            entry.Construct(Services(), args: null);
+
+            play.onClick.Invoke();
+
+            Assert.That(loader.Loads.Select(load => load.Scene), Is.EqualTo(new[] { SceneId.Intro }));
+            Assert.That(((IntroSceneArgs)loader.Loads[0].Args).FirstRun, Is.True);
+        }
+
+        [Test]
+        public void Help_OnLevelSelect_ReplaysTheIntro()
+        {
+            store.Stored = new SavedProgress(new LevelRecord[0], GameSettings.Default, introSeen: true);
+            var (entry, view, _, _, _) = LevelSelect();
+            entry.Construct(Services(), args: null);
+
+            view.transform.Find("Help Button").GetComponent<Button>().onClick.Invoke();
+
+            Assert.That(loader.Loads.Select(load => load.Scene), Is.EqualTo(new[] { SceneId.Intro }));
+            Assert.That(((IntroSceneArgs)loader.Loads[0].Args).FirstRun, Is.False);
         }
 
         // Design §8.3 slice 5: the settings modal opens on the menus with the saved settings, and back closes it first.

@@ -106,7 +106,7 @@ namespace Mycelia.Game.Tests
                 new LevelButtonState(1, true, 3),
                 new LevelButtonState(2, true, 0),
                 new LevelButtonState(3, false, 0),
-            }, _ => { }, () => { });
+            }, _ => { }, () => { }, () => { });
 
             Assert.That(view.Buttons.Count, Is.EqualTo(3));
             Assert.That(view.Buttons.Select(Number), Is.EqualTo(new[] { "1", "2", "3" }));
@@ -120,7 +120,7 @@ namespace Mycelia.Game.Tests
             LevelSelectView view = TestMenus.LevelSelect(out _);
             created.Add(view.gameObject);
             var chosen = new List<int>();
-            view.Init(new[] { new LevelButtonState(1, true, 1), new LevelButtonState(2, true, 0) }, chosen.Add, () => { });
+            view.Init(new[] { new LevelButtonState(1, true, 1), new LevelButtonState(2, true, 0) }, chosen.Add, () => { }, () => { });
 
             view.Buttons[1].GetComponent<Button>().onClick.Invoke();
 
@@ -150,12 +150,27 @@ namespace Mycelia.Game.Tests
             created.Add(select.gameObject);
             int opened = 0;
             menu.Init(() => { }, () => opened++);
-            select.Init(new[] { new LevelButtonState(1, true, 0) }, _ => { }, () => opened++);
+            select.Init(new[] { new LevelButtonState(1, true, 0) }, _ => { }, () => opened++, () => { });
 
             menu.transform.Find("Settings").GetComponent<Button>().onClick.Invoke();
             select.transform.Find("Settings").GetComponent<Button>().onClick.Invoke();
 
             Assert.That(opened, Is.EqualTo(2));
+        }
+
+        // Design §8.3 slice 8: help (?) on level select replays the intro.
+        [Test]
+        public void Help_OnLevelSelect_AsksToReplayTheIntro()
+        {
+            LevelSelectView select = TestMenus.LevelSelect(out _);
+            created.Add(select.gameObject);
+            int helped = 0, settings = 0;
+            select.Init(new[] { new LevelButtonState(1, true, 0) }, _ => { }, () => settings++, () => helped++);
+
+            select.transform.Find("Help").GetComponent<Button>().onClick.Invoke();
+
+            Assert.That(helped, Is.EqualTo(1));
+            Assert.That(settings, Is.EqualTo(0));
         }
     }
 }

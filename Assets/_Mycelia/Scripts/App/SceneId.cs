@@ -7,5 +7,6 @@ namespace Mycelia.App
         Game,
         MainMenu,
         LevelSelect,
+        Intro,
     }
 }

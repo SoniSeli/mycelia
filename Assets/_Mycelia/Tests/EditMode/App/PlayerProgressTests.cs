@@ -107,6 +107,36 @@ namespace Mycelia.App.Tests
             Assert.That(store.Stored.Levels.Single().Key, Is.EqualTo("level-01"));
         }
 
+        // Design §8.3 slice 8: the intro shows until the player finishes it once.
+        [Test]
+        public void FinishingTheIntro_MarksItSeen_UnsavedUntilSaved()
+        {
+            store.Stored = new SavedProgress(new[] { new LevelRecord("level-01", 2) }, GameSettings.Default, introSeen: false);
+            PlayerProgress progress = Load();
+            Assert.That(progress.IntroSeen, Is.False);
+
+            Assert.That(progress.MarkIntroSeen(), Is.True);
+            Assert.That(progress.IntroSeen, Is.True);
+            Assert.That(progress.HasUnsavedChanges, Is.True);
+            Assert.That(progress.MarkIntroSeen(), Is.False, "Already seen.");
+
+            progress.SaveIfChanged();
+
+            Assert.That(store.Stored.IntroSeen, Is.True);
+            Assert.That(store.Stored.Levels.Single().Key, Is.EqualTo("level-01"));
+        }
+
+        [Test]
+        public void AnIntroAlreadySeen_StaysSeen_WithoutChangingTheSave()
+        {
+            store.Stored = new SavedProgress(new LevelRecord[0], GameSettings.Default, introSeen: true);
+            PlayerProgress progress = Load();
+
+            Assert.That(progress.IntroSeen, Is.True);
+            Assert.That(progress.MarkIntroSeen(), Is.False);
+            Assert.That(progress.HasUnsavedChanges, Is.False);
+        }
+
         [Test]
         public void Saving_KeepsSettingsTheIntroFlagAndUnknownLevels()
         {

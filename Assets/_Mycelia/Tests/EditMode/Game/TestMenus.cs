@@ -33,6 +33,7 @@ namespace Mycelia.Game.Tests
             template.gameObject.SetActive(false);
             Set(view, "buttonPrefab", template);
             Set(view, "grid", grid);
+            Set(view, "help", Child("Help", root).gameObject.AddComponent<Button>());
             Set(view, "settings", Child("Settings", root).gameObject.AddComponent<Button>());
             return view;
         }

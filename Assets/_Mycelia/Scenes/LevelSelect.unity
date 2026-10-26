@@ -1058,6 +1058,7 @@ MonoBehaviour:
   buttonPrefab: {fileID: 3962462179014303665, guid: 757e7e93d3f12b849abcc79a847be7f6, type: 3}
   grid: {fileID: 1269134046}
   settings: {fileID: 120169381}
+  help: {fileID: 870226376}
 --- !u!224 &575878005
 RectTransform:
   m_ObjectHideFlags: 0

@@ -267,8 +267,11 @@ namespace Mycelia.App.Tests
         }
 
         // Design §8.3 slice 5: one settings modal on every screen, over everything but the pause modal (it never shows with
-        // it), so it covers the result card too; it starts closed, and its scene's entry opens it.
-        [TestCaseSource(nameof(UiScenes))]
+        // it), so it covers the result card too; it starts closed, and its scene's entry opens it. Slice 8: the intro has
+        // only its pages and Next, as in Soni's mockups.
+        static SceneId[] ScreensWithSettings => UiScenes.Where(scene => scene != SceneId.Intro).ToArray();
+
+        [TestCaseSource(nameof(ScreensWithSettings))]
         public void EveryScreen_HasOneSettingsModal_AboveEveryCanvasButThePauseModal(SceneId scene)
         {
             WithScene(scene, roots =>
@@ -409,8 +412,8 @@ namespace Mycelia.App.Tests
             });
         }
 
-        // Design §8.3 slice 6: help (?) and settings side by side, centred, in a footer under the levels. Help does
-        // nothing until onboarding exists (slice 8; Soni: development builds only until then).
+        // Design §8.3 slice 6: help (?) and settings side by side, centred, in a footer under the levels. Slice 8: help
+        // replays the intro.
         [Test]
         public void LevelSelect_HasHelpAndSettings_SideBySideInTheFooter()
         {
@@ -424,6 +427,7 @@ namespace Mycelia.App.Tests
                     .ToArray();
                 var help = (RectTransform)footer.Single(button => button.image.sprite.name == "icon-help").transform;
 
+                Assert.That(serialized.FindProperty("help").objectReferenceValue, Is.SameAs(help.GetComponent<UnityEngine.UI.Button>()));
                 Assert.That(footer.Select(button => button.transform), Is.EquivalentTo(new Transform[] { help, settings }));
                 Assert.That(settings.GetComponent<UnityEngine.UI.Image>().sprite.name, Is.EqualTo("icon-settings"));
                 AssertInFooter(help, x: help.anchoredPosition.x);
@@ -572,6 +576,138 @@ namespace Mycelia.App.Tests
                     Assert.That(viewCamera, Is.SameAs(new SerializedObject(boardCamera).FindProperty("boardCamera").objectReferenceValue),
                         "In the game, it fills the camera fitted to the board.");
             });
+        }
+
+        // Design §8.3 slice 8: welcome, how to play and the SDGs, one page at a time under one round Next button, with
+        // the chain demo on "How to Grow".
+        [Test]
+        public void TheIntro_HasThreePages_UnderOneRoundNextButton()
+        {
+            WithScene(SceneId.Intro, roots =>
+            {
+                Game.IntroView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.IntroView>(true)).Single();
+                var serialized = new SerializedObject(view);
+                SerializedProperty pages = serialized.FindProperty("pages");
+                var next = (UnityEngine.UI.Button)serialized.FindProperty("next").objectReferenceValue;
+                var demo = (GameObject)serialized.FindProperty("demo").objectReferenceValue;
+                int demoPage = serialized.FindProperty("demoPage").intValue;
+
+                Assert.That(pages.arraySize, Is.EqualTo(3));
+                Assert.That(next.image.sprite.name, Is.EqualTo("icon-next"));
+                Assert.That(Enumerable.Range(0, 3).Select(i => ((GameObject)pages.GetArrayElementAtIndex(i).objectReferenceValue).transform.IsChildOf(next.transform)),
+                    Has.All.False, "Next stays while the pages change.");
+                Assert.That(demo.GetComponent<Game.ChainDemo>(), Is.Not.Null);
+                var area = (RectTransform)new SerializedObject(demo.GetComponent<Game.ChainDemo>()).FindProperty("area").objectReferenceValue;
+                Assert.That(area.IsChildOf(((GameObject)pages.GetArrayElementAtIndex(demoPage).objectReferenceValue).transform), Is.True,
+                    "The demo fills a space on its own page.");
+                Assert.That(demo.GetComponentInParent<Canvas>(true), Is.Null, "The demo draws in the world, like the board.");
+            });
+        }
+
+        // The demo must teach the real rules (design §3.2): each chain is two or more spores of one kind, each a
+        // neighbour of the last (8-way), none twice; the page says "sideways or diagonally", so one chain bends diagonally.
+        [Test]
+        public void TheIntroDemoChains_FollowTheGamesRules()
+        {
+            WithScene(SceneId.Intro, roots =>
+            {
+                Game.ChainDemo demo = roots.SelectMany(root => root.GetComponentsInChildren<Game.ChainDemo>(true)).Single();
+                var serialized = new SerializedObject(demo);
+                int[] Ints(string name)
+                {
+                    SerializedProperty array = serialized.FindProperty(name);
+                    return Enumerable.Range(0, array.arraySize).Select(i => array.GetArrayElementAtIndex(i).intValue).ToArray();
+                }
+                SerializedProperty spores = serialized.FindProperty("spores");
+                Vector2Int[] cells = Enumerable.Range(0, spores.arraySize)
+                    .Select(i => ((Component)spores.GetArrayElementAtIndex(i).objectReferenceValue).transform.localPosition)
+                    .Select(p => new Vector2Int(Mathf.FloorToInt(p.x + 0.5f), Mathf.FloorToInt(p.y + 0.5f))).ToArray();
+                int[] types = Ints("sporeTypes"), chains = Ints("chains"), lengths = Ints("chainLengths");
+                int catalogTypes = ProjectAssets.Spores.Types.Count;
+
+                Assert.That(types.Length, Is.EqualTo(cells.Length));
+                Assert.That(types, Has.All.InRange(0, catalogTypes - 1));
+                Assert.That(cells.Distinct().Count(), Is.EqualTo(cells.Length), "One spore per cell.");
+                Assert.That(lengths.Sum(), Is.EqualTo(chains.Length));
+                bool diagonal = false;
+                int start = 0;
+                foreach (int length in lengths)
+                {
+                    int[] chain = chains.Skip(start).Take(length).ToArray();
+                    start += length;
+                    Assert.That(chain.Length, Is.GreaterThanOrEqualTo(2));
+                    Assert.That(chain.Distinct().Count(), Is.EqualTo(chain.Length), "No spore twice.");
+                    Assert.That(chain.Select(i => types[i]).Distinct().Count(), Is.EqualTo(1), "One kind per chain.");
+                    for (int i = 1; i < chain.Length; i++)
+                    {
+                        Vector2Int step = cells[chain[i]] - cells[chain[i - 1]];
+                        Assert.That(Mathf.Max(Mathf.Abs(step.x), Mathf.Abs(step.y)), Is.EqualTo(1), "Each link is a neighbour.");
+                        diagonal |= step.x != 0 && step.y != 0;
+                    }
+                }
+                Assert.That(diagonal, Is.True, "One link is diagonal.");
+            });
+        }
+
+        // The demo draws its chain like a level does: the same line material and width.
+        [Test]
+        public void TheIntroDemoLine_LooksLikeTheChainLineInALevel()
+        {
+            WithScene(SceneId.Game, gameRoots =>
+            {
+                Game.ChainView chainView = gameRoots.SelectMany(root => root.GetComponentsInChildren<Game.ChainView>(true)).Single();
+                var levelLine = (LineRenderer)new SerializedObject(chainView).FindProperty("line").objectReferenceValue;
+                WithScene(SceneId.Intro, roots =>
+                {
+                    Game.ChainDemo demo = roots.SelectMany(root => root.GetComponentsInChildren<Game.ChainDemo>(true)).Single();
+                    var line = (LineRenderer)new SerializedObject(demo).FindProperty("line").objectReferenceValue;
+
+                    Assert.That(line.sharedMaterial, Is.SameAs(levelLine.sharedMaterial));
+                    Assert.That(line.widthMultiplier, Is.EqualTo(levelLine.widthMultiplier));
+                    Assert.That(line.numCapVertices, Is.EqualTo(levelLine.numCapVertices));
+                    Assert.That(line.numCornerVertices, Is.EqualTo(levelLine.numCornerVertices));
+                });
+            });
+        }
+
+        // UN SDG guidelines (checked 2026-10-26): the icons are used whole and unchanged, with the UN's disclaimer and a
+        // link to its SDG site beside them (docs/adr, design §10).
+        const string UnDisclaimer = "The content of this publication has not been approved by the United Nations and does not reflect the views of the United Nations or its officials or Member States.";
+
+        [Test]
+        public void TheSdgPage_ShowsTheThreeIconsWholeAndUnchanged_WithTheUnDisclaimerAndLink()
+        {
+            WithScene(SceneId.Intro, roots =>
+            {
+                UnityEngine.UI.Image[] icons = roots.SelectMany(root => root.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+                    .Where(image => image.sprite != null && image.sprite.name.StartsWith("sdg-")).ToArray();
+
+                Assert.That(icons.Select(icon => icon.sprite.name), Is.EquivalentTo(new[] { "sdg-09", "sdg-12", "sdg-13" }));
+                foreach (UnityEngine.UI.Image icon in icons)
+                {
+                    Assert.That(icon.color, Is.EqualTo(Color.white), $"{icon.name} is not tinted.");
+                    Assert.That(icon.type, Is.EqualTo(UnityEngine.UI.Image.Type.Simple), $"{icon.name} is not sliced or cut.");
+                    Assert.That(icon.preserveAspect || Mathf.Approximately(icon.rectTransform.sizeDelta.x, icon.rectTransform.sizeDelta.y), Is.True,
+                        $"{icon.name} keeps its square shape.");
+                    // Its own imported texture: once packed, sprite.texture is the atlas page.
+                    var source = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GetAssetPath(icon.sprite));
+                    Assert.That(icon.sprite.rect.size, Is.EqualTo(new Vector2(source.width, source.height)), $"{icon.name} is not cropped.");
+                    Assert.That(icon.GetComponent<UnityEngine.UI.Mask>() == null && icon.GetComponentInParent<UnityEngine.UI.RectMask2D>(true) == null, Is.True);
+                }
+
+                Transform page = PagesOf(roots).Single(p => icons[0].transform.IsChildOf(p.transform)).transform;
+                string pageText = string.Join(" ", page.GetComponentsInChildren<TMPro.TMP_Text>(true).Select(text => text.text));
+                Assert.That(icons.All(icon => icon.transform.IsChildOf(page)), Is.True, "All three on one page.");
+                Assert.That(pageText, Does.Contain(UnDisclaimer));
+                Assert.That(pageText, Does.Contain("un.org/sustainabledevelopment"));
+            });
+        }
+
+        static GameObject[] PagesOf(GameObject[] roots)
+        {
+            Game.IntroView view = roots.SelectMany(root => root.GetComponentsInChildren<Game.IntroView>(true)).Single();
+            SerializedProperty pages = new SerializedObject(view).FindProperty("pages");
+            return Enumerable.Range(0, pages.arraySize).Select(i => (GameObject)pages.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
         }
 
         // ADR-0012 rule 7: UI images draw from one UI atlas, so each screen batches.

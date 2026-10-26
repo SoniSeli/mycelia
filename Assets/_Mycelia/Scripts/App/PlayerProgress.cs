@@ -14,7 +14,7 @@ namespace Mycelia.App
     {
         readonly IProgressStore store;
         GameSettings settings;
-        readonly bool introSeen;
+        bool introSeen;
 
         PlayerProgress(IProgressStore store, Progression levels, GameSettings settings, bool introSeen, LoadOutcome loadOutcome)
         {
@@ -53,6 +53,20 @@ namespace Mycelia.App
                 return false;
 
             settings = value;
+            HasUnsavedChanges = true;
+            return true;
+        }
+
+        /// <summary>Whether the player has finished the intro once (design §8.3 slice 8).</summary>
+        public bool IntroSeen => introSeen;
+
+        /// <summary>Counts the intro as seen, in memory. Returns true if that changed anything; saving stays a separate step.</summary>
+        public bool MarkIntroSeen()
+        {
+            if (introSeen)
+                return false;
+
+            introSeen = true;
             HasUnsavedChanges = true;
             return true;
         }
