@@ -20,15 +20,17 @@ namespace Mycelia.App
 
         /// <summary>
         /// The player's choice, saved at once (settings are saved on change, design §6). Switching haptics on plays one
-        /// tick, so the player feels what they turned on (ADR-0016).
+        /// tick, so the player feels what they turned on (ADR-0016). Every flip taps like a button, through the effects
+        /// switch as it is now: switching effects on is heard, switching them off is silent (ADR-0017).
         /// </summary>
-        public static void Choose(PlayerProgress progress, SettingsChoice choice, IHaptics haptics)
+        public static void Choose(PlayerProgress progress, SettingsChoice choice, IHaptics haptics, ISoundEffects sounds)
         {
             bool hapticsWereOn = progress.Settings.Haptics;
             if (progress.ChangeSettings(Apply(progress.Settings, choice)))
                 progress.SaveIfChanged();
             if (choice.Haptics && !hapticsWereOn)
                 haptics.Play(Haptic.Tick);
+            sounds.Play(SoundEffect.Tap);
         }
 
         static float Volume(float current, bool on, float fallback) => !on ? 0 : current > 0 ? current : fallback;

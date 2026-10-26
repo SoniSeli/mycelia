@@ -41,8 +41,8 @@ namespace Mycelia.App.Tests
             var store = new FakeProgressStore();
             PlayerProgress progress = PlayerProgress.Load(store, ProjectAssets.Levels.Keys);
 
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics());
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics());
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics(), new FakeSounds());
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics(), new FakeSounds());
 
             Assert.That(store.Saves, Is.EqualTo(1));
             Assert.That(store.Stored.Settings.MusicVolume, Is.Zero);
@@ -54,12 +54,41 @@ namespace Mycelia.App.Tests
         public void SwitchingHapticsOn_PlaysOneTick_ThroughTheSwitchThatIsNowOn()
         {
             PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: false), new FakeHaptics());
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: false), new FakeHaptics(), new FakeSounds());
             var device = new FakeHaptics();
 
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: true), new SwitchedHaptics(progress, device));
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: true), new SwitchedHaptics(progress, device), new FakeSounds());
 
             Assert.That(device.Played, Is.EqualTo(new[] { Haptic.Tick }));
+        }
+
+        // ADR-0017: every flip taps like a button, through the effects switch as it is after the flip.
+        [Test]
+        public void FlippingASwitch_Taps_WhileEffectsAreOn()
+        {
+            PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
+            var output = new FakeAudioOutput();
+
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics(),
+                new SwitchedSoundEffects(progress, output));
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: false), new FakeHaptics(),
+                new SwitchedSoundEffects(progress, output));
+
+            Assert.That(output.Effects, Is.EqualTo(new[] { (SoundEffect.Tap, 0, GameSettings.Default.SfxVolume), (SoundEffect.Tap, 0, GameSettings.Default.SfxVolume) }));
+        }
+
+        [Test]
+        public void SwitchingEffectsOff_IsSilent_AndOnAgainIsHeard()
+        {
+            PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
+            var output = new FakeAudioOutput();
+            var sounds = new SwitchedSoundEffects(progress, output);
+
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: true), new FakeHaptics(), sounds);
+            Assert.That(output.Effects, Is.Empty);
+
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: true), new FakeHaptics(), sounds);
+            Assert.That(output.Effects, Is.EqualTo(new[] { (SoundEffect.Tap, 0, GameSettings.Default.SfxVolume) }));
         }
 
         [Test]
@@ -68,8 +97,8 @@ namespace Mycelia.App.Tests
             PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
             var haptics = new FakeHaptics();
 
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: true), haptics);
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: false), haptics);
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: true), haptics, new FakeSounds());
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: false), haptics, new FakeSounds());
 
             Assert.That(haptics.Played, Is.Empty);
         }

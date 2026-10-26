@@ -104,6 +104,43 @@ namespace Mycelia.App.Tests
         public void Play(Game.Haptic haptic) => Played.Add(haptic);
     }
 
+    sealed class FakeSounds : Game.ISoundEffects
+    {
+        public readonly List<Game.SoundEffect> Played = new List<Game.SoundEffect>(256);
+        public readonly List<int> Ticks = new List<int>(256);
+        public readonly List<bool> Paused = new List<bool>();
+
+        public void Play(Game.SoundEffect effect) => Played.Add(effect);
+
+        public void PlayTick(int chainLength)
+        {
+            Played.Add(Game.SoundEffect.Tick);
+            Ticks.Add(chainLength);
+        }
+
+        public void SetPaused(bool paused) => Paused.Add(paused);
+    }
+
+    // Room for every call a test makes, so recording allocates nothing.
+    sealed class FakeAudioOutput : IAudioOutput
+    {
+        public readonly List<(Game.SoundEffect Effect, int ChainLength, float Volume)> Effects =
+            new List<(Game.SoundEffect, int, float)>(256);
+        public readonly List<string> Calls = new List<string>(256);
+
+        public void PlayEffect(Game.SoundEffect effect, int chainLength, float volume)
+        {
+            Effects.Add((effect, chainLength, volume));
+            Calls.Add("effect");
+        }
+
+        public void StopLevelEffects() => Calls.Add("stop effects");
+
+        public void PlayMusic(float volume) => Calls.Add("music " + volume.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        public void PauseMusic() => Calls.Add("pause music");
+    }
+
     static class ProjectAssets
     {
         public static SporeCatalog Spores => Single<SporeCatalog>("t:SporeCatalog");

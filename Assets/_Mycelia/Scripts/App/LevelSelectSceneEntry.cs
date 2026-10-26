@@ -17,7 +17,7 @@ namespace Mycelia.App
         public void Construct(AppServices services, SceneArgs args)
         {
             LevelButtonState[] levels = LevelSelectModel.For(services.Levels.Keys, services.Progress.Levels);
-            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics), onClosed: null);
+            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics, services.Sounds), onClosed: null);
             view.Init(levels, index => services.Scenes.Load(SceneId.Game, services, new GameSceneArgs(services.Levels.Levels[index])),
                 () => settings.Open(SettingsSwitches.ToChoice(services.Progress.Settings)),
                 () => services.Scenes.Load(SceneId.Intro, services, new IntroSceneArgs(firstRun: false)));
@@ -29,6 +29,8 @@ namespace Mycelia.App
                 else
                     services.Scenes.Load(SceneId.MainMenu, services);
             });
+            // Every button taps, the level buttons the view made included (ADR-0017).
+            ButtonTaps.Attach(gameObject.scene, services.Sounds);
         }
     }
 }

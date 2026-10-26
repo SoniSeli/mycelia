@@ -11,10 +11,11 @@ namespace Mycelia.App
     public sealed class AppServices
     {
         public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress, IAnalytics analytics,
-            IHaptics haptics)
+            IHaptics haptics, ISoundEffects sounds)
         {
             Analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
             Haptics = haptics ?? throw new ArgumentNullException(nameof(haptics));
+            Sounds = sounds ?? throw new ArgumentNullException(nameof(sounds));
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             Scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             Seeds = seeds ?? throw new ArgumentNullException(nameof(seeds));
@@ -43,5 +44,8 @@ namespace Mycelia.App
 
         /// <summary>The device's haptics, played only while the saved haptics switch is on (ADR-0016).</summary>
         public IHaptics Haptics { get; }
+
+        /// <summary>The sound effects, played at the saved effects volume while it is above 0 (ADR-0017).</summary>
+        public ISoundEffects Sounds { get; }
     }
 }

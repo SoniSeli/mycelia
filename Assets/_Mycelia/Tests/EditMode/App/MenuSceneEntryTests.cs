@@ -15,6 +15,7 @@ namespace Mycelia.App.Tests
         GameObject root;
         FakeSceneLoader loader;
         FakeProgressStore store;
+        FakeSounds sounds;
 
         [SetUp]
         public void CreateRoot()
@@ -22,6 +23,7 @@ namespace Mycelia.App.Tests
             root = new GameObject("Scene");
             loader = new FakeSceneLoader();
             store = new FakeProgressStore();
+            sounds = new FakeSounds();
         }
 
         [TearDown]
@@ -29,7 +31,7 @@ namespace Mycelia.App.Tests
 
         AppServices Services() =>
             new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels,
-                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics());
+                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics(), sounds);
 
         static void Set(Object target, string property, Object value)
         {
@@ -195,6 +197,30 @@ namespace Mycelia.App.Tests
             Assert.That(loader.Loads.Count, Is.EqualTo(1));
             Assert.That(loader.Loads[0].Scene, Is.EqualTo(SceneId.Game));
             Assert.That(((GameSceneArgs)loader.Loads[0].Args).Level, Is.SameAs(ProjectAssets.Levels.Levels[1]));
+        }
+
+        // ADR-0017: every button taps, the level buttons the view made included.
+        [Test]
+        public void EveryButtonOnLevelSelect_Taps()
+        {
+            var (entry, view, _, _, settingsButton) = LevelSelect();
+            entry.Construct(Services(), args: null);
+
+            view.Buttons[0].GetComponent<Button>().onClick.Invoke();
+            settingsButton.onClick.Invoke();
+
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Tap, SoundEffect.Tap }));
+        }
+
+        [Test]
+        public void PlayOnTheMainMenu_Taps()
+        {
+            var (entry, play, _, _, _) = MainMenu();
+            entry.Construct(Services(), args: null);
+
+            play.onClick.Invoke();
+
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Tap }));
         }
 
         [Test]

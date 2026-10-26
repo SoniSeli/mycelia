@@ -18,8 +18,12 @@ namespace Mycelia.App
         [SerializeField, Tooltip("The fade between scenes, above every canvas; it outlives scene loads with this object.")]
         ScreenFade fade;
 
+        [SerializeField, Tooltip("Sound effects and the music loop, next to the app's one audio listener (ADR-0017).")]
+        AudioPlayer audioPlayer;
+
         SceneLoader scenes;
         PlayerProgress progress;
+        Music music;
 
         void Awake()
         {
@@ -44,11 +48,18 @@ namespace Mycelia.App
                 progress: progress,
                 analytics: analytics,
                 // Felt only while the saved switch is on (ADR-0016).
-                haptics: new SwitchedHaptics(progress, AndroidHaptics.Create()));
+                haptics: new SwitchedHaptics(progress, AndroidHaptics.Create()),
+                // Heard only while the saved volumes are above 0 (ADR-0017).
+                sounds: new SwitchedSoundEffects(progress, audioPlayer));
+            music = new Music(progress, audioPlayer);
+            music.Follow();
 
             StartScene start = StartScene.Choose(TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);
         }
+
+        // The music switch applies at once, wherever it was flipped.
+        void Update() => music?.Follow();
 
         // ADR-0006: the OS may suspend or kill the app right after this, so the write is synchronous. It also catches
         // a win whose move was still playing when the app went to the background.

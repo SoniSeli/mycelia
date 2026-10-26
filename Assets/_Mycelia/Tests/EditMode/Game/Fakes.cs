@@ -28,6 +28,24 @@ namespace Mycelia.Game.Tests
         public void Play(Haptic haptic) => Played.Add(haptic);
     }
 
+    // Room for every sound a test plays, so recording allocates nothing.
+    sealed class RecordingSounds : ISoundEffects
+    {
+        public readonly List<SoundEffect> Played = new List<SoundEffect>(256);
+        public readonly List<int> Ticks = new List<int>(256);
+        public readonly List<bool> Paused = new List<bool>();
+
+        public void Play(SoundEffect effect) => Played.Add(effect);
+
+        public void PlayTick(int chainLength)
+        {
+            Played.Add(SoundEffect.Tick);
+            Ticks.Add(chainLength);
+        }
+
+        public void SetPaused(bool paused) => Paused.Add(paused);
+    }
+
     sealed class RecordingPausable : IPausable
     {
         public readonly List<bool> Calls = new List<bool>();

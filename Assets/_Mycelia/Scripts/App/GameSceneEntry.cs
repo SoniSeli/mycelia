@@ -52,8 +52,8 @@ namespace Mycelia.App
             chainView.Init(boardView, config.Width * config.Height);
             // Settings opened mid-level pause it and cover it alone; closing them resumes play (design §8.3 slice 5).
             var screen = new PauseScreen(pauseOverlay, settings, () => SettingsSwitches.ToChoice(services.Progress.Settings));
-            Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, new PausedFrameRate(SceneId.Game));
-            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics), () => Pause.Resume());
+            Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, new PausedFrameRate(SceneId.Game), services.Sounds);
+            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics, services.Sounds), () => Pause.Resume());
             Action openSettings = () =>
             {
                 if (Pause.CanPause)
@@ -76,8 +76,9 @@ namespace Mycelia.App
             // A win plays its wave on the board before the HUD shows the result (Soni, 2026-10-25).
             winWave.Init(boardView, config.Width, config.Height, () => playback.LastCleared, hud);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
-            // The outcome is felt as it shows: a win as its wave starts, a loss with its card (ADR-0016).
-            var results = new LevelResultRecorder(Session, services.Progress, playback, new OutcomeHaptics(services.Haptics, winWave),
+            // The outcome is felt and heard as it shows: a win as its wave starts, a loss with its card (ADR-0016, ADR-0017).
+            var results = new LevelResultRecorder(Session, services.Progress, playback,
+                new OutcomeSounds(services.Sounds, new OutcomeHaptics(services.Haptics, winWave)),
                 services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
             Action restart = () =>
@@ -106,9 +107,12 @@ namespace Mycelia.App
                 else
                     leave();
             });
-            // The chain is felt as it is dragged and committed (ADR-0016).
+            // The chain is felt and heard as it is dragged and committed (ADR-0016, ADR-0017).
             var chainHaptics = new ChainHaptics(services.Haptics, chainView, results);
-            chainInput.Init(Session, boardCamera, chainHaptics, chainHaptics, Pause, services.Scenes);
+            var chainSounds = new ChainSounds(services.Sounds, chainHaptics, chainHaptics);
+            chainInput.Init(Session, boardCamera, chainSounds, chainSounds, Pause, services.Scenes);
+            // Every button taps (ADR-0017).
+            ButtonTaps.Attach(gameObject.scene, services.Sounds);
         }
     }
 }

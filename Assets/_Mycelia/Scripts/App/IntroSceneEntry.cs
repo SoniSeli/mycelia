@@ -28,6 +28,8 @@ namespace Mycelia.App
                 },
                 onLeft: () => services.Scenes.Load(firstRun ? SceneId.MainMenu : SceneId.LevelSelect, services));
             back.Init(view.Back);
+            // Every button taps (ADR-0017).
+            ButtonTaps.Attach(gameObject.scene, services.Sounds);
         }
     }
 }

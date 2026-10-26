@@ -16,6 +16,7 @@ namespace Mycelia.App.Tests
         GameObject root;
         FakeSceneLoader loader;
         FakeProgressStore store;
+        FakeSounds sounds;
         Button next;
         BackButton back;
         GameObject[] pages;
@@ -26,6 +27,7 @@ namespace Mycelia.App.Tests
             root = new GameObject("Scene");
             loader = new FakeSceneLoader();
             store = new FakeProgressStore();
+            sounds = new FakeSounds();
         }
 
         [TearDown]
@@ -74,7 +76,7 @@ namespace Mycelia.App.Tests
 
         AppServices Services() =>
             new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels,
-                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics());
+                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics(), sounds);
 
         SceneId[] Loaded => loader.Loads.Select(load => load.Scene).ToArray();
 
@@ -94,6 +96,18 @@ namespace Mycelia.App.Tests
             Assert.That(store.Saves, Is.EqualTo(1));
             Assert.That(store.Stored.IntroSeen, Is.True);
             Assert.That(Loaded, Is.EqualTo(new[] { SceneId.LevelSelect }));
+        }
+
+        // ADR-0017: every button taps.
+        [Test]
+        public void Next_Taps()
+        {
+            IntroSceneEntry entry = Entry(introSeen: true);
+            entry.Construct(Services(), new IntroSceneArgs(firstRun: false));
+
+            next.onClick.Invoke();
+
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Tap }));
         }
 
         [Test]

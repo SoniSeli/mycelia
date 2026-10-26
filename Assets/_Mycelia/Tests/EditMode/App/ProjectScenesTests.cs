@@ -126,6 +126,54 @@ namespace Mycelia.App.Tests
             });
         }
 
+        // ADR-0017: sound outlives scene loads, so the music plays on through fades, and every screen can be heard.
+        [Test]
+        public void TheAppsOneAudioListener_AndItsSound_LiveOnTheAppRoot()
+        {
+            WithScene(SceneId.Bootstrap, roots =>
+            {
+                AppRoot appRoot = roots.SelectMany(root => root.GetComponentsInChildren<AppRoot>(true)).Single();
+                Assert.That(appRoot.GetComponent<AudioListener>(), Is.Not.Null);
+                var player = (AudioPlayer)new SerializedObject(appRoot).FindProperty("audioPlayer").objectReferenceValue;
+                Assert.That(player, Is.Not.Null);
+                Assert.That(player.transform.IsChildOf(appRoot.transform), Is.True);
+            });
+            foreach (SceneId scene in AllScenes)
+                WithScene(scene, roots =>
+                {
+                    int expected = scene == SceneId.Bootstrap ? 1 : 0;
+                    Assert.That(roots.SelectMany(root => root.GetComponentsInChildren<AudioListener>(true)).Count(), Is.EqualTo(expected), scene.ToString());
+                });
+        }
+
+        [Test]
+        public void TheAudioPlayer_HasTwelveTicks_TwoEffectSources_AndALoopingMusicSource()
+        {
+            WithScene(SceneId.Bootstrap, roots =>
+            {
+                AudioPlayer player = roots.SelectMany(root => root.GetComponentsInChildren<AudioPlayer>(true)).Single();
+                var serialized = new SerializedObject(player);
+                SerializedProperty ticks = serialized.FindProperty("ticks");
+                Assert.That(ticks.arraySize, Is.EqualTo(12));
+                var tickClips = Enumerable.Range(0, ticks.arraySize).Select(i => ticks.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
+                Assert.That(tickClips, Is.Unique);
+                Assert.That(tickClips.Select(clip => clip.name), Is.EqualTo(Enumerable.Range(1, 12).Select(i => $"tick-{i:00}")), "Lowest first.");
+
+                AudioSource Source(string name) => (AudioSource)serialized.FindProperty(name).objectReferenceValue;
+                AudioSource level = Source("levelEffects"), taps = Source("taps"), music = Source("music");
+                Assert.That(new[] { level, taps, music }, Is.Unique);
+                foreach (AudioSource source in new[] { level, taps, music })
+                {
+                    Assert.That(source.playOnAwake, Is.False, source.name);
+                    Assert.That(source.spatialBlend, Is.Zero, $"{source.name} is 2D.");
+                }
+                Assert.That(level.loop || taps.loop, Is.False);
+                Assert.That(music.loop, Is.True);
+                Assert.That(music.clip, Is.Not.Null);
+                Assert.That(music.clip.name, Is.EqualTo("music-loop"));
+            });
+        }
+
         [Test]
         public void Bootstrap_HasNoSceneEntry()
         {

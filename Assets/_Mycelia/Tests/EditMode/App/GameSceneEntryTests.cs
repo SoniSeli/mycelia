@@ -35,6 +35,7 @@ namespace Mycelia.App.Tests
         FakeProgressStore store;
         FakeAnalytics analytics;
         FakeHaptics haptics;
+        FakeSounds sounds;
         ChainInputController chainInput;
         TMPro.TMP_Text factText;
         PauseOverlay pauseOverlay;
@@ -164,7 +165,8 @@ namespace Mycelia.App.Tests
             store = new FakeProgressStore();
             analytics = new FakeAnalytics();
             haptics = new FakeHaptics();
-            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys), analytics, haptics);
+            sounds = new FakeSounds();
+            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys), analytics, haptics, sounds);
             level = ProjectAssets.TestLevel;
         }
 
@@ -502,6 +504,50 @@ namespace Mycelia.App.Tests
             listener.SessionEnded(Domain.Sessions.SessionState.Lost, 0);
 
             Assert.That(haptics.Played, Is.EqualTo(new[] { Haptic.Loss }));
+        }
+
+        // ADR-0017: the chain climbs a scale as it grows, and pops when committed.
+        [Test]
+        public void DraggingAChain_TicksAStepHigherPerSpore_AndCommittingItPops()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            GridPosition[] cells = FindChainOfThree(entry.Session);
+            var drag = (ChainDrag)typeof(ChainInputController).GetField("drag", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(chainInput);
+
+            drag.Press(new Vector2(cells[0].Column + 0.5f, cells[0].Row + 0.5f));
+            drag.Move(new Vector2(cells[1].Column + 0.5f, cells[1].Row + 0.5f));
+            drag.Move(new Vector2(cells[2].Column + 0.5f, cells[2].Row + 0.5f));
+            Assert.That(drag.Release(), Is.Not.Null);
+
+            Assert.That(sounds.Ticks, Is.EqualTo(new[] { 1, 2, 3 }));
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Tick, SoundEffect.Tick, SoundEffect.Tick, SoundEffect.Commit }));
+            Assert.That(haptics.Played, Is.EqualTo(new[] { Haptic.Tick, Haptic.Tick, Haptic.Tick, Haptic.Commit }), "Still felt too.");
+        }
+
+        [Test]
+        public void TheOutcome_IsHeard_WhenPlaybackReportsIt()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            var listener = (IPlaybackListener)typeof(MovePlayback).GetField("listener", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(boardView.GetComponent<MovePlayback>());
+
+            listener.SessionEnded(Domain.Sessions.SessionState.Won, 2);
+
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Win }));
+            Assert.That(haptics.Played, Is.EqualTo(new[] { Haptic.Win }), "Still felt too.");
+        }
+
+        // ADR-0013: nothing of the level keeps sounding under the pause overlay; its buttons still tap.
+        [Test]
+        public void PausingTheLevel_PausesItsSounds_AndThePauseButtonTaps()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+
+            hudPause.onClick.Invoke();
+            resume.onClick.Invoke();
+
+            Assert.That(sounds.Paused, Is.EqualTo(new[] { true, false }));
+            Assert.That(sounds.Played, Is.EqualTo(new[] { SoundEffect.Tap, SoundEffect.Tap }));
         }
 
         [Test]
