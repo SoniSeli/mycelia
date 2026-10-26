@@ -42,7 +42,9 @@ namespace Mycelia.App
                 spores: spores,
                 levels: levels,
                 progress: progress,
-                analytics: analytics);
+                analytics: analytics,
+                // Felt only while the saved switch is on (ADR-0016).
+                haptics: new SwitchedHaptics(progress, AndroidHaptics.Create()));
 
             StartScene start = StartScene.Choose(TakeEditorStartScene());
             scenes.Load(start.Scene, services, start.Args);

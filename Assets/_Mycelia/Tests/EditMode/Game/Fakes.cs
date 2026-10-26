@@ -20,6 +20,14 @@ namespace Mycelia.Game.Tests
         public bool IsBlockingInput { get; set; }
     }
 
+    // Room for every haptic a test plays, so recording allocates nothing.
+    sealed class RecordingHaptics : IHaptics
+    {
+        public readonly List<Haptic> Played = new List<Haptic>(256);
+
+        public void Play(Haptic haptic) => Played.Add(haptic);
+    }
+
     sealed class RecordingPausable : IPausable
     {
         public readonly List<bool> Calls = new List<bool>();

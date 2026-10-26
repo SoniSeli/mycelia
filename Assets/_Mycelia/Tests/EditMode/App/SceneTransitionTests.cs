@@ -50,7 +50,7 @@ namespace Mycelia.App.Tests
                 return sceneIsInTheBuild;
             });
             services = new AppServices(new FakeSceneLoader(), new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels,
-                PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys), new FakeAnalytics());
+                PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics());
         }
 
         [Test]

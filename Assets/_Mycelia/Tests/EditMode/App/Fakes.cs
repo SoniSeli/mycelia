@@ -96,6 +96,14 @@ namespace Mycelia.App.Tests
         public AnalyticsEvent Single(string name) => Events.Single(e => e.Name == name);
     }
 
+    /// <summary>Keeps every haptic played, with room reserved so playing one allocates nothing.</summary>
+    sealed class FakeHaptics : Game.IHaptics
+    {
+        public readonly List<Game.Haptic> Played = new List<Game.Haptic>(256);
+
+        public void Play(Game.Haptic haptic) => Played.Add(haptic);
+    }
+
     static class ProjectAssets
     {
         public static SporeCatalog Spores => Single<SporeCatalog>("t:SporeCatalog");

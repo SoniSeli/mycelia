@@ -34,6 +34,8 @@ namespace Mycelia.App.Tests
         TestSettingsModal settings;
         FakeProgressStore store;
         FakeAnalytics analytics;
+        FakeHaptics haptics;
+        ChainInputController chainInput;
         TMPro.TMP_Text factText;
         PauseOverlay pauseOverlay;
         Button resume;
@@ -72,7 +74,7 @@ namespace Mycelia.App.Tests
             line.transform.SetParent(boardView.transform);
             var chainView = line.gameObject.AddComponent<ChainView>();
             SetReference(chainView, "line", line);
-            var chainInput = new GameObject("Chain Input", typeof(ChainInputController)).GetComponent<ChainInputController>();
+            chainInput = new GameObject("Chain Input", typeof(ChainInputController)).GetComponent<ChainInputController>();
             chainInput.transform.SetParent(scene.transform);
             inputSettings = ScriptableObject.CreateInstance<ChainInputSettings>();
             SetReference(chainInput, "settings", inputSettings);
@@ -161,7 +163,8 @@ namespace Mycelia.App.Tests
             loader = new FakeSceneLoader();
             store = new FakeProgressStore();
             analytics = new FakeAnalytics();
-            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys), analytics);
+            haptics = new FakeHaptics();
+            services = new AppServices(loader, seeds, ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(store, ProjectAssets.Levels.Keys), analytics, haptics);
             level = ProjectAssets.TestLevel;
         }
 
@@ -433,6 +436,72 @@ namespace Mycelia.App.Tests
                 Assert.That(spore, Is.Not.Null, cell.ToString());
                 Assert.That(spore.Renderer.sprite, Is.SameAs(services.Spores.TypeOf(board.GetOccupant(cell)).Sprite), cell.ToString());
             }
+        }
+
+        static bool InChain(LevelSession session, GridPosition cell)
+        {
+            foreach (GridPosition chained in session.Chain.Cells)
+                if (chained.Equals(cell)) return true;
+            return false;
+        }
+
+        // Three cells the session accepts as a chain, found by trying them; the chain is left empty again.
+        static GridPosition[] FindChainOfThree(LevelSession session)
+        {
+            IReadOnlyBoard board = session.Board;
+            for (int column = 0; column < board.Width; column++)
+            for (int row = 0; row < board.Height; row++)
+            {
+                session.Chain.Touch(new GridPosition(column, row));
+                for (int step = 0; step < 2; step++)
+                {
+                    GridPosition last = session.Chain.Cells[session.Chain.Count - 1];
+                    for (int dc = -1; dc <= 1 && session.Chain.Count == step + 1; dc++)
+                    for (int dr = -1; dr <= 1 && session.Chain.Count == step + 1; dr++)
+                    {
+                        var next = new GridPosition(last.Column + dc, last.Row + dr);
+                        if (next.Column < 0 || next.Row < 0 || next.Column >= board.Width || next.Row >= board.Height || InChain(session, next))
+                            continue;
+                        session.Chain.Touch(next);
+                    }
+                }
+                if (session.Chain.Count == 3)
+                {
+                    GridPosition[] cells = { session.Chain.Cells[0], session.Chain.Cells[1], session.Chain.Cells[2] };
+                    session.Chain.Clear();
+                    return cells;
+                }
+                session.Chain.Clear();
+            }
+            throw new InvalidOperationException("The test level's board has no chain of three.");
+        }
+
+        [Test]
+        public void DraggingAChain_TicksPerSpore_AndCommittingItPlaysTheCommitHaptic()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            GridPosition[] cells = FindChainOfThree(entry.Session);
+            var drag = (ChainDrag)typeof(ChainInputController).GetField("drag", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(chainInput);
+
+            drag.Press(new Vector2(cells[0].Column + 0.5f, cells[0].Row + 0.5f));
+            drag.Move(new Vector2(cells[1].Column + 0.5f, cells[1].Row + 0.5f));
+            drag.Move(new Vector2(cells[2].Column + 0.5f, cells[2].Row + 0.5f));
+            Assert.That(drag.Release(), Is.Not.Null);
+
+            Assert.That(haptics.Played, Is.EqualTo(new[] { Haptic.Tick, Haptic.Tick, Haptic.Tick, Haptic.Commit }));
+        }
+
+        // Playback can't run its sequence in Edit Mode, so the test tells its listener what it would at the end of a move.
+        [Test]
+        public void TheOutcome_IsFelt_WhenPlaybackReportsIt()
+        {
+            entry.Construct(services, new GameSceneArgs(level));
+            var listener = (IPlaybackListener)typeof(MovePlayback).GetField("listener", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(boardView.GetComponent<MovePlayback>());
+
+            listener.SessionEnded(Domain.Sessions.SessionState.Lost, 0);
+
+            Assert.That(haptics.Played, Is.EqualTo(new[] { Haptic.Loss }));
         }
 
         [Test]

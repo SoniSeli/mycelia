@@ -15,7 +15,7 @@ namespace Mycelia.App.Tests
         {
             fades = new List<string>();
             loader = new SceneLoader(new FakeScreenFade(fades));
-            services = new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys), new FakeAnalytics());
+            services = new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels, PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics());
         }
 
         [TearDown]

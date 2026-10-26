@@ -16,7 +16,7 @@ namespace Mycelia.App
 
         public void Construct(AppServices services, SceneArgs args)
         {
-            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice), onClosed: null);
+            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics), onClosed: null);
             // The first Play shows the intro, which then leads into level select (design §8.3 slice 8).
             view.Init(() =>
                 {

@@ -74,7 +74,7 @@ namespace Mycelia.App.Tests
 
         AppServices Services() =>
             new AppServices(loader, new FixedSeedSource(1), ProjectAssets.Spores, ProjectAssets.Levels,
-                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics());
+                PlayerProgress.Load(store, ProjectAssets.Levels.Keys), new FakeAnalytics(), new FakeHaptics());
 
         SceneId[] Loaded => loader.Loads.Select(load => load.Scene).ToArray();
 

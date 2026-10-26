@@ -18,11 +18,17 @@ namespace Mycelia.App
                 Volume(settings.MusicVolume, choice.Music, GameSettings.Default.MusicVolume),
                 choice.Haptics);
 
-        /// <summary>The player's choice, saved at once (settings are saved on change, design §6).</summary>
-        public static void Choose(PlayerProgress progress, SettingsChoice choice)
+        /// <summary>
+        /// The player's choice, saved at once (settings are saved on change, design §6). Switching haptics on plays one
+        /// tick, so the player feels what they turned on (ADR-0016).
+        /// </summary>
+        public static void Choose(PlayerProgress progress, SettingsChoice choice, IHaptics haptics)
         {
+            bool hapticsWereOn = progress.Settings.Haptics;
             if (progress.ChangeSettings(Apply(progress.Settings, choice)))
                 progress.SaveIfChanged();
+            if (choice.Haptics && !hapticsWereOn)
+                haptics.Play(Haptic.Tick);
         }
 
         static float Volume(float current, bool on, float fallback) => !on ? 0 : current > 0 ? current : fallback;

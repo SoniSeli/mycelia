@@ -53,7 +53,7 @@ namespace Mycelia.App
             // Settings opened mid-level pause it and cover it alone; closing them resumes play (design §8.3 slice 5).
             var screen = new PauseScreen(pauseOverlay, settings, () => SettingsSwitches.ToChoice(services.Progress.Settings));
             Pause = new LevelPause(Session, playback, playback, screen, hud, backdrop, new PausedFrameRate(SceneId.Game));
-            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice), () => Pause.Resume());
+            settings.Init(choice => SettingsSwitches.Choose(services.Progress, choice, services.Haptics), () => Pause.Resume());
             Action openSettings = () =>
             {
                 if (Pause.CanPause)
@@ -76,7 +76,9 @@ namespace Mycelia.App
             // A win plays its wave on the board before the HUD shows the result (Soni, 2026-10-25).
             winWave.Init(boardView, config.Width, config.Height, () => playback.LastCleared, hud);
             // Wins are recorded as they are committed and saved before the result shows (ADR-0006).
-            var results = new LevelResultRecorder(Session, services.Progress, playback, winWave, services.Analytics);
+            // The outcome is felt as it shows: a win as its wave starts, a loss with its card (ADR-0016).
+            var results = new LevelResultRecorder(Session, services.Progress, playback, new OutcomeHaptics(services.Haptics, winWave),
+                services.Analytics);
             // Retry and Restart start the same level with a fresh seed, through the loader like any scene change.
             Action restart = () =>
             {
@@ -104,7 +106,9 @@ namespace Mycelia.App
                 else
                     leave();
             });
-            chainInput.Init(Session, boardCamera, chainView, results, Pause, services.Scenes);
+            // The chain is felt as it is dragged and committed (ADR-0016).
+            var chainHaptics = new ChainHaptics(services.Haptics, chainView, results);
+            chainInput.Init(Session, boardCamera, chainHaptics, chainHaptics, Pause, services.Scenes);
         }
     }
 }

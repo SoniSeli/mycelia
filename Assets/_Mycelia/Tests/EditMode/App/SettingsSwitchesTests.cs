@@ -41,12 +41,37 @@ namespace Mycelia.App.Tests
             var store = new FakeProgressStore();
             PlayerProgress progress = PlayerProgress.Load(store, ProjectAssets.Levels.Keys);
 
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true));
-            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true));
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics());
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: false, haptics: true), new FakeHaptics());
 
             Assert.That(store.Saves, Is.EqualTo(1));
             Assert.That(store.Stored.Settings.MusicVolume, Is.Zero);
             Assert.That(progress.HasUnsavedChanges, Is.False);
+        }
+
+        // ADR-0016: the player feels what they turned on.
+        [Test]
+        public void SwitchingHapticsOn_PlaysOneTick_ThroughTheSwitchThatIsNowOn()
+        {
+            PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: false), new FakeHaptics());
+            var device = new FakeHaptics();
+
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: true, music: true, haptics: true), new SwitchedHaptics(progress, device));
+
+            Assert.That(device.Played, Is.EqualTo(new[] { Haptic.Tick }));
+        }
+
+        [Test]
+        public void SwitchingHapticsOff_OrAnotherSwitch_PlaysNothing()
+        {
+            PlayerProgress progress = PlayerProgress.Load(new FakeProgressStore(), ProjectAssets.Levels.Keys);
+            var haptics = new FakeHaptics();
+
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: true), haptics);
+            SettingsSwitches.Choose(progress, new SettingsChoice(effects: false, music: true, haptics: false), haptics);
+
+            Assert.That(haptics.Played, Is.Empty);
         }
     }
 }

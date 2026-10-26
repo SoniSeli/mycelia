@@ -1,5 +1,6 @@
 using System;
 using Mycelia.Content;
+using Mycelia.Game;
 
 namespace Mycelia.App
 {
@@ -9,9 +10,11 @@ namespace Mycelia.App
     /// </summary>
     public sealed class AppServices
     {
-        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress, IAnalytics analytics)
+        public AppServices(ISceneLoader scenes, ISeedSource seeds, SporeCatalog spores, LevelCatalog levels, PlayerProgress progress, IAnalytics analytics,
+            IHaptics haptics)
         {
             Analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
+            Haptics = haptics ?? throw new ArgumentNullException(nameof(haptics));
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             Scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
             Seeds = seeds ?? throw new ArgumentNullException(nameof(seeds));
@@ -37,5 +40,8 @@ namespace Mycelia.App
 
         /// <summary>Playtest events, kept on the device (design §8.2 slice 6).</summary>
         public IAnalytics Analytics { get; }
+
+        /// <summary>The device's haptics, played only while the saved haptics switch is on (ADR-0016).</summary>
+        public IHaptics Haptics { get; }
     }
 }
