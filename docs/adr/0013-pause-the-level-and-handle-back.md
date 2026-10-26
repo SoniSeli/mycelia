@@ -84,6 +84,11 @@ Decided with the main menu and level select (ADR-0012 Refinements):
 
 - **Haptics don't register as an `IPausable`**: each is a one-shot of at most 150 ms started by a touch, a commit or an outcome, and none of those can happen while the level is paused ([ADR-0016](0016-drive-android-haptics-through-the-vibrator.md)). *Why (Soni):* every haptic is over before a pause can matter. A longer pattern would have to register.
 
+### Refinements (2026-10-26, Milestone 4 slice 10)
+
+- **Sound effects register as an `IPausable`**, and pausing **stops** the level's effects still sounding instead of resuming them later: none lasts over 2.2 s, and a stopped source leaves no paused state to carry into the next scene. Button taps play on their own source, so the pause overlay's and settings' buttons are heard ([ADR-0017](0017-play-sound-with-playoneshot-behind-a-sound-interface.md)).
+- **The music is the one thing that keeps playing under the overlay** (an exception to "everything that plays sound registers"): it is one loop shared by every screen and owned by the `AppRoot`. *Why (Soni):* music is ambience shared with the menus, so the pause screen isn't silent and the music switch is heard when flipped in settings. In the background Unity stops all audio output itself (checked on the phone with `dumpsys audio`), which closes the design's "audio pauses on interruptions".
+
 ## Consequences
 
 - **Positive:**

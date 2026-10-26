@@ -56,5 +56,5 @@ We will play haptics through an **`IHaptics` interface** (`Mycelia.Game`, one `P
   - The phone's own touch-feedback setting doesn't affect the game.
 - **Follow-up:**
   - The low-end reference device (Milestone 5): check the Android 8–9 fallback strengths and a phone without amplitude control.
-  - Slice 10 (audio) can add sound to the same moments next to these.
+  - Slice 10 (audio) can add sound to the same moments next to these. *Done: `ChainSounds` and `OutcomeSounds` sit in front of these ([ADR-0017](0017-play-sound-with-playoneshot-behind-a-sound-interface.md)).*
   - **Revisit if:** a longer pattern (one that could outlast a pause) is wanted, or players ask for haptics to follow the phone's touch-feedback setting.

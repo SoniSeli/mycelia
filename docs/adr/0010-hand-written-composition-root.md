@@ -100,6 +100,11 @@ Decided with the intro (design §8.3):
 
 - **`AppServices.Haptics`** is the device's haptics behind the saved switch (`SwitchedHaptics` over `AndroidHaptics.Create()`), created once in `AppRoot`; the Game scene's entry wraps the chain view, the move player and the win wave with it, and every settings modal gets it for its test tick ([ADR-0016](0016-drive-android-haptics-through-the-vibrator.md)). The sketch's `AndroidHaptics` service is now real; audio is still to come (slice 10).
 
+### Refinements (2026-10-26, Milestone 4 slice 10)
+
+- **`AppServices.Sounds`** is a `SwitchedSoundEffects` over the `AppRoot`'s `AudioPlayer`, created once in `AppRoot`; the Game scene's entry wraps the chain and the outcome with it and registers it with `LevelPause`, every scene entry attaches a tap to every button in its scene, and every settings modal gets it for the switch tap ([ADR-0017](0017-play-sound-with-playoneshot-behind-a-sound-interface.md)). The music isn't a service: `AppRoot` owns a `Music` and calls `Follow()` every frame. The sketch's `AudioService` is now real.
+- **The app's one `AudioListener` lives on the `AppRoot`**, next to the `AudioPlayer`, so it outlives scene loads; the Bootstrap and Game cameras no longer carry one (the menus had none before). Guarded by `ProjectScenesTests`.
+
 ## Consequences
 
 - **Positive:**
