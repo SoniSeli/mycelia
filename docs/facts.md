@@ -6,6 +6,8 @@ One fact per level, shown in full on the result panel after a win (design §3.6,
 
 *Decided 2026-10-27 (design §8.4): no content pass. The facts and photos stay as prototype placeholders, and the README will say so (Milestone 6). The photos stay local only, and public builds and README media show text-only fact cards. The deciding factors (Soni): they are only there for the prototype; and the photos' licences are unknown, a disclaimer doesn't give permission to share them, and text-only cards already work.*
 
+*Changed 2026-10-27 (design §8.5, Milestone 6): the public itch.io build and the README media show the photos, as credited, unlicensed prototype placeholders under a disclaimer (README and itch.io page) that will be removed if an owner asks. The photos stay out of the repository, so the release APK is built on Soni's PC. The deciding factor (Soni): it's a prototype, and the fact cards should show their images. A store listing still needs licensed or replaced photos.*
+
 | Level | Fact | Photo source |
 |---|---|---|
 | level-01 | Mycelium is the hidden rootlike network of fungi, a web of tiny threads (hyphae) spreading through soil. It grows into dead wood and leaves, breaking them down. This decomposition releases nutrients back into the earth, feeding new plant and mushroom growth. | miro.medium.com |
