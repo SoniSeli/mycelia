@@ -34,6 +34,10 @@ We will use **URP with the 2D Renderer**. Sprites use the **unlit** sprite mater
 
 The deciding factor is **lifetime and direction**: Built-in is deprecated, and between the two URP options, the 2D Renderer keeps the glow look possible. The "unlit by default, light only after measuring" rule removes most of its cost risk.
 
+### Refinements (2026-10-27, Milestone 5 slice 1)
+
+- **The 2D renderer carries no post-process data.** No camera ever used post-processing, but the renderer still referenced URP's `PostProcessData`, so every build shipped its film grain and SMAA textures and post-processing shaders (−2.0 MiB of APK without them), and the trims it came with took about 19 MB off memory ([performance budget](../performance-budget.md), case study "Seven megabytes the game never used"). `ProjectBuildSizeTests` keeps every renderer without it; a post-processing effect would bring it back, measured. *Why (Soni):* it costs size and memory, and nothing uses it.
+
 ## Consequences
 
 - **Positive:**

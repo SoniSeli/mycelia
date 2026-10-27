@@ -7,7 +7,7 @@ Each file records one significant decision: its context, the options considered,
 | # | Decision | Status |
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-use-urp-with-2d-renderer.md) | Use URP with the 2D Renderer | Accepted (amended 2026-10-24) |
+| [0002](0002-use-urp-with-2d-renderer.md) | Use URP with the 2D Renderer | Accepted (amended 2026-10-24; refined 2026-10-27) |
 | [0003](0003-separate-pure-domain-from-views.md) | Keep game rules in an engine-free domain; views play back move results | Accepted (refined by 0004) |
 | [0004](0004-resolve-moves-through-a-phase-pipeline.md) | Resolve moves through a phase pipeline of rules that emit typed steps | Accepted |
 | [0005](0005-identify-spores-by-asset-with-runtime-id.md) | Identify spore types by ScriptableObject asset, with a compact runtime id and a stable key | Accepted (amended by 0006; refined 2026-10-25, 2026-10-27) |
