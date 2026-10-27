@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.Build;
 
 namespace Mycelia.App.Tests
 {
@@ -19,6 +20,14 @@ namespace Mycelia.App.Tests
         public void TheUnitySplashScreen_IsOff_ForTheColdStartBudget()
         {
             Assert.That(PlayerSettings.SplashScreen.show, Is.False);
+        }
+
+        // Medium took 4.5 MiB off the APK and about 17 MB off memory against Minimal; High saved a little more, with more
+        // risk of stripping code that is only reached by reflection (performance budget, Milestone 5 slice 1).
+        [Test]
+        public void ManagedCodeStripping_IsMedium_ForSizeAndMemory()
+        {
+            Assert.That(PlayerSettings.GetManagedStrippingLevel(NamedBuildTarget.Android), Is.EqualTo(ManagedStrippingLevel.Medium));
         }
     }
 }
