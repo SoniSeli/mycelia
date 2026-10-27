@@ -29,5 +29,22 @@ namespace Mycelia.App.Tests
         {
             Assert.That(PlayerSettings.GetManagedStrippingLevel(NamedBuildTarget.Android), Is.EqualTo(ManagedStrippingLevel.Medium));
         }
+
+        // The release keystore lives outside the repository and is set only for the length of a local release build
+        // (design §8.5). Committed, it would point CI at a file it doesn't have and publish the key's path.
+        [Test]
+        public void TheReleaseKeystore_IsNeverSetInTheProject_SoCiSignsWithItsDebugKey()
+        {
+            Assert.That(PlayerSettings.Android.useCustomKeystore, Is.False);
+            Assert.That(PlayerSettings.Android.keystoreName, Is.Empty);
+            Assert.That(PlayerSettings.Android.keyaliasName, Is.Empty);
+        }
+
+        // Public builds carry a real version; local and CI builds share it (design §8.5).
+        [Test]
+        public void TheVersion_Is1_0_0_ForTheFirstPublicRelease()
+        {
+            Assert.That(PlayerSettings.bundleVersion, Is.EqualTo("1.0.0"));
+        }
     }
 }
