@@ -111,6 +111,10 @@ Decided with the new spores (design §8.3, Soni's UI/UX brief: "circles, differe
 - **The silhouette guard now reads the pixels**, since four circles could pass "no two types share a sprite" while looking alike. `ProjectSporeArtTests` reads each shipped sprite's opaque body (the glow is fainter than the threshold) and checks that every two spores differ in more than 4 % of their combined area (the closest pair, smooth and notched, differs in 7 %), that each one is a circle centred on its cell that its outline only changes, and that all four are medium-sized and cover about the same area ([ADR-0011](0011-fit-camera-to-board-and-pool-views-up-front.md) Refinements).
 - The renders of the game screen in the three simulations and grayscale showed the four types apart in each (design §6).
 
+### Refinements (2026-10-27, Milestone 5 planning)
+
+- **The spore types are not named fungus species.** Outline and colour are their identity, and the key names the outline. The `displayName` field stays, but no screen shows it. *Why (Soni):* the four types have no species.
+
 ## Consequences
 
 - **Positive:**

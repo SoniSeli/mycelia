@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Targets set; measured on the mid-range device (Milestone 2 slice 8, Milestone 4 device pass); level 11 is about 5 MB over the memory budget since the splash screen went (accepted until Milestone 5); the low-end reference device and the lines not yet measured move to Milestone 5 |
-| **Last updated** | 2026-10-26 |
+| **Status** | Targets set; measured on the mid-range device (Milestone 2 slice 8, Milestone 4 device pass); level 11 is about 5 MB over the memory budget since the splash screen went (accepted until Milestone 5). No low-end device for now: results stay provisional (2026-10-27). Milestone 5 measures peak memory, growth over 10 levels, the 15-minute session and level load (design §8.4) |
+| **Last updated** | 2026-10-27 |
 
 > **Why budgets first.** These targets are set *before* the code is written, so every system is designed to fit them. Measurements on a real device are recorded against them below, and any significant fix gets a short case study.
 
@@ -11,18 +11,20 @@
 
 | Role | Device | SoC / RAM | Android | Why this device |
 |---|---|---|---|---|
-| **Low-end (budget target)** | _To choose in Milestone 5_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
+| **Low-end (budget target)** | _None for now (decided 2026-10-27; after v1)_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
 | Mid-range (sanity check) | Xiaomi Redmi Note 12 Pro+ 5G (22101316UG) | MediaTek Dimensity 1080 (MT6877V) / 8 GB, 1080 × 2400 | 13 (API 33) | Developer's own phone, available every day. Good for checking that things work, too fast to prove the budgets. |
 
 > **Status (2026-10-22): no low-end device yet; deferred to Milestone 2.** Only the mid-range phone is available. Until a low-end device is chosen, results on the mid-range phone are **provisional**: a pass there doesn't prove the budget, but a failure there (like the memory result below) is a real problem. Options for Milestone 2: a cheap second-hand phone (the most useful, because you can profile it yourself), or a device farm such as Firebase Test Lab for start-up and crash checks on low-end models.
 >
 > **Decided 2026-10-23 (Milestone 2 slice 8): measure on the mid-range phone only for now; the low-end device moves to Milestone 5.** The deciding factor: only the Redmi is available, and buying a test phone isn't worth it before there is content to measure. Every result below therefore stays provisional.
+>
+> **Decided 2026-10-27 (Milestone 5 planning): no low-end device for now.** Milestone 5 measures on the mid-range phone only, the results stay provisional, and checking on a low-end device is work for after v1. The deciding factor (Soni): there is no low-end device to test with for now.
 
 ## Budgets
 
-All figures are measured on the **low-end reference device** with a **Development build** and the Profiler attached, unless noted otherwise. Until Milestone 5 they come from the mid-range phone, with `PerfProbe` instead of a live Profiler (see How to measure).
+All figures are measured on the **low-end reference device** with a **Development build** and the Profiler attached, unless noted otherwise. With no low-end device for now, they come from the mid-range phone, with `PerfProbe` and Profiler captures recorded on the phone instead of a live Profiler (see How to measure).
 
-> **Not measured yet; moved to Milestone 5 (2026-10-24):** memory growth over 10 levels, ~~cold start to level select~~ (measured in the Milestone 4 device pass, 2026-10-26), the 15-minute session, overdraw, and scripts-only CPU time. They need the finished levels, the level select or the low-end device. The live Profiler connection moves there too.
+> **Not measured yet; moved to Milestone 5 (2026-10-24):** memory growth over 10 levels, ~~cold start to level select~~ (measured in the Milestone 4 device pass, 2026-10-26), the 15-minute session, overdraw, and scripts-only CPU time. They need the finished levels, the level select or the low-end device. The live Profiler connection moves there too. *Decided 2026-10-27 (design §8.4): Milestone 5 measures memory growth over 10 levels, the 15-minute session and level load (never measured yet). Overdraw, scripts-only CPU time and the live Profiler connection are left out. The deciding factor (Soni): measure only what engineers usually test or look at; the main-thread total (≤ 10 ms) already passes, and captures recorded on the phone already stand in for the live connection.*
 
 ### Runtime
 

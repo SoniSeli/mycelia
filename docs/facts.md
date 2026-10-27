@@ -4,6 +4,8 @@ One fact per level, shown in full on the result panel after a win (design §3.6,
 
 *Status 2026-10-24: in the level assets as **placeholder text** until the Milestone 5 content pass. The photos are **local only** (`Assets/ThirdParty/FactPhotos/`, git-ignored): their licences are unknown, so they are never committed and must be licensed or replaced before any public build, store listing or README media.*
 
+*Decided 2026-10-27 (design §8.4): no content pass. The facts and photos stay as prototype placeholders, and the README will say so (Milestone 6). The photos stay local only, and public builds and README media show text-only fact cards. The deciding factors (Soni): they are only there for the prototype; and the photos' licences are unknown, a disclaimer doesn't give permission to share them, and text-only cards already work.*
+
 | Level | Fact | Photo source |
 |---|---|---|
 | level-01 | Mycelium is the hidden rootlike network of fungi, a web of tiny threads (hyphae) spreading through soil. It grows into dead wood and leaves, breaking them down. This decomposition releases nutrients back into the earth, feeding new plant and mushroom growth. | miro.medium.com |
@@ -23,9 +25,9 @@ The full photo URLs are in Soni's notes next to the photos (`Assets/ThirdParty/F
 
 **Import settings (decided 2026-10-24, Milestone 3 slice 8):** on Android each photo is capped at 1024 px and compressed as ASTC 6 × 6. With the automatic setting, seven photos whose sides aren't multiples of 4 shipped uncompressed, which put the release APK at 43.0 MB, over its 40 MB budget; now it is 38.7 MB ([performance budget](performance-budget.md)). The card shows a photo 380 px tall. The settings live in the photos' `.meta` files, which are git-ignored with them, so a new copy of the photos needs them set again. Soni's reason for doing it before Milestone 5: it's a cheap fix.
 
-## For the Milestone 5 content pass
+## Review notes
 
-Decided 2026-10-24 to keep the text as written for playtesting (*why:* it is placeholder text until the content pass). Points raised in review, to check then:
+Decided 2026-10-24 to keep the text as written for playtesting (*why:* it is placeholder text until the content pass). Points raised in review, kept for whoever replaces the placeholders (there is no content pass since 2026-10-27):
 
 - **level-02:** trees "signalling each other to dangers" through mycelium is disputed; a 2023 review (Karst et al., *Nature Ecology & Evolution*) found the evidence for such networks overstated.
 - **level-03:** Quorn's mycoprotein is grown in fermenters on glucose, not plant waste, and is low in saturated fat rather than free of it.
