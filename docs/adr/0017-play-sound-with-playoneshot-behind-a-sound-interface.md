@@ -61,4 +61,5 @@ We will play effects through an **`ISoundEffects` interface** (`Mycelia.Game`: `
   - 2.8 MB of WAV for the music in plain git (the Git LFS question in design §9 is still open).
 - **Follow-up:**
   - Milestone 5: memory of the clips in a release build (estimated under 1 MB: about 8 s of effects decompressed, the music streamed) and the APK size change; sound on the low-end device.
+    *Measured 2026-10-27 (Milestone 5 slice 2, a Memory Profiler snapshot of a development build on the mid-range phone): the 17 clips hold 0.82 MB (the music 159 KB, streamed) and the AudioManager 1.17 MB, 2.0 MB against the 10 MB audio budget. The low-end device stays open (design §8.4).*
   - **Revisit if:** players ask for volume sliders (the save already keeps volumes, ADR-0006), a sound needs per-voice control, or real recordings replace the code-made ones.
