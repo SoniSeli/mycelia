@@ -7,7 +7,7 @@
 | **Last updated** | 2026-10-27 |
 | **Related** | [Performance budget](performance-budget.md) · [Decision records](adr/README.md) |
 
-> **How to read this draft.** Sections marked **Decide** are open questions to settle (most become an ADR). Everything else is a proposal: rewrite it in your own words before the first commit, since this document is part of your portfolio.
+> **How to read this document.** It was written before the code and kept up to date while building. Decisions made along the way are added in place as dated notes (*Decided …*, *Done …*) with their reasons; the larger ones have an ADR.
 
 ---
 
@@ -15,11 +15,9 @@
 
 **Pitch.** Mycelia is a portrait, one-thumb puzzle game for mobile. Players connect neighbouring spores of the same kind to clear them from the board and complete each level's collection goals within a limited number of moves. Finishing a level unlocks a short, illustrated fact about fungi and mycelium networks.
 
-**Platforms.** Android first (minimum API level _TBD_), iOS second.
+**Platforms.** Android: minimum API level 26 (Android 8.0), 64-bit ARM. iOS is out of scope for v1.
 
 **Audience.** Casual players who play short sessions (2–5 minutes per level).
-
-> **Decide:** One sentence on why you built this. A recruiter will ask; the educational angle (learning about fungi through play) is a strong answer.
 
 ## 2. Goals and non-goals
 
@@ -36,7 +34,7 @@
 
 ## 3. Game rules
 
-_Write these in your own words from how the game plays. They become the spec for the domain tests in Milestone 1._
+These rules are the spec for the domain tests (Milestone 1).
 
 ### 3.1 Board
 - A rectangular grid of cells, **6 × 6** by default; a level may override the size.
@@ -108,7 +106,7 @@ Launch → Main menu ⇄ Settings
 
 > **Decided 2026-10-24:** launch opens a main menu (title and Play) before level select, as the game's front door for a portfolio piece people open once to judge ([ADR-0012](adr/0012-use-ugui-with-textmeshpro.md) Refinements). Back steps out one screen at a time, and leaves the app from the main menu. *Decided 2026-10-26 (Milestone 4 slice 8):* the intro opens after the first tap on the mushroom rather than before the main menu, and ends in level select ([ADR-0010](adr/0010-hand-written-composition-root.md) Refinements).
 
-## 5. Architecture (proposal)
+## 5. Architecture
 
 Three layers, each depending only on the one below it:
 
@@ -155,7 +153,7 @@ Three layers, each depending only on the one below it:
 - **App lifecycle:** progress saves atomically (temporary file → replace, with a backup) when a level is won, when settings change, and when the app is paused. A level in progress is not resumed (§3.6). When the app is paused or loses focus during a level, it shows a pause overlay and waits for the player. Audio pauses on interruptions. The Android back button behaves sensibly on every screen ([ADR-0013](adr/0013-pause-the-level-and-handle-back.md)).
 - **Performance:** see [performance-budget.md](performance-budget.md). The target is a low-end reference device, not the Editor.
 - **Accessibility:** colour-blind support is **always on, not a setting**. Every spore type is a species with a unique silhouette (a circle with its own outline), enforced by a test that compares their pixels, and is checked in grayscale and in colour-blindness simulations. Text is readable at phone size. Haptics can be turned off.
-- **Localisation:** _out of scope for v1?_ If so, keep fact text in data so it can be localised later.
+- **Localisation:** out of scope for v1. The fact texts live in the level assets, so they can be localised later.
 
 ## 7. Testing strategy
 
@@ -209,7 +207,7 @@ Slices in order; each lands as its own commit(s) with tests. Pushes are batched.
 
 > **Decide before starting:** placeholder or final level design for the 12 levels, and where fact images come from. *Decided along the way: the CI keystore with the Play release (slice 2, §7); save moments (slice 3); main menu first (slice 4, §9); analytics to a local file (slice 6, ADR-0014).*
 
-### 8.3 Milestone 4 plan (draft)
+### 8.3 Milestone 4 plan
 
 Soni's UI/UX brief (2026-10-24) sets the look: a deep blue to turquoise vertical gradient and slowly drifting glowing spores behind every screen, one rounded font for all text, and soft, organic, round shapes with no hard grid boxes. Most of the brief overlaps Milestone 4's theme (settings, first-run intro, colour-blind spores, app shell), so it comes first, and haptics and audio follow. The mockups and the brief are kept outside the repository; Soni's own mushroom (cap and stem) and level-node shape are in `Art/UI`. Already in place: back on every screen (ADR-0013), the main menu and level select (Milestone 3), and the save's settings and `introSeen` fields.
 
@@ -247,9 +245,9 @@ Planned 2026-10-27. Milestone 6 publishes v1.0.0: a free itch.io page with a sig
 
 | # | Slice | Builds on | Done when |
 |---|---|---|---|
-| 1 | **Signed release build**: a release keystore that Soni creates and backs up (never in git; its passwords stay with Soni); version 1.0.0; a release APK built from the working copy with the photos, signed with that key; its size recorded. | Milestone 5 slice 1, §7 | A second signed build installs over the first on the phone and the save survives; the APK is ≤ 40 MB. *Done 2026-10-27: the keystore is in `C:\Users\Public\MyceliaKeys\` (Soni: easy to find and back up), with a copy off the PC; a local script asks for its password and builds, and the project never keeps the key's settings (guarded in `ProjectPlayerSettingsTests`, with the version). APK 31.40 MiB with the photos; the second build installed over the first without an uninstall, and the save stayed byte for byte, all 12 levels and their stars ([performance budget](performance-budget.md) results log).* |
+| 1 | **Signed release build**: a release keystore that Soni creates and backs up (never in git; its passwords stay with Soni); version 1.0.0; a release APK built from the working copy with the photos, signed with that key; its size recorded. | Milestone 5 slice 1, §7 | A second signed build installs over the first on the phone and the save survives; the APK is ≤ 40 MB. *Done 2026-10-27: the keystore is in a folder outside the repository, chosen to be easy to find and back up, with a copy off the PC; a local script asks for its password and builds, and the project never keeps the key's settings (guarded in `ProjectPlayerSettingsTests`, with the version). APK 31.40 MiB with the photos; the second build installed over the first without an uninstall, and the save stayed byte for byte, all 12 levels and their stars ([performance budget](performance-budget.md) results log).* |
 | 2 | **Media**: a short gameplay GIF recorded on the phone with `adb shell screenrecord` while Soni plays (a chain, a win, a fact card) and converted with ffmpeg; 3–4 screenshots with `adb shell screencap`, from the slice 1 build. | Slice 1 | The GIF and screenshots are in `docs/media/`, under about 5 MB together. *Done 2026-10-27: recorded at 1080 × 1920 (9:16), with the phone's screen size set to that for the recording and reset afterwards (Soni: 9:16 is the standard portrait frame for store pages, itch.io and video, so the media fits wherever it's posted). `gameplay.gif` runs from level select through level 2 to the win and its fact card with the photo (37 s, 360 px wide, 15 fps, 2.40 MiB). Four full-size screenshots: the main menu, level select on a save written for the shot (levels 1–4 won, 5 open, the rest locked; Soni's own save was put back byte for byte), level 2 mid-chain (a frame from the recording) and the level 2 fact card. 4.46 MiB together.* |
-| 3 | **Publish**: the README (what the game is, the GIF, what was built, architecture, a Performance section with the budget against the measurements, marked provisional, and a short paragraph linking each case study, build and run, credits, the placeholder disclaimer, all rights reserved); the history checked for secrets before the repository goes public; the itch.io page (free, no donations) with the APK, media and disclaimer, uploaded by Soni; tag `v1.0.0`. | Slices 1–2 | The itch.io link and the repository open in a logged-out browser; Milestone 6 done-when met. |
+| 3 | **Publish**: the README (what the game is, the GIF, what was built, architecture, a Performance section with the budget against the measurements, marked provisional, and a short paragraph linking each case study, build and run, credits, the placeholder disclaimer, all rights reserved); the history checked for secrets before the repository goes public; the itch.io page (free, no donations) with the APK, media and disclaimer, uploaded by Soni; tag `v1.0.0`. *Decided 2026-10-27: the history check found no secrets (no keystore, licence or key file was ever committed; passwords and the Unity licence appear only as CI secret references; every commit uses the noreply address). The keystore's folder is no longer named in these documents (Soni: a public repository shouldn't describe where things are on my own PC, even when nothing secret is there); earlier commits keep the old wording. Before going public, the drafting prompts left in this document and the performance budget were tidied, and [facts.md](facts.md) now links each photo's full URL, as the disclaimer says. The itch.io page is `soniseli.itch.io/mycelia`, its cover the main menu's title and mushroom cropped to 630 × 500. A check for unused files before going public (Soni: the repository should feel lean, with only what an engineer might ask about) found no unused classes or methods; the old star sprite, which nothing used but the UI atlas still packed, and the ADR index's stale candidates table were removed, while the unused TextMeshPro shaders (a standard package import, which TMP's Editor tools look up by name) and `.vsconfig` stay.* | Slices 1–2 | The itch.io link and the repository open in a logged-out browser; Milestone 6 done-when met. |
 
 > **Decided before starting (2026-10-27), with Soni's reasons:** the build link is an itch.io page, because it gives the game its own page with screenshots, a GIF and a download button that recruiters and players understand, without a code repository around it. The fact photos are shown with a disclaimer, because it's a prototype and the fact cards should show their images. The disclaimer says the photos belong to their owners, are credited on each card with full sources in [facts.md](facts.md), are used as unlicensed prototype placeholders, and will be removed if an owner asks; it doesn't claim permission. The release APK is built and signed on Soni's PC, so the photos stay out of the public repository and only the APK and the README media carry them. The repository goes public, all rights reserved, so reviewers can read the code from a CV link while the art and any later store release stay Soni's. Soni uploads the APK to itch.io by hand, because v1 is a single release. The performance write-up is a README section without new images, because the case studies are already written. The GIF is recorded on the phone, so it shows the game on a real device. Plain git, no Git LFS (§9). The itch.io page stays free, with no payments or donations, so the SDG icons stay illustrative, non-commercial use (§10).
 
@@ -275,7 +273,7 @@ The idea was first prototyped on a third-party Asset Store template to check tha
 | Asset | Source | Licence |
 |---|---|---|
 | PrimeTween (code dependency, not in the repo) | npm package `com.kyrylokuzyk.primetween` by Kyrylo Kuzyk | PrimeTween licence: free in commercial products; in GitHub projects only as an npm package ([ADR-0009](adr/0009-animate-playback-with-primetween.md)) |
-| Spore silhouettes (smooth, scalloped, spiked and notched circles; the placeholder shapes and the board cell tile they replaced), UI panel, star and lock | Made for this project (spores drawn by code) | Own work |
+| Spore silhouettes (smooth, scalloped, spiked and notched circles; the placeholder shapes and the board cell tile they replaced), UI panel and lock | Made for this project (spores drawn by code) | Own work |
 | Spore colours | Sampled from Soni Seli's mockup (Milestone 4; the Okabe–Ito palette of Okabe & Ito, 2008, before it) | Own work |
 | Shantell Sans (the game font, Bold and SemiBold, baked into static TextMeshPro font assets) | The Shantell Sans Project Authors (Shantell Martin with Arrow Type), [github.com/arrowtype/shantell-sans](https://github.com/arrowtype/shantell-sans), release 1.011 | SIL Open Font License 1.1 (`Assets/_Mycelia/Art/Fonts/ShantellSans - OFL.txt`) |
 | Mushroom (cap and stem) and level-node shape | Soni Seli | Own work |

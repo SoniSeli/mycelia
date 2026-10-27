@@ -23,11 +23,3 @@ Each file records one significant decision: its context, the options considered,
 | [0015](0015-balance-levels-with-a-simulated-bot.md) | Balance levels with a simulated bot over fixed seeds | Accepted |
 | [0016](0016-drive-android-haptics-through-the-vibrator.md) | Drive Android haptics through the vibrator's effects, behind a haptics interface | Accepted |
 | [0017](0017-play-sound-with-playoneshot-behind-a-sound-interface.md) | Play sound with PlayOneShot on preloaded clips, behind a sound-effects interface | Accepted |
-
-## Candidates to decide
-
-These came up while drafting the [design document](../design.md). Each becomes an ADR once decided.
-
-| Topic | The question to answer |
-|---|---|
-| Large binary assets | Git LFS or plain git for a small project? |

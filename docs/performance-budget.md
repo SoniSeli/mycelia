@@ -11,7 +11,7 @@
 
 | Role | Device | SoC / RAM | Android | Why this device |
 |---|---|---|---|---|
-| **Low-end (budget target)** | _None for now (decided 2026-10-27; after v1)_ | _e.g. Helio G35 / 3 GB_ | _e.g. 11_ | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
+| **Low-end (budget target)** | _None for now (decided 2026-10-27; after v1)_ | — | — | _Represents the bottom of the audience. If it's fine here, it's fine everywhere._ |
 | Mid-range (sanity check) | Xiaomi Redmi Note 12 Pro+ 5G (22101316UG) | MediaTek Dimensity 1080 (MT6877V) / 8 GB, 1080 × 2400 | 13 (API 33) | Developer's own phone, available every day. Good for checking that things work, too fast to prove the budgets. |
 
 > **Status (2026-10-22): no low-end device yet; deferred to Milestone 2.** Only the mid-range phone is available. Until a low-end device is chosen, results on the mid-range phone are **provisional**: a pass there doesn't prove the budget, but a failure there (like the memory result below) is a real problem. Options for Milestone 2: a cheap second-hand phone (the most useful, because you can profile it yourself), or a device farm such as Firebase Test Lab for start-up and crash checks on low-end models.
@@ -62,8 +62,6 @@ All figures are measured on the **low-end reference device** with a **Developmen
 | Metric | Budget | Notes |
 |---|---|---|
 | 15-minute play session | **No thermal throttling warning; frame rate stays within budget** | Android's thermal status (`adb shell dumpsys thermalservice`) read every 30 s from the PC; Adaptive Performance isn't used |
-
-> **Decide:** Adjust any number you can't justify. A budget you can explain ("16.6 ms per frame is 60 fps, and I keep 6 ms of headroom for heat throttling") is worth more than an ambitious one.
 
 ### Changes
 
@@ -157,7 +155,7 @@ Store raw captures outside the repo (they're large). Commit screenshots of the r
 
 ## Optimisation case studies
 
-Add one section per meaningful fix. Two or three good ones are enough.
+One section per meaningful fix or budget change found by measuring.
 
 ### 77 batches and a budget measuring the wrong thing
 
@@ -230,12 +228,3 @@ Add one section per meaningful fix. Two or three good ones are enough.
 - **Change:** managed stripping Medium (Soni's choice over High: most of the gain, less risk); post-process data, LiberationSans and the unused modules removed (guard tests for the stripping level, the renderers and fonts in `Resources`).
 - **Measurement after:** APK **29.44 MiB** (−7.2), download **28.5 MiB** (−7.0); level 11 **238 MB**, main menu **231–232 MB** (about −36 MB). Most of the memory came from stripping (Code and `.so` mmap −10 MB each) and from the trims (Unity's native allocations −14 MB, likely URP no longer setting up post-processing).
 - **Trade-off:** Medium stripping can remove code reached only through reflection, so new reflection-based code or plugins need a play test on a release build (`link.xml` if something goes missing); adding post-processing later means adding the post-process data back, which a guard test now flags. Unity's splash logo (2.7 MB uncompressed) still ships with the splash off.
-
-### Case study template: _title_
-
-- **Symptom:** What did you notice, and where? Include a profiler screenshot.
-- **Measurement before:** Number(s) on the reference device.
-- **Hypothesis:** What you believed the cause was, and why.
-- **Change:** What you changed (link the commit or PR).
-- **Measurement after:** The same number(s), measured the same way.
-- **Trade-off:** What the fix cost (memory, complexity, flexibility).
